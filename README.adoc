@@ -1,35 +1,36 @@
-// Before publishing your new repository:
-// 1. Write the readme file
-// 2. Update the issues link in Contributing section in the readme file
-// 3. Update the discussion link in config.yml file in .github/ISSUE_TEMPLATE directory
+= RELP Flooder library rlp_10
 
-# repo-template
+Standalone version of https://github.com/teragrep/rlp_09[rlp_09]
 
-// Add a short description of your project. Tell what your project does and what it's used for. 
+== How to use
 
-This is a template repository for Teragrep organization. 
+`mvn clean package`
 
-## Features
+== How to run
 
-// List your project's features 
+`java -jar rlp_10.jar`
 
-## Documentation
+== Configurations
 
-See the official documentation on https://docs.teragrep.com[docs.teragrep.com].
 
-## Limitations
+[cols="3"]
+|===
+|System property|Default value|Usage
 
-// If your project has limitations, please list them. Otherwise remove this section. 
+|hostname|localhost|Sets hostname for the event
+|appname|rlp_10|Sets used appname for the event
+|target|127.0.0.1|RELP target server
+|port|1601|RELP target port
+|threads|4|RELP Flooder thread count
+|useTls|false|Is TLS used for connections
+|payloadSize|10|Event message payload size (excludes any headers)
+|batchSize|1|How many events is sent in one batch
 
-## How to [compile/use/implement]
+|===
 
-// add instructions how people can start to use your project 
+== Contributing
 
-## Contributing
-
-// Change the repository name in the issues link to match with your project's name
-
-You can involve yourself with our project by https://github.com/teragrep/repo-template/issues/new/choose[opening an issue] or submitting a pull request. 
+You can involve yourself with our project by https://github.com/teragrep/rlp_10/issues/new/choose[opening an issue] or submitting a pull request.
 
 Contribution requirements:
 
@@ -40,8 +41,8 @@ Contribution requirements:
 
 Read more in our https://github.com/teragrep/teragrep/blob/main/contributing.adoc[Contributing Guideline].
 
-### Contributor License Agreement
+=== Contributor License Agreement
 
-Contributors must sign https://github.com/teragrep/teragrep/blob/main/cla.adoc[Teragrep Contributor License Agreement] before a pull request is accepted to organization's repositories. 
+Contributors must sign https://github.com/teragrep/teragrep/blob/main/cla.adoc[Teragrep Contributor License Agreement] before a pull request is accepted to organization's repositories.
 
-You need to submit the CLA only once. After submitting the CLA you can contribute to all Teragrep's repositories. 
+You need to submit the CLA only once. After submitting the CLA you can contribute to all Teragrep's repositories.
