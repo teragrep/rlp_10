@@ -50,6 +50,8 @@ import com.teragrep.rlp_09.RelpFlooder;
 import com.teragrep.rlp_09.RelpFlooderConfig;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -66,7 +68,7 @@ public class Flooder {
         this.timerTask = new TimerTask() {
             @Override
             public void run() {
-                printEps();
+                printRps();
             }
         };
     }
@@ -77,14 +79,15 @@ public class Flooder {
         relpFlooder.start();
     }
 
-    void stop() {
+    void stop() throws InterruptedException {
         timerTask.cancel();
         relpFlooder.stop();
-        printEps();
+        printRps();
+        printRpsPerThread();
     }
 
-    private void printEps() {
-        long totalSent = relpFlooder.getMessagesSent();
+    private void printRps() {
+        long totalSent = relpFlooder.getTotalRecordsSent();
         long deltaSent = totalSent - lastReportEventsSent;
         float totalBytes = (float) totalSent * relpFlooderConfig.getMessageLength();
         float deltaBytes = (float) deltaSent * relpFlooderConfig.getMessageLength();
@@ -92,7 +95,7 @@ public class Flooder {
         float totalElapsed = (float) (currentTime - startTime) / 1000;
         float deltaElapsed = (float) (currentTime - lastReportTime) / 1000;
         System.out.format(
-                "Sent %,d messages / %,.2f MB in %,.1f seconds (%,.0f EPS / ~%,.2f MB/s), total sent %,1d messages / %,.1f MB in %,.1f seconds (%,.0f EPS / ~%,.2f MB/s)%n",
+                "Sent %,d records / %,.2f MB in %,.1f seconds (%,.0f EPS / ~%,.2f MB/s), total sent %,1d records / %,.1f MB in %,.1f seconds (%,.0f EPS / ~%,.2f MB/s)%n",
                 deltaSent,
                 deltaBytes / 1024 / 1024,
                 deltaElapsed,
@@ -106,5 +109,17 @@ public class Flooder {
         );
         lastReportEventsSent = totalSent;
         lastReportTime = currentTime;
+    }
+
+    private void printRpsPerThread() {
+        int totalRecordsSent = relpFlooder.getTotalRecordsSent();
+        if(totalRecordsSent == 0) {
+            return;
+        }
+        HashMap<Integer, Integer> rpsPerThread = relpFlooder.getRecordsSentPerThread();
+        for(Map.Entry<Integer, Integer> entry : rpsPerThread.entrySet()) {
+            float threadShare = (float) entry.getValue() /totalRecordsSent;
+            System.out.format("Thread %,d sent %,d records (~%,.1f%% of total)%n", entry.getKey(), entry.getValue(),  threadShare*100);
+        }
     }
 }

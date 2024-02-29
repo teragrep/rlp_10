@@ -68,7 +68,11 @@ public class Main {
         Flooder flooder = new Flooder(relpFlooderConfig);
         Thread shutdownHook = new Thread(() -> {
             System.out.println("Shutting down...");
-            flooder.stop();
+            try {
+                flooder.stop();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         });
         Runtime.getRuntime().addShutdownHook(shutdownHook);
         try {
