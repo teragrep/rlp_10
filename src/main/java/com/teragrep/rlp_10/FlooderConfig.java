@@ -55,6 +55,7 @@ class FlooderConfig {
     public final boolean useTls;
     public final int payloadSize;
     public final int reportInterval;
+    public final long maxMessagesSent;
     public FlooderConfig() {
         this.hostname = System.getProperty("hostname", "localhost");
         this.appname = System.getProperty("appname", "rlp_10");
@@ -64,5 +65,6 @@ class FlooderConfig {
         this.useTls = Boolean.parseBoolean(System.getProperty("useTls", "false"));
         this.payloadSize = Integer.parseInt(System.getProperty("payloadSize", "10"));
         this.reportInterval = Integer.parseInt(System.getProperty("reportInterval", "10"));
+        this.maxMessagesSent = Long.parseLong(System.getProperty("maxMessagesSent", "-1"));
     }
 }

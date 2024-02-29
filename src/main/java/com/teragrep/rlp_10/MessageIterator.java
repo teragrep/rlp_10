@@ -71,7 +71,7 @@ class MessageIterator implements Iterator<byte[]> {
 
     @Override
     public boolean hasNext() {
-        return true;
+        return flooderConfig.maxMessagesSent == -1 || current<flooderConfig.maxMessagesSent;
     }
 
     @Override

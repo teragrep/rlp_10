@@ -59,6 +59,7 @@ class Main {
         LOGGER.info("Using appname <[{}]>", flooderConfig.appname);
         LOGGER.info("Adding <[{}]> characters to payload size", flooderConfig.payloadSize);
         LOGGER.info("Sending records to: <[{}]:[{}]>", flooderConfig.target, flooderConfig.port);
+        LOGGER.info("Sending <[{}]> events per thread, total of <[{}]> records", flooderConfig.maxMessagesSent, (flooderConfig.maxMessagesSent > 0 ? flooderConfig.maxMessagesSent * flooderConfig.threads : "infinite"));
         LOGGER.info("TLS enabled (FIXME: Implement): <[{}]>", flooderConfig.useTls);
         LOGGER.info("Reporting stats every <[{}]> seconds", flooderConfig.reportInterval);
 
