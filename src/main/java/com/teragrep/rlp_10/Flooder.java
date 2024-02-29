@@ -99,7 +99,7 @@ public class Flooder {
     }
 
     private float reportTotalMegaBytesSent() {
-        return Math.(relpFlooder.getTotalBytesSent()/1024f/1024f, 2);
+        return relpFlooder.getTotalBytesSent()/1024f/1024f;
     }
 
 

@@ -68,7 +68,7 @@ public class Main {
         LOGGER.info("Sending <[{}]> records per batch", relpFlooderConfig.getBatchSize());
         LOGGER.info("Sending records to: <[{}]:[{}]>", relpFlooderConfig.getTarget(), relpFlooderConfig.getPort());
         LOGGER.info("TLS enabled (FIXME: Implement): <[{}]>", relpFlooderConfig.isUseTls());
-        LOGGER.info("Reporting stats every <[{}]> seconds", relpFlooderConfig.isUseTls());
+        LOGGER.info("Reporting stats every <[{}]> seconds", reportInterval);
 
         Flooder flooder = new Flooder(relpFlooderConfig, reportInterval);
         Thread shutdownHook = new Thread(() -> {
