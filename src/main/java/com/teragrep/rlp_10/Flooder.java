@@ -46,80 +46,67 @@
 
 package com.teragrep.rlp_10;
 
+import com.codahale.metrics.ConsoleReporter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.MetricRegistry;
 import com.teragrep.rlp_09.RelpFlooder;
 import com.teragrep.rlp_09.RelpFlooderConfig;
 
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
+
+import static com.codahale.metrics.MetricRegistry.name;
 
 public class Flooder {
-    private final long startTime = Instant.now().toEpochMilli();
-    private long lastReportEventsSent = 0;
-    private long lastReportTime = Instant.now().toEpochMilli();
-    private final RelpFlooderConfig relpFlooderConfig;
     private final RelpFlooder relpFlooder;
-    private final TimerTask timerTask;
-    public Flooder(RelpFlooderConfig relpFlooderConfig) {
-        this.relpFlooderConfig = relpFlooderConfig;
+    private final ConsoleReporter consoleReporter;
+    private HashMap<Integer, Integer> lastRecordsSentPerThread;
+    private Instant startTime;
+    private final int reportInterval;
+    public Flooder(RelpFlooderConfig relpFlooderConfig, int reportInterval) {
         this.relpFlooder = new RelpFlooder(relpFlooderConfig);
-        this.timerTask = new TimerTask() {
-            @Override
-            public void run() {
-                printRps();
-            }
-        };
+        MetricRegistry metricRegistry = new MetricRegistry();
+        metricRegistry.register(name("records", "sent", "total", "perThread"), (Gauge<HashMap<Integer, Integer>>) relpFlooder::getRecordsSentPerThread);
+        metricRegistry.register(name("records", "sent", "total"), (Gauge<Integer>) relpFlooder::getTotalRecordsSent);
+        metricRegistry.register(name("records", "sent", "perSecond"), (Gauge<Float>) this::reportRecordsPerSecond);
+        metricRegistry.register(name("records", "sent", "perSecond", "perThread"), (Gauge<HashMap<Integer, Float>>) this::reportRecordsPerSecondPerThread);
+        metricRegistry.register(name("elapsed", "seconds"), (Gauge<Float>) this::reportElapsed);
+        this.consoleReporter = ConsoleReporter
+                .forRegistry(metricRegistry)
+                .build();
+        this.reportInterval = reportInterval;
+    }
+
+    private Float reportElapsed() {
+        return (Instant.now().toEpochMilli()-startTime.toEpochMilli())/1000f;
+    }
+
+    private Float reportRecordsPerSecond() {
+        Instant now = Instant.now();
+        float elapsed = (now.toEpochMilli() - startTime.toEpochMilli()) / 1000f;
+        return relpFlooder.getTotalRecordsSent()/elapsed;
+    }
+
+    private HashMap<Integer, Float> reportRecordsPerSecondPerThread() {
+        Instant now = Instant.now();
+        float elapsed = (now.toEpochMilli() - startTime.toEpochMilli())/1000f;
+        HashMap<Integer, Float> recordsPerThread = new HashMap<>();
+        for(Map.Entry<Integer, Integer> entry : relpFlooder.getRecordsSentPerThread().entrySet()) {
+            recordsPerThread.put(entry.getKey(), entry.getValue()/elapsed);
+        }
+        return recordsPerThread;
     }
 
     public void flood() {
-        Timer statsReporter = new Timer();
-        statsReporter.scheduleAtFixedRate(timerTask, 10000, 10000);
+        startTime = Instant.now();
+        consoleReporter.start(reportInterval, TimeUnit.SECONDS);
         relpFlooder.start();
     }
 
     void stop() throws InterruptedException {
-        timerTask.cancel();
         relpFlooder.stop();
-        printRps();
-        printRpsPerThread();
-    }
-
-    private void printRps() {
-        long totalSent = relpFlooder.getTotalRecordsSent();
-        long deltaSent = totalSent - lastReportEventsSent;
-        float totalBytes = (float) totalSent * relpFlooderConfig.getMessageLength();
-        float deltaBytes = (float) deltaSent * relpFlooderConfig.getMessageLength();
-        long currentTime = Instant.now().toEpochMilli();
-        float totalElapsed = (float) (currentTime - startTime) / 1000;
-        float deltaElapsed = (float) (currentTime - lastReportTime) / 1000;
-        System.out.format(
-                "Sent %,d records / %,.2f MB in %,.1f seconds (%,.0f EPS / ~%,.2f MB/s), total sent %,1d records / %,.1f MB in %,.1f seconds (%,.0f EPS / ~%,.2f MB/s)%n",
-                deltaSent,
-                deltaBytes / 1024 / 1024,
-                deltaElapsed,
-                deltaSent / deltaElapsed,
-                (deltaBytes / deltaElapsed) / 1024 / 1024,
-                totalSent,
-                totalBytes / 1024 / 1024,
-                totalElapsed,
-                totalSent / totalElapsed,
-                (totalBytes / totalElapsed) / 1024 / 1024
-        );
-        lastReportEventsSent = totalSent;
-        lastReportTime = currentTime;
-    }
-
-    private void printRpsPerThread() {
-        int totalRecordsSent = relpFlooder.getTotalRecordsSent();
-        if(totalRecordsSent == 0) {
-            return;
-        }
-        HashMap<Integer, Integer> rpsPerThread = relpFlooder.getRecordsSentPerThread();
-        for(Map.Entry<Integer, Integer> entry : rpsPerThread.entrySet()) {
-            float threadShare = (float) entry.getValue() /totalRecordsSent;
-            System.out.format("Thread %,d sent %,d records (~%,.1f%% of total)%n", entry.getKey(), entry.getValue(),  threadShare*100);
-        }
+        consoleReporter.stop();
     }
 }

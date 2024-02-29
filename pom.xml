@@ -15,6 +15,8 @@
     <sha1/>
     <dropwizard-metrics.version>4.2.25</dropwizard-metrics.version>
     <rlp_09.version>0.0.1-SNAPSHOT</rlp_09.version>
+    <log4j2.version>2.22.1</log4j2.version>
+    <slf4j.version>2.0.5</slf4j.version>
   </properties>
   <dependencies>
     <!-- dropwizard metrics -->
@@ -29,6 +31,23 @@
       <artifactId>rlp_09</artifactId>
       <version>${rlp_09.version}</version>
     </dependency>
+    <!-- logging -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>${log4j2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+
   </dependencies>
   <build>
     <finalName>${artifactId}-${revision}${changelist}${sha1}</finalName>

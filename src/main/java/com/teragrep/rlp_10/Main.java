@@ -46,8 +46,11 @@
 
 package com.teragrep.rlp_10;
 import com.teragrep.rlp_09.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Main {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
     public static void main(String[] args) {
         RelpFlooderConfig relpFlooderConfig = new RelpFlooderConfig();
         relpFlooderConfig.setHostname(System.getProperty("hostname", "localhost"));
@@ -58,20 +61,22 @@ public class Main {
         relpFlooderConfig.setUseTls(Boolean.parseBoolean(System.getProperty("useTls", "false")));
         relpFlooderConfig.setPayloadSize(Integer.parseInt(System.getProperty("payloadSize", "10")));
         relpFlooderConfig.setBatchSize(Integer.parseInt(System.getProperty("batchSize", "1")));
-        System.out.printf("Using hostname <[%s]>%n", relpFlooderConfig.getHostname());
-        System.out.printf("Using appname <[%s]>%n", relpFlooderConfig.getAppname());
-        System.out.printf("Adding <[%s]> characters to payload size making total event size <%s>%n", relpFlooderConfig.getPayloadSize(), relpFlooderConfig.getMessageLength());
-        System.out.printf("Sending <[%s]> messages per batch%n", relpFlooderConfig.getBatchSize());
-        System.out.printf("Sending messages to: <[%s]:[%s]>%n", relpFlooderConfig.getTarget(), relpFlooderConfig.getPort());
-        System.out.printf("TLS enabled (FIXME: Implement): <[%s]>%n", relpFlooderConfig.isUseTls());
+        int reportInterval = Integer.parseInt(System.getProperty("reportInterval", "10"));
+        LOGGER.info("Using hostname <[{}]>", relpFlooderConfig.getHostname());
+        LOGGER.info("Using appname <[{}]>", relpFlooderConfig.getAppname());
+        LOGGER.info("Adding <[{}]> characters to payload size making total event size <{}>", relpFlooderConfig.getPayloadSize(), relpFlooderConfig.getMessageLength());
+        LOGGER.info("Sending <[{}]> messages per batch", relpFlooderConfig.getBatchSize());
+        LOGGER.info("Sending messages to: <[{}]:[{}]>", relpFlooderConfig.getTarget(), relpFlooderConfig.getPort());
+        LOGGER.info("TLS enabled (FIXME: Implement): <[{}]>", relpFlooderConfig.isUseTls());
+        LOGGER.info("Reporting stats every <[{}]> seconds", relpFlooderConfig.isUseTls());
 
-        Flooder flooder = new Flooder(relpFlooderConfig);
+        Flooder flooder = new Flooder(relpFlooderConfig, reportInterval);
         Thread shutdownHook = new Thread(() -> {
-            System.out.println("Shutting down...");
+            LOGGER.info("Shutting down...");
             try {
                 flooder.stop();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+            } catch (InterruptedException | RuntimeException e) {
+                LOGGER.error("Failed to stop properly: {}", e.getMessage());
             }
         });
         Runtime.getRuntime().addShutdownHook(shutdownHook);
@@ -79,7 +84,7 @@ public class Main {
             flooder.flood();
         }
         catch (Exception e){
-            System.out.printf("Caught an error while flooding: <%s>%n", e.getMessage());
+            LOGGER.error("Caught an error while flooding: {}", e.getMessage());
         }
         System.exit(0);
     }
