@@ -55,7 +55,6 @@ import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
 
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 

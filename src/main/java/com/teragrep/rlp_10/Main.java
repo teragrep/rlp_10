@@ -45,7 +45,8 @@
  */
 
 package com.teragrep.rlp_10;
-import com.teragrep.rlp_09.*;
+
+import com.teragrep.rlp_09.RelpFlooderConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
