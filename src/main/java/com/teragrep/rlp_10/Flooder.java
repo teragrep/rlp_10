@@ -62,25 +62,51 @@ import static com.codahale.metrics.MetricRegistry.name;
 public class Flooder {
     private final RelpFlooder relpFlooder;
     private final ConsoleReporter consoleReporter;
-    private HashMap<Integer, Integer> lastRecordsSentPerThread;
     private Instant startTime;
     private final int reportInterval;
     public Flooder(RelpFlooderConfig relpFlooderConfig, int reportInterval) {
         this.relpFlooder = new RelpFlooder(relpFlooderConfig);
         MetricRegistry metricRegistry = new MetricRegistry();
+        // Records sent total
+        metricRegistry.register(name( "records","sent", "total"), (Gauge<Integer>) relpFlooder::getTotalRecordsSent);
         metricRegistry.register(name("records", "sent", "total", "perThread"), (Gauge<HashMap<Integer, Integer>>) relpFlooder::getRecordsSentPerThread);
-        metricRegistry.register(name("records", "sent", "total"), (Gauge<Integer>) relpFlooder::getTotalRecordsSent);
+        // Records sent per second
         metricRegistry.register(name("records", "sent", "perSecond"), (Gauge<Float>) this::reportRecordsPerSecond);
         metricRegistry.register(name("records", "sent", "perSecond", "perThread"), (Gauge<HashMap<Integer, Float>>) this::reportRecordsPerSecondPerThread);
-        metricRegistry.register(name("elapsed", "seconds"), (Gauge<Float>) this::reportElapsed);
+        // Bytes sent total
+        metricRegistry.register(name("bytes", "sent", "total"), (Gauge<Integer>) relpFlooder::getTotalBytesSent);
+        metricRegistry.register(name("bytes", "sent", "total", "MB"), (Gauge<Float>) this::reportTotalMegaBytesSent);
+        metricRegistry.register(name("bytes", "sent", "total", "perThread"), (Gauge<HashMap<Integer, Integer>>) relpFlooder::getTotalBytesSentPerThread);
+        // Bytes second record
+        metricRegistry.register(name("bytes", "sent", "perSecond"), (Gauge<Float>) this::reportBytesPerSecond);
+        metricRegistry.register(name("bytes", "sent", "perSecond", "MB"), (Gauge<Float>) this::reportMegaBytesSentPerSecond);
+        metricRegistry.register(name("bytes", "sent", "perSecond", "perThread"), (Gauge<HashMap<Integer, Float>>) this::reportBytesPerSecondPerThread);
+        // Elapsed
+        metricRegistry.register(name("time", "elapsed"), (Gauge<String>) this::reportElapsed);
+        metricRegistry.register(name("time", "elapsed", "seconds"), (Gauge<Float>) this::reportElapsedSeconds);
         this.consoleReporter = ConsoleReporter
                 .forRegistry(metricRegistry)
                 .build();
         this.reportInterval = reportInterval;
     }
 
-    private Float reportElapsed() {
+    private String reportElapsed() {
+        float elapsed = reportElapsedSeconds();
+        return String.format("%d:%02d", (int) Math.floor(elapsed/60), (int) elapsed%60);
+    }
+    private float reportElapsedSeconds() {
         return (Instant.now().toEpochMilli()-startTime.toEpochMilli())/1000f;
+    }
+
+    private float reportTotalMegaBytesSent() {
+        return Math.(relpFlooder.getTotalBytesSent()/1024f/1024f, 2);
+    }
+
+
+    private float reportMegaBytesSentPerSecond() {
+        Instant now = Instant.now();
+        float elapsed = (now.toEpochMilli() - startTime.toEpochMilli()) / 1000f;
+        return relpFlooder.getTotalBytesSent()/1024f/1024f/elapsed;
     }
 
     private Float reportRecordsPerSecond() {
@@ -97,6 +123,22 @@ public class Flooder {
             recordsPerThread.put(entry.getKey(), entry.getValue()/elapsed);
         }
         return recordsPerThread;
+    }
+
+    private Float reportBytesPerSecond() {
+        Instant now = Instant.now();
+        float elapsed = (now.toEpochMilli() - startTime.toEpochMilli()) / 1000f;
+        return relpFlooder.getTotalBytesSent()/elapsed;
+    }
+
+    private HashMap<Integer, Float> reportBytesPerSecondPerThread() {
+        Instant now = Instant.now();
+        float elapsed = (now.toEpochMilli() - startTime.toEpochMilli())/1000f;
+        HashMap<Integer, Float> bytesPerThread = new HashMap<>();
+        for(Map.Entry<Integer, Integer> entry : relpFlooder.getTotalBytesSentPerThread().entrySet()) {
+            bytesPerThread.put(entry.getKey(), entry.getValue()/elapsed);
+        }
+        return bytesPerThread;
     }
 
     public void flood() {

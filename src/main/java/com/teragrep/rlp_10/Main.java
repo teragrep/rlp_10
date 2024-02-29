@@ -64,9 +64,9 @@ public class Main {
         int reportInterval = Integer.parseInt(System.getProperty("reportInterval", "10"));
         LOGGER.info("Using hostname <[{}]>", relpFlooderConfig.getHostname());
         LOGGER.info("Using appname <[{}]>", relpFlooderConfig.getAppname());
-        LOGGER.info("Adding <[{}]> characters to payload size making total event size <{}>", relpFlooderConfig.getPayloadSize(), relpFlooderConfig.getMessageLength());
-        LOGGER.info("Sending <[{}]> messages per batch", relpFlooderConfig.getBatchSize());
-        LOGGER.info("Sending messages to: <[{}]:[{}]>", relpFlooderConfig.getTarget(), relpFlooderConfig.getPort());
+        LOGGER.info("Adding <[{}]> characters to payload size making total event size <{}>", relpFlooderConfig.getPayloadSize(), relpFlooderConfig.getRecordLength());
+        LOGGER.info("Sending <[{}]> records per batch", relpFlooderConfig.getBatchSize());
+        LOGGER.info("Sending records to: <[{}]:[{}]>", relpFlooderConfig.getTarget(), relpFlooderConfig.getPort());
         LOGGER.info("TLS enabled (FIXME: Implement): <[{}]>", relpFlooderConfig.isUseTls());
         LOGGER.info("Reporting stats every <[{}]> seconds", relpFlooderConfig.isUseTls());
 
