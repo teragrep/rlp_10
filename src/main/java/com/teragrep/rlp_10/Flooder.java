@@ -51,9 +51,11 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.teragrep.rlp_09.RelpFlooder;
 import com.teragrep.rlp_09.RelpFlooderConfig;
+import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -64,8 +66,8 @@ class Flooder {
     private final ConsoleReporter consoleReporter;
     private Instant startTime;
     private final int reportInterval;
-    public Flooder(RelpFlooderConfig relpFlooderConfig, int reportInterval) {
-        this.relpFlooder = new RelpFlooder(relpFlooderConfig);
+    public Flooder(RelpFlooderConfig relpFlooderConfig, RelpFlooderIteratorFactory relpFlooderIteratorFactory, int reportInterval) {
+        this.relpFlooder = new RelpFlooder(relpFlooderConfig, relpFlooderIteratorFactory);
         MetricRegistry metricRegistry = new MetricRegistry();
         // Records sent total
         metricRegistry.register(name( "records","sent", "total"), (Gauge<Integer>) relpFlooder::getTotalRecordsSent);

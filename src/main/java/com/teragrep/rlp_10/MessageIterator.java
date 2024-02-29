@@ -45,38 +45,45 @@
  */
 
 package com.teragrep.rlp_10;
-import com.teragrep.rlp_09.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-class Main {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
-    public static void main(String[] args) {
-        FlooderConfig flooderConfig = new FlooderConfig();
-        RelpFlooderConfig relpFlooderConfig = new RelpFlooderConfig(flooderConfig.target, flooderConfig.port, flooderConfig.threads);
-        LOGGER.info("Using hostname <[{}]>", flooderConfig.hostname);
-        LOGGER.info("Using appname <[{}]>", flooderConfig.appname);
-        LOGGER.info("Adding <[{}]> characters to payload size", flooderConfig.payloadSize);
-        LOGGER.info("Sending records to: <[{}]:[{}]>", flooderConfig.target, flooderConfig.port);
-        LOGGER.info("TLS enabled (FIXME: Implement): <[{}]>", flooderConfig.useTls);
-        LOGGER.info("Reporting stats every <[{}]> seconds", flooderConfig.reportInterval);
+import com.teragrep.rlo_14.Facility;
+import com.teragrep.rlo_14.Severity;
+import com.teragrep.rlo_14.SyslogMessage;
 
-        Flooder flooder = new Flooder(relpFlooderConfig, new MessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
-        Thread shutdownHook = new Thread(() -> {
-            LOGGER.info("Shutting down...");
-            try {
-                flooder.stop();
-            } catch (InterruptedException | RuntimeException e) {
-                LOGGER.error("Failed to stop properly: {}", e.getMessage());
-            }
-        });
-        Runtime.getRuntime().addShutdownHook(shutdownHook);
-        try {
-            flooder.flood();
-        }
-        catch (Exception e){
-            LOGGER.error("Caught an error while flooding: {}", e.getMessage());
-        }
-        System.exit(0);
+import java.time.Instant;
+import java.util.Iterator;
+
+class MessageIterator implements Iterator<byte[]> {
+    int current=0;
+    private final FlooderConfig flooderConfig;
+    private final String padding;
+    private final int threadId;
+    public MessageIterator(FlooderConfig flooderConfig, int threadId) {
+        this.flooderConfig = flooderConfig;
+        this.padding = new String(new char[flooderConfig.payloadSize]).replace("\0", "X");
+        this.threadId = threadId;
+    }
+
+    private String createMessage() {
+        current++;
+        return String.format("Thread %s - message %s, padding: %s", threadId, current, padding);
+    }
+
+    @Override
+    public boolean hasNext() {
+        return true;
+    }
+
+    @Override
+    public byte[] next() {
+        return new SyslogMessage()
+                .withTimestamp(Instant.now().toEpochMilli())
+                .withAppName(flooderConfig.appname)
+                .withHostname(flooderConfig.hostname)
+                .withFacility(Facility.USER)
+                .withSeverity(Severity.INFORMATIONAL)
+                .withMsg(createMessage())
+                .toRfc5424SyslogMessage()
+                .getBytes();
     }
 }

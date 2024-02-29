@@ -45,38 +45,18 @@
  */
 
 package com.teragrep.rlp_10;
-import com.teragrep.rlp_09.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-class Main {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
-    public static void main(String[] args) {
-        FlooderConfig flooderConfig = new FlooderConfig();
-        RelpFlooderConfig relpFlooderConfig = new RelpFlooderConfig(flooderConfig.target, flooderConfig.port, flooderConfig.threads);
-        LOGGER.info("Using hostname <[{}]>", flooderConfig.hostname);
-        LOGGER.info("Using appname <[{}]>", flooderConfig.appname);
-        LOGGER.info("Adding <[{}]> characters to payload size", flooderConfig.payloadSize);
-        LOGGER.info("Sending records to: <[{}]:[{}]>", flooderConfig.target, flooderConfig.port);
-        LOGGER.info("TLS enabled (FIXME: Implement): <[{}]>", flooderConfig.useTls);
-        LOGGER.info("Reporting stats every <[{}]> seconds", flooderConfig.reportInterval);
+import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
 
-        Flooder flooder = new Flooder(relpFlooderConfig, new MessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
-        Thread shutdownHook = new Thread(() -> {
-            LOGGER.info("Shutting down...");
-            try {
-                flooder.stop();
-            } catch (InterruptedException | RuntimeException e) {
-                LOGGER.error("Failed to stop properly: {}", e.getMessage());
-            }
-        });
-        Runtime.getRuntime().addShutdownHook(shutdownHook);
-        try {
-            flooder.flood();
-        }
-        catch (Exception e){
-            LOGGER.error("Caught an error while flooding: {}", e.getMessage());
-        }
-        System.exit(0);
+import java.util.Iterator;
+
+public class MessageIteratorFactory implements RelpFlooderIteratorFactory {
+    private final FlooderConfig flooderConfig;
+    MessageIteratorFactory(FlooderConfig flooderConfig) {
+        this.flooderConfig = flooderConfig;
+    }
+    @Override
+    public Iterator<byte[]> get(int i) {
+        return new MessageIterator(flooderConfig, i);
     }
 }
