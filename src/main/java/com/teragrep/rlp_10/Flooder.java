@@ -59,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
-public class Flooder {
+class Flooder {
     private final RelpFlooder relpFlooder;
     private final ConsoleReporter consoleReporter;
     private Instant startTime;

@@ -45,32 +45,36 @@
  */
 
 package com.teragrep.rlp_10;
+import com.teragrep.rlo_14.Facility;
+import com.teragrep.rlo_14.Severity;
+import com.teragrep.rlo_14.SyslogMessage;
 import com.teragrep.rlp_09.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Main {
+import java.time.Instant;
+
+class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
     public static void main(String[] args) {
-        RelpFlooderConfig relpFlooderConfig = new RelpFlooderConfig();
-        relpFlooderConfig.setHostname(System.getProperty("hostname", "localhost"));
-        relpFlooderConfig.setAppname(System.getProperty("appname", "rlp_10"));
-        relpFlooderConfig.setTarget(System.getProperty("target", "127.0.0.1"));
-        relpFlooderConfig.setPort(Integer.parseInt(System.getProperty("port", "1601")));
-        relpFlooderConfig.setThreads(Integer.parseInt(System.getProperty("threads", "4")));
-        relpFlooderConfig.setUseTls(Boolean.parseBoolean(System.getProperty("useTls", "false")));
-        relpFlooderConfig.setPayloadSize(Integer.parseInt(System.getProperty("payloadSize", "10")));
-        relpFlooderConfig.setBatchSize(Integer.parseInt(System.getProperty("batchSize", "1")));
-        int reportInterval = Integer.parseInt(System.getProperty("reportInterval", "10"));
-        LOGGER.info("Using hostname <[{}]>", relpFlooderConfig.getHostname());
-        LOGGER.info("Using appname <[{}]>", relpFlooderConfig.getAppname());
-        LOGGER.info("Adding <[{}]> characters to payload size making total event size <{}>", relpFlooderConfig.getPayloadSize(), relpFlooderConfig.getRecordLength());
-        LOGGER.info("Sending <[{}]> records per batch", relpFlooderConfig.getBatchSize());
-        LOGGER.info("Sending records to: <[{}]:[{}]>", relpFlooderConfig.getTarget(), relpFlooderConfig.getPort());
-        LOGGER.info("TLS enabled (FIXME: Implement): <[{}]>", relpFlooderConfig.isUseTls());
-        LOGGER.info("Reporting stats every <[{}]> seconds", reportInterval);
+        FlooderConfig flooderConfig = new FlooderConfig();
+        String record = new SyslogMessage()
+                .withTimestamp(Instant.now().toEpochMilli())
+                .withAppName(flooderConfig.appname)
+                .withHostname(flooderConfig.hostname)
+                .withFacility(Facility.USER)
+                .withSeverity(Severity.INFORMATIONAL)
+                .withMsg(new String(new char[flooderConfig.payloadSize]).replace("\0", "X"))
+                .toRfc5424SyslogMessage();
+        RelpFlooderConfig relpFlooderConfig = new RelpFlooderConfig(flooderConfig.target, flooderConfig.port, record, flooderConfig.threads);
+        LOGGER.info("Using hostname <[{}]>", flooderConfig.hostname);
+        LOGGER.info("Using appname <[{}]>", flooderConfig.appname);
+        LOGGER.info("Adding <[{}]> characters to payload size making total event size <{}>", flooderConfig.payloadSize, relpFlooderConfig.getRecordLength());
+        LOGGER.info("Sending records to: <[{}]:[{}]>", flooderConfig.target, flooderConfig.port);
+        LOGGER.info("TLS enabled (FIXME: Implement): <[{}]>", flooderConfig.useTls);
+        LOGGER.info("Reporting stats every <[{}]> seconds", flooderConfig.reportInterval);
 
-        Flooder flooder = new Flooder(relpFlooderConfig, reportInterval);
+        Flooder flooder = new Flooder(relpFlooderConfig, flooderConfig.reportInterval);
         Thread shutdownHook = new Thread(() -> {
             LOGGER.info("Shutting down...");
             try {

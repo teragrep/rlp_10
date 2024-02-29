@@ -2,6 +2,19 @@
 
 Standalone version of https://github.com/teragrep/rlp_09[rlp_09]
 
+== Features
+
+- Simple to use
+- Scales to as many threads as wanted
+
+== Limitations
+
+- Minimal failure tolerance, mostly meant for testing
+- Limited usability outside specific testing situations
+- Supports only one record per RELP batch
+- Doesn't support dynamic message modification
+- No TLS support yet
+
 == How to use
 
 `mvn clean package`
