@@ -46,27 +46,19 @@
 
 package com.teragrep.rlp_10;
 
-class FlooderConfig {
-    public final String hostname;
-    public final String appname;
-    public final String target;
-    public final int port;
-    public final int threads;
-    public final boolean useTls;
-    public final int payloadSize;
-    public final int reportInterval;
-    public final long maxMessagesSent;
-    public final boolean usePerThreadIterator;
-    public FlooderConfig() {
-        this.hostname = System.getProperty("hostname", "localhost");
-        this.appname = System.getProperty("appname", "rlp_10");
-        this.target = System.getProperty("target", "127.0.0.1");
-        this.port = Integer.parseInt(System.getProperty("port", "1601"));
-        this.threads = Integer.parseInt(System.getProperty("threads", "4"));
-        this.useTls = Boolean.parseBoolean(System.getProperty("useTls", "false"));
-        this.payloadSize = Integer.parseInt(System.getProperty("payloadSize", "10"));
-        this.reportInterval = Integer.parseInt(System.getProperty("reportInterval", "10"));
-        this.maxMessagesSent = Long.parseLong(System.getProperty("maxMessagesSent", "-1"));
-        this.usePerThreadIterator = Boolean.parseBoolean(System.getProperty("usePerThreadIterator", "true"));
+import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
+
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class SynchronizedMessageIteratorFactory implements RelpFlooderIteratorFactory {
+    private final AtomicInteger eventsSent = new AtomicInteger(0);
+    private final FlooderConfig flooderConfig;
+    SynchronizedMessageIteratorFactory(FlooderConfig flooderConfig) {
+        this.flooderConfig = flooderConfig;
+    }
+    @Override
+    public Iterator<byte[]> get(Object config) {
+        return new SynchronizedMessageIterator(flooderConfig, (int) config, eventsSent);
     }
 }

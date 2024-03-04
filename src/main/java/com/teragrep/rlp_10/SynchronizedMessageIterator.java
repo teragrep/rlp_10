@@ -52,26 +52,28 @@ import com.teragrep.rlo_14.SyslogMessage;
 
 import java.time.Instant;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 
-class MessageIterator implements Iterator<byte[]> {
-    int current=0;
+class SynchronizedMessageIterator implements Iterator<byte[]> {
+    private final AtomicInteger eventsSent;
     private final FlooderConfig flooderConfig;
     private final String padding;
     private final int threadId;
-    public MessageIterator(FlooderConfig flooderConfig, int threadId) {
+    public SynchronizedMessageIterator(FlooderConfig flooderConfig, int threadId, AtomicInteger eventsSent) {
+        this.eventsSent = eventsSent;
         this.flooderConfig = flooderConfig;
         this.padding = new String(new char[flooderConfig.payloadSize]).replace("\0", "X");
         this.threadId = threadId;
     }
 
     private String createMessage() {
-        current++;
-        return String.format("Thread %s - message %s, padding: %s", threadId, current, padding);
+        int nextId = eventsSent.incrementAndGet();
+        return String.format("Thread %s - message %s, padding: %s", threadId, nextId, padding);
     }
 
     @Override
     public boolean hasNext() {
-        return flooderConfig.maxMessagesSent == -1 || current<flooderConfig.maxMessagesSent;
+        return flooderConfig.maxMessagesSent <= -1 || eventsSent.get()<flooderConfig.maxMessagesSent;
     }
 
     @Override

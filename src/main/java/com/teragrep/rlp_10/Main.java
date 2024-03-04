@@ -47,6 +47,7 @@
 package com.teragrep.rlp_10;
 
 import com.teragrep.rlp_09.RelpFlooderConfig;
+import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,11 +60,17 @@ class Main {
         LOGGER.info("Using appname <[{}]>", flooderConfig.appname);
         LOGGER.info("Adding <[{}]> characters to payload size", flooderConfig.payloadSize);
         LOGGER.info("Sending records to: <[{}]:[{}]>", flooderConfig.target, flooderConfig.port);
-        LOGGER.info("Sending <[{}]> events per thread, total of <[{}]> records", flooderConfig.maxMessagesSent, (flooderConfig.maxMessagesSent > 0 ? flooderConfig.maxMessagesSent * flooderConfig.threads : "infinite"));
+        Flooder flooder;
+        if(flooderConfig.usePerThreadIterator) {
+            LOGGER.info("Sending <[{}]> events per thread, total of <[{}]> records", flooderConfig.maxMessagesSent, flooderConfig.maxMessagesSent * flooderConfig.threads);
+            flooder = new Flooder(relpFlooderConfig, new PerThreadMessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
+        } else {
+            LOGGER.info("Sending total of <[{}]> events across all threads", flooderConfig.maxMessagesSent);
+            flooder = new Flooder(relpFlooderConfig, new SynchronizedMessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
+        }
         LOGGER.info("TLS enabled (FIXME: Implement): <[{}]>", flooderConfig.useTls);
         LOGGER.info("Reporting stats every <[{}]> seconds", flooderConfig.reportInterval);
 
-        Flooder flooder = new Flooder(relpFlooderConfig, new MessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
         Thread shutdownHook = new Thread(() -> {
             LOGGER.info("Shutting down...");
             try {

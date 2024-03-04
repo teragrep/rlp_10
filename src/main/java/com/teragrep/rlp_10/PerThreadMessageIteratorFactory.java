@@ -50,13 +50,13 @@ import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
 
 import java.util.Iterator;
 
-public class MessageIteratorFactory implements RelpFlooderIteratorFactory {
+public class PerThreadMessageIteratorFactory implements RelpFlooderIteratorFactory {
     private final FlooderConfig flooderConfig;
-    MessageIteratorFactory(FlooderConfig flooderConfig) {
+    PerThreadMessageIteratorFactory(FlooderConfig flooderConfig) {
         this.flooderConfig = flooderConfig;
     }
     @Override
-    public Iterator<byte[]> get(int i) {
-        return new MessageIterator(flooderConfig, i);
+    public Iterator<byte[]> get(Object config) {
+        return new PerThreadMessageIterator(flooderConfig, (int) config);
     }
 }

@@ -40,7 +40,7 @@ Standalone version of https://github.com/teragrep/rlp_09[rlp_09]
 |batchSize|1|How many events is sent in one batch
 |reportInterval|10|How often report should be printed
 |maxMessagesSent|-1|How many messages should be sent per thread (-1 for infinity)
-
+|usePerThreadIterator|true|Should each thread act as an independent iterator (will send maxMessagesSent * threads amount of events)
 |===
 
 == Contributing

@@ -46,27 +46,44 @@
 
 package com.teragrep.rlp_10;
 
-class FlooderConfig {
-    public final String hostname;
-    public final String appname;
-    public final String target;
-    public final int port;
-    public final int threads;
-    public final boolean useTls;
-    public final int payloadSize;
-    public final int reportInterval;
-    public final long maxMessagesSent;
-    public final boolean usePerThreadIterator;
-    public FlooderConfig() {
-        this.hostname = System.getProperty("hostname", "localhost");
-        this.appname = System.getProperty("appname", "rlp_10");
-        this.target = System.getProperty("target", "127.0.0.1");
-        this.port = Integer.parseInt(System.getProperty("port", "1601"));
-        this.threads = Integer.parseInt(System.getProperty("threads", "4"));
-        this.useTls = Boolean.parseBoolean(System.getProperty("useTls", "false"));
-        this.payloadSize = Integer.parseInt(System.getProperty("payloadSize", "10"));
-        this.reportInterval = Integer.parseInt(System.getProperty("reportInterval", "10"));
-        this.maxMessagesSent = Long.parseLong(System.getProperty("maxMessagesSent", "-1"));
-        this.usePerThreadIterator = Boolean.parseBoolean(System.getProperty("usePerThreadIterator", "true"));
+import com.teragrep.rlo_14.Facility;
+import com.teragrep.rlo_14.Severity;
+import com.teragrep.rlo_14.SyslogMessage;
+
+import java.time.Instant;
+import java.util.Iterator;
+
+class PerThreadMessageIterator implements Iterator<byte[]> {
+    private int current=0;
+    private final FlooderConfig flooderConfig;
+    private final String padding;
+    private final int threadId;
+    public PerThreadMessageIterator(FlooderConfig flooderConfig, int threadId) {
+        this.flooderConfig = flooderConfig;
+        this.padding = new String(new char[flooderConfig.payloadSize]).replace("\0", "X");
+        this.threadId = threadId;
+    }
+
+    private String createMessage() {
+        current++;
+        return String.format("Thread %s - message %s, padding: %s", threadId, current, padding);
+    }
+
+    @Override
+    public boolean hasNext() {
+        return flooderConfig.maxMessagesSent <= -1 || current<flooderConfig.maxMessagesSent;
+    }
+
+    @Override
+    public byte[] next() {
+        return new SyslogMessage()
+                .withTimestamp(Instant.now().toEpochMilli())
+                .withAppName(flooderConfig.appname)
+                .withHostname(flooderConfig.hostname)
+                .withFacility(Facility.USER)
+                .withSeverity(Severity.INFORMATIONAL)
+                .withMsg(createMessage())
+                .toRfc5424SyslogMessage()
+                .getBytes();
     }
 }
