@@ -59,6 +59,7 @@ class SynchronizedMessageIterator implements Iterator<byte[]> {
     private final FlooderConfig flooderConfig;
     private final String padding;
     private final int threadId;
+    private int currentId;
     public SynchronizedMessageIterator(FlooderConfig flooderConfig, int threadId, AtomicInteger recordsSent) {
         this.recordsSent = recordsSent;
         this.flooderConfig = flooderConfig;
@@ -67,13 +68,13 @@ class SynchronizedMessageIterator implements Iterator<byte[]> {
     }
 
     private String createMessage() {
-        int nextId = recordsSent.incrementAndGet();
-        return String.format("Thread %s - message %s, padding: %s", threadId, nextId, padding);
+        return String.format("Thread %s - message %s, padding: %s", threadId, currentId, padding);
     }
 
     @Override
     public boolean hasNext() {
-        return flooderConfig.maxMessagesSent <= -1 || recordsSent.get()<flooderConfig.maxMessagesSent;
+        currentId = recordsSent.incrementAndGet();
+        return flooderConfig.maxMessagesSent <= -1 || currentId<=flooderConfig.maxMessagesSent;
     }
 
     @Override

@@ -56,7 +56,7 @@ public class PerThreadMessageIteratorFactory implements RelpFlooderIteratorFacto
         this.flooderConfig = flooderConfig;
     }
     @Override
-    public Iterator<byte[]> get(Object config) {
-        return new PerThreadMessageIterator(flooderConfig, (int) config);
+    public Iterator<byte[]> get(int threadId) {
+        return new PerThreadMessageIterator(flooderConfig, threadId);
     }
 }

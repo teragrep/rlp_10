@@ -58,7 +58,7 @@ public class SynchronizedMessageIteratorFactory implements RelpFlooderIteratorFa
         this.flooderConfig = flooderConfig;
     }
     @Override
-    public Iterator<byte[]> get(Object config) {
-        return new SynchronizedMessageIterator(flooderConfig, (int) config, recordsSent);
+    public Iterator<byte[]> get(int threadId) {
+        return new SynchronizedMessageIterator(flooderConfig, threadId, recordsSent);
     }
 }
