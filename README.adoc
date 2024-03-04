@@ -30,17 +30,16 @@ Standalone version of https://github.com/teragrep/rlp_09[rlp_09]
 |===
 |System property|Default value|Usage
 
-|hostname|localhost|Sets hostname for the event
-|appname|rlp_10|Sets used appname for the event
+|hostname|localhost|Sets hostname for the record
+|appname|rlp_10|Sets used appname for the record
 |target|127.0.0.1|RELP target server
 |port|1601|RELP target port
 |threads|4|RELP Flooder thread count
 |useTls|false|Is TLS used for connections
-|payloadSize|10|Event message payload size (excludes any headers)
-|batchSize|1|How many events is sent in one batch
+|payloadSize|10|Record message extra padding
 |reportInterval|10|How often report should be printed
-|maxMessagesSent|-1|How many messages should be sent per thread (-1 for infinity)
-|usePerThreadIterator|true|Should each thread act as an independent iterator (will send maxMessagesSent * threads amount of events)
+|maxRecordsSent|-1|How many records should be sent (-1 for infinity). By default, this is per-thread but with usePerThreadIterator=false it is the total amount.
+|usePerThreadIterator|true|Should each thread act as an independent iterator (will send maxRecordsSent * threads amount of records)
 |===
 
 == Contributing

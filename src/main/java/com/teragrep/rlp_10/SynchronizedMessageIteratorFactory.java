@@ -52,13 +52,13 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SynchronizedMessageIteratorFactory implements RelpFlooderIteratorFactory {
-    private final AtomicInteger eventsSent = new AtomicInteger(0);
+    private final AtomicInteger recordsSent = new AtomicInteger(0);
     private final FlooderConfig flooderConfig;
     SynchronizedMessageIteratorFactory(FlooderConfig flooderConfig) {
         this.flooderConfig = flooderConfig;
     }
     @Override
     public Iterator<byte[]> get(Object config) {
-        return new SynchronizedMessageIterator(flooderConfig, (int) config, eventsSent);
+        return new SynchronizedMessageIterator(flooderConfig, (int) config, recordsSent);
     }
 }

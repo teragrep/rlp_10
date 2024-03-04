@@ -62,10 +62,10 @@ class Main {
         LOGGER.info("Sending records to: <[{}]:[{}]>", flooderConfig.target, flooderConfig.port);
         Flooder flooder;
         if(flooderConfig.usePerThreadIterator) {
-            LOGGER.info("Sending <[{}]> events per thread, total of <[{}]> records", flooderConfig.maxMessagesSent, flooderConfig.maxMessagesSent * flooderConfig.threads);
+            LOGGER.info("Sending <[{}]> records per thread, total of <[{}]> records", flooderConfig.maxMessagesSent, flooderConfig.maxMessagesSent * flooderConfig.threads);
             flooder = new Flooder(relpFlooderConfig, new PerThreadMessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
         } else {
-            LOGGER.info("Sending total of <[{}]> events across all threads", flooderConfig.maxMessagesSent);
+            LOGGER.info("Sending total of <[{}]> records across all threads", flooderConfig.maxMessagesSent);
             flooder = new Flooder(relpFlooderConfig, new SynchronizedMessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
         }
         LOGGER.info("TLS enabled (FIXME: Implement): <[{}]>", flooderConfig.useTls);

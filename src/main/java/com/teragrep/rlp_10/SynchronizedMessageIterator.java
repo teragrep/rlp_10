@@ -55,25 +55,25 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class SynchronizedMessageIterator implements Iterator<byte[]> {
-    private final AtomicInteger eventsSent;
+    private final AtomicInteger recordsSent;
     private final FlooderConfig flooderConfig;
     private final String padding;
     private final int threadId;
-    public SynchronizedMessageIterator(FlooderConfig flooderConfig, int threadId, AtomicInteger eventsSent) {
-        this.eventsSent = eventsSent;
+    public SynchronizedMessageIterator(FlooderConfig flooderConfig, int threadId, AtomicInteger recordsSent) {
+        this.recordsSent = recordsSent;
         this.flooderConfig = flooderConfig;
         this.padding = new String(new char[flooderConfig.payloadSize]).replace("\0", "X");
         this.threadId = threadId;
     }
 
     private String createMessage() {
-        int nextId = eventsSent.incrementAndGet();
+        int nextId = recordsSent.incrementAndGet();
         return String.format("Thread %s - message %s, padding: %s", threadId, nextId, padding);
     }
 
     @Override
     public boolean hasNext() {
-        return flooderConfig.maxMessagesSent <= -1 || eventsSent.get()<flooderConfig.maxMessagesSent;
+        return flooderConfig.maxMessagesSent <= -1 || recordsSent.get()<flooderConfig.maxMessagesSent;
     }
 
     @Override
