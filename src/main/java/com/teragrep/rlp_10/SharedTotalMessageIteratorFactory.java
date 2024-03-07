@@ -51,14 +51,14 @@ import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class SpecificCountMessageIteratorFactory implements RelpFlooderIteratorFactory {
+public class SharedTotalMessageIteratorFactory implements RelpFlooderIteratorFactory {
     private final AtomicInteger recordsSent = new AtomicInteger(0);
     private final FlooderConfig flooderConfig;
-    SpecificCountMessageIteratorFactory(FlooderConfig flooderConfig) {
+    SharedTotalMessageIteratorFactory(FlooderConfig flooderConfig) {
         this.flooderConfig = flooderConfig;
     }
     @Override
     public Iterator<byte[]> get(int threadId) {
-        return new SpecificCountMessageIterator(flooderConfig, threadId, recordsSent);
+        return new SharedTotalMessageIterator(flooderConfig, threadId, recordsSent);
     }
 }

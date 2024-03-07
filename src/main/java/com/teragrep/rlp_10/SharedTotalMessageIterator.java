@@ -54,13 +54,13 @@ import java.time.Instant;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class SpecificCountMessageIterator implements Iterator<byte[]> {
+class SharedTotalMessageIterator implements Iterator<byte[]> {
     private final AtomicInteger recordsSent;
     private final FlooderConfig flooderConfig;
     private final String padding;
     private final int threadId;
     private int currentId;
-    public SpecificCountMessageIterator(FlooderConfig flooderConfig, int threadId, AtomicInteger recordsSent) {
+    public SharedTotalMessageIterator(FlooderConfig flooderConfig, int threadId, AtomicInteger recordsSent) {
         this.recordsSent = recordsSent;
         this.flooderConfig = flooderConfig;
         this.padding = new String(new char[flooderConfig.payloadSize]).replace("\0", "X");

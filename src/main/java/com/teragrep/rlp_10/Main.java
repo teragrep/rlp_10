@@ -65,7 +65,7 @@ class Main {
             flooder = new Flooder(relpFlooderConfig, new PerThreadMessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
         } else {
             LOGGER.info("Sending total of <[{}]> records across all threads", flooderConfig.maxMessagesSent);
-            flooder = new Flooder(relpFlooderConfig, new SpecificCountMessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
+            flooder = new Flooder(relpFlooderConfig, new SharedTotalMessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
         }
         LOGGER.info("TLS enabled (FIXME: Implement): <[{}]>", flooderConfig.useTls);
         LOGGER.info("Reporting stats every <[{}]> seconds", flooderConfig.reportInterval);
