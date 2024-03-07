@@ -47,7 +47,6 @@
 package com.teragrep.rlp_10;
 
 import com.teragrep.rlp_09.RelpFlooderConfig;
-import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +65,7 @@ class Main {
             flooder = new Flooder(relpFlooderConfig, new PerThreadMessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
         } else {
             LOGGER.info("Sending total of <[{}]> records across all threads", flooderConfig.maxMessagesSent);
-            flooder = new Flooder(relpFlooderConfig, new SynchronizedMessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
+            flooder = new Flooder(relpFlooderConfig, new SpecificCountMessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
         }
         LOGGER.info("TLS enabled (FIXME: Implement): <[{}]>", flooderConfig.useTls);
         LOGGER.info("Reporting stats every <[{}]> seconds", flooderConfig.reportInterval);

@@ -46,19 +46,47 @@
 
 package com.teragrep.rlp_10;
 
-import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
+import com.teragrep.rlo_14.Facility;
+import com.teragrep.rlo_14.Severity;
+import com.teragrep.rlo_14.SyslogMessage;
 
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class SynchronizedMessageIteratorFactory implements RelpFlooderIteratorFactory {
-    private final AtomicInteger recordsSent = new AtomicInteger(0);
+class SpecificCountMessageIterator implements Iterator<byte[]> {
+    private final AtomicInteger recordsSent;
     private final FlooderConfig flooderConfig;
-    SynchronizedMessageIteratorFactory(FlooderConfig flooderConfig) {
+    private final String padding;
+    private final int threadId;
+    private int currentId;
+    public SpecificCountMessageIterator(FlooderConfig flooderConfig, int threadId, AtomicInteger recordsSent) {
+        this.recordsSent = recordsSent;
         this.flooderConfig = flooderConfig;
+        this.padding = new String(new char[flooderConfig.payloadSize]).replace("\0", "X");
+        this.threadId = threadId;
     }
+
+    private String createMessage() {
+        return String.format("Thread %s - message %s, padding: %s", threadId, currentId, padding);
+    }
+
     @Override
-    public Iterator<byte[]> get(int threadId) {
-        return new SynchronizedMessageIterator(flooderConfig, threadId, recordsSent);
+    public boolean hasNext() {
+        currentId = recordsSent.incrementAndGet();
+        return flooderConfig.maxMessagesSent <= -1 || currentId<=flooderConfig.maxMessagesSent;
+    }
+
+    @Override
+    public byte[] next() {
+        return new SyslogMessage()
+                .withTimestamp(Instant.now().toEpochMilli())
+                .withAppName(flooderConfig.appname)
+                .withHostname(flooderConfig.hostname)
+                .withFacility(Facility.USER)
+                .withSeverity(Severity.INFORMATIONAL)
+                .withMsg(createMessage())
+                .toRfc5424SyslogMessage()
+                .getBytes();
     }
 }
