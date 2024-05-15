@@ -46,47 +46,17 @@
 
 package com.teragrep.rlp_10;
 
-import com.teragrep.rlo_14.Facility;
-import com.teragrep.rlo_14.Severity;
-import com.teragrep.rlo_14.SyslogMessage;
+import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
 
-import java.time.Instant;
 import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicInteger;
 
-class SharedTotalMessageIterator implements Iterator<byte[]> {
-    private final AtomicInteger recordsSent;
+public class PerThreadRecordIteratorFactory implements RelpFlooderIteratorFactory {
     private final FlooderConfig flooderConfig;
-    private final String padding;
-    private final int threadId;
-    private int currentId;
-    public SharedTotalMessageIterator(FlooderConfig flooderConfig, int threadId, AtomicInteger recordsSent) {
-        this.recordsSent = recordsSent;
+    PerThreadRecordIteratorFactory(FlooderConfig flooderConfig) {
         this.flooderConfig = flooderConfig;
-        this.padding = new String(new char[flooderConfig.payloadSize]).replace("\0", "X");
-        this.threadId = threadId;
     }
-
-    private String createMessage() {
-        return String.format("Thread %s - message %s, padding: %s", threadId, currentId, padding);
-    }
-
     @Override
-    public boolean hasNext() {
-        currentId = recordsSent.incrementAndGet();
-        return flooderConfig.maxMessagesSent <= -1 || currentId<=flooderConfig.maxMessagesSent;
-    }
-
-    @Override
-    public byte[] next() {
-        return new SyslogMessage()
-                .withTimestamp(Instant.now().toEpochMilli())
-                .withAppName(flooderConfig.appname)
-                .withHostname(flooderConfig.hostname)
-                .withFacility(Facility.USER)
-                .withSeverity(Severity.INFORMATIONAL)
-                .withMsg(createMessage())
-                .toRfc5424SyslogMessage()
-                .getBytes();
+    public Iterator<byte[]> get(int threadId) {
+        return new PerThreadRecordIterator(flooderConfig, threadId);
     }
 }

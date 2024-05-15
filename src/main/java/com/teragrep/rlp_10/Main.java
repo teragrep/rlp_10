@@ -54,19 +54,27 @@ class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
     public static void main(String[] args) {
         FlooderConfig flooderConfig = new FlooderConfig();
-        RelpFlooderConfig relpFlooderConfig = new RelpFlooderConfig(flooderConfig.target, flooderConfig.port, flooderConfig.threads);
+        RelpFlooderConfig relpFlooderConfig = new RelpFlooderConfig(flooderConfig.target, flooderConfig.port, flooderConfig.threads, flooderConfig.connectTimeout, flooderConfig.waitForAcks);
         LOGGER.info("Using hostname <[{}]>", flooderConfig.hostname);
         LOGGER.info("Using appname <[{}]>", flooderConfig.appname);
         LOGGER.info("Adding <[{}]> characters to payload size", flooderConfig.payloadSize);
         LOGGER.info("Sending records to: <[{}]:[{}]>", flooderConfig.target, flooderConfig.port);
         Flooder flooder;
         if(flooderConfig.usePerThreadIterator) {
-            LOGGER.info("Sending <[{}]> records per thread, total of <[{}]> records", flooderConfig.maxMessagesSent, flooderConfig.maxMessagesSent * flooderConfig.threads);
-            flooder = new Flooder(relpFlooderConfig, new PerThreadMessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
+            LOGGER.info(
+                    "Sending <[{}]> records per thread, total of <[{}]> records",
+                    flooderConfig.maxRecordsSent < 0 ? "infinite" : flooderConfig.maxRecordsSent,
+                    flooderConfig.maxRecordsSent < 0 ? "infinite" : flooderConfig.maxRecordsSent * flooderConfig.threads
+            );
+            flooder = new Flooder(relpFlooderConfig, new PerThreadRecordIteratorFactory(flooderConfig), flooderConfig.reportInterval);
         } else {
-            LOGGER.info("Sending total of <[{}]> records across all threads", flooderConfig.maxMessagesSent);
-            flooder = new Flooder(relpFlooderConfig, new SharedTotalMessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
+            LOGGER.info(
+                    "Sending total of <[{}]> records across all threads",
+                    flooderConfig.maxRecordsSent < 0 ? "infinite" : flooderConfig.maxRecordsSent
+            );
+            flooder = new Flooder(relpFlooderConfig, new SharedTotalRecordIteratorFactory(flooderConfig), flooderConfig.reportInterval);
         }
+        LOGGER.info("Waiting for acks: <[{}]>", flooderConfig.waitForAcks);
         LOGGER.info("TLS enabled (FIXME: Implement): <[{}]>", flooderConfig.useTls);
         LOGGER.info("Reporting stats every <[{}]> seconds", flooderConfig.reportInterval);
 

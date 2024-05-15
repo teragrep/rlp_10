@@ -55,8 +55,10 @@ class FlooderConfig {
     public final boolean useTls;
     public final int payloadSize;
     public final int reportInterval;
-    public final long maxMessagesSent;
+    public final long maxRecordsSent;
     public final boolean usePerThreadIterator;
+    public final int connectTimeout;
+    public final boolean waitForAcks;
     public FlooderConfig() {
         this.hostname = System.getProperty("hostname", "localhost");
         this.appname = System.getProperty("appname", "rlp_10");
@@ -66,7 +68,9 @@ class FlooderConfig {
         this.useTls = Boolean.parseBoolean(System.getProperty("useTls", "false"));
         this.payloadSize = Integer.parseInt(System.getProperty("payloadSize", "10"));
         this.reportInterval = Integer.parseInt(System.getProperty("reportInterval", "10"));
-        this.maxMessagesSent = Long.parseLong(System.getProperty("maxMessagesSent", "-1"));
+        this.maxRecordsSent = Long.parseLong(System.getProperty("maxRecordsSent", "-1"));
         this.usePerThreadIterator = Boolean.parseBoolean(System.getProperty("usePerThreadIterator", "true"));
+        this.connectTimeout = Integer.parseInt(System.getProperty("connectTimeout", "5"));
+        this.waitForAcks = Boolean.parseBoolean(System.getProperty("waitForAcks", "true"));
     }
 }

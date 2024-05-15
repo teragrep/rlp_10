@@ -46,17 +46,44 @@
 
 package com.teragrep.rlp_10;
 
-import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
+import com.teragrep.rlo_14.Facility;
+import com.teragrep.rlo_14.Severity;
+import com.teragrep.rlo_14.SyslogMessage;
 
+import java.time.Instant;
 import java.util.Iterator;
 
-public class PerThreadMessageIteratorFactory implements RelpFlooderIteratorFactory {
+class PerThreadRecordIterator implements Iterator<byte[]> {
+    private int current=0;
     private final FlooderConfig flooderConfig;
-    PerThreadMessageIteratorFactory(FlooderConfig flooderConfig) {
+    private final String padding;
+    private final int threadId;
+    public PerThreadRecordIterator(FlooderConfig flooderConfig, int threadId) {
         this.flooderConfig = flooderConfig;
+        this.padding = new String(new char[flooderConfig.payloadSize]).replace("\0", "X");
+        this.threadId = threadId;
     }
+
+    private String createMessage() {
+        current++;
+        return String.format("Thread %s - message %s, padding: %s", threadId, current, padding);
+    }
+
     @Override
-    public Iterator<byte[]> get(int threadId) {
-        return new PerThreadMessageIterator(flooderConfig, threadId);
+    public boolean hasNext() {
+        return flooderConfig.maxRecordsSent <= -1 || current<flooderConfig.maxRecordsSent;
+    }
+
+    @Override
+    public byte[] next() {
+        return new SyslogMessage()
+                .withTimestamp(Instant.now().toEpochMilli())
+                .withAppName(flooderConfig.appname)
+                .withHostname(flooderConfig.hostname)
+                .withFacility(Facility.USER)
+                .withSeverity(Severity.INFORMATIONAL)
+                .withMsg(createMessage())
+                .toRfc5424SyslogMessage()
+                .getBytes();
     }
 }

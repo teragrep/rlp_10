@@ -69,15 +69,15 @@ class Flooder {
         this.relpFlooder = new RelpFlooder(relpFlooderConfig, relpFlooderIteratorFactory);
         MetricRegistry metricRegistry = new MetricRegistry();
         // Records sent total
-        metricRegistry.register(name( "records","sent", "total"), (Gauge<Integer>) relpFlooder::getTotalRecordsSent);
-        metricRegistry.register(name("records", "sent", "total", "perThread"), (Gauge<HashMap<Integer, Integer>>) relpFlooder::getRecordsSentPerThread);
+        metricRegistry.register(name( "records","sent", "total"), (Gauge<Long>) relpFlooder::getTotalRecordsSent);
+        metricRegistry.register(name("records", "sent", "total", "perThread"), (Gauge<HashMap<Integer, Long>>) relpFlooder::getRecordsSentPerThread);
         // Records sent per second
         metricRegistry.register(name("records", "sent", "perSecond"), (Gauge<Float>) this::reportRecordsPerSecond);
         metricRegistry.register(name("records", "sent", "perSecond", "perThread"), (Gauge<HashMap<Integer, Float>>) this::reportRecordsPerSecondPerThread);
         // Bytes sent total
-        metricRegistry.register(name("bytes", "sent", "total"), (Gauge<Integer>) relpFlooder::getTotalBytesSent);
+        metricRegistry.register(name("bytes", "sent", "total"), (Gauge<Long>) relpFlooder::getTotalBytesSent);
         metricRegistry.register(name("bytes", "sent", "total", "MB"), (Gauge<Float>) this::reportTotalMegaBytesSent);
-        metricRegistry.register(name("bytes", "sent", "total", "perThread"), (Gauge<HashMap<Integer, Integer>>) relpFlooder::getTotalBytesSentPerThread);
+        metricRegistry.register(name("bytes", "sent", "total", "perThread"), (Gauge<HashMap<Integer, Long>>) relpFlooder::getTotalBytesSentPerThread);
         // Bytes second record
         metricRegistry.register(name("bytes", "sent", "perSecond"), (Gauge<Float>) this::reportBytesPerSecond);
         metricRegistry.register(name("bytes", "sent", "perSecond", "MB"), (Gauge<Float>) this::reportMegaBytesSentPerSecond);
@@ -120,7 +120,7 @@ class Flooder {
         Instant now = Instant.now();
         float elapsed = (now.toEpochMilli() - startTime.toEpochMilli())/1000f;
         HashMap<Integer, Float> recordsPerThread = new HashMap<>();
-        for(Map.Entry<Integer, Integer> entry : relpFlooder.getRecordsSentPerThread().entrySet()) {
+        for(Map.Entry<Integer, Long> entry : relpFlooder.getRecordsSentPerThread().entrySet()) {
             recordsPerThread.put(entry.getKey(), entry.getValue()/elapsed);
         }
         return recordsPerThread;
@@ -136,7 +136,7 @@ class Flooder {
         Instant now = Instant.now();
         float elapsed = (now.toEpochMilli() - startTime.toEpochMilli())/1000f;
         HashMap<Integer, Float> bytesPerThread = new HashMap<>();
-        for(Map.Entry<Integer, Integer> entry : relpFlooder.getTotalBytesSentPerThread().entrySet()) {
+        for(Map.Entry<Integer, Long> entry : relpFlooder.getTotalBytesSentPerThread().entrySet()) {
             bytesPerThread.put(entry.getKey(), entry.getValue()/elapsed);
         }
         return bytesPerThread;

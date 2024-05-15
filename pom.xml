@@ -14,7 +14,7 @@
     <changelist>-SNAPSHOT</changelist>
     <sha1/>
     <dropwizard-metrics.version>4.2.25</dropwizard-metrics.version>
-    <rlp_09.version>2.0.4</rlp_09.version>
+    <rlp_09.version>3.0.0</rlp_09.version>
     <log4j2.version>2.22.1</log4j2.version>
     <slf4j.version>2.0.5</slf4j.version>
   </properties>
