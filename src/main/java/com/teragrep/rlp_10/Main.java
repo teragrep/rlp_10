@@ -60,7 +60,7 @@ class Main {
         LOGGER.info("Using appname <[{}]>", flooderConfig.appname);
         LOGGER.info("Adding <[{}]> characters to payload size", flooderConfig.payloadSize);
         LOGGER.info("Sending records to: <[{}]:[{}]>", flooderConfig.target, flooderConfig.port);
-        LOGGER.info("Using <[{}]> mode", flooderConfig.mode);
+        LOGGER.info("Using <[{}]> mode with <[{}]> threads", flooderConfig.mode, flooderConfig.threads);
         RelpFlooderIteratorFactory relpFlooderIteratorFactory;
         switch(flooderConfig.mode) {
             case "simple":

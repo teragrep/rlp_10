@@ -47,8 +47,6 @@
 package com.teragrep.rlp_10;
 
 import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 
@@ -59,6 +57,6 @@ public class SimpleRecordIteratorFactory implements RelpFlooderIteratorFactory  
     }
     @Override
     public Iterator<byte[]> get(int threadId) {
-        return new PerThreadRecordIterator(flooderConfig, threadId);
+        return new SimpleRecordIterator(flooderConfig, threadId);
     }
 }
