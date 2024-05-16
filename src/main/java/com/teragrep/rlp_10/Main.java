@@ -47,6 +47,7 @@
 package com.teragrep.rlp_10;
 
 import com.teragrep.rlp_09.RelpFlooderConfig;
+import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,21 +60,37 @@ class Main {
         LOGGER.info("Using appname <[{}]>", flooderConfig.appname);
         LOGGER.info("Adding <[{}]> characters to payload size", flooderConfig.payloadSize);
         LOGGER.info("Sending records to: <[{}]:[{}]>", flooderConfig.target, flooderConfig.port);
-        Flooder flooder;
-        if(flooderConfig.usePerThreadIterator) {
-            LOGGER.info(
-                    "Sending <[{}]> records per thread, total of <[{}]> records",
-                    flooderConfig.maxRecordsSent < 0 ? "infinite" : flooderConfig.maxRecordsSent,
-                    flooderConfig.maxRecordsSent < 0 ? "infinite" : flooderConfig.maxRecordsSent * flooderConfig.threads
-            );
-            flooder = new Flooder(relpFlooderConfig, new PerThreadRecordIteratorFactory(flooderConfig), flooderConfig.reportInterval);
-        } else {
-            LOGGER.info(
-                    "Sending total of <[{}]> records across all threads",
-                    flooderConfig.maxRecordsSent < 0 ? "infinite" : flooderConfig.maxRecordsSent
-            );
-            flooder = new Flooder(relpFlooderConfig, new SharedTotalRecordIteratorFactory(flooderConfig), flooderConfig.reportInterval);
+        LOGGER.info("Using <[{}]> mode", flooderConfig.mode);
+        RelpFlooderIteratorFactory relpFlooderIteratorFactory;
+        switch(flooderConfig.mode) {
+            case "simple":
+                LOGGER.info(
+                        "Sending <[{}]> static records per thread, total of <[{}]> records",
+                        flooderConfig.maxRecordsSent < 0 ? "infinite" : flooderConfig.maxRecordsSent,
+                        flooderConfig.maxRecordsSent < 0 ? "infinite" : flooderConfig.maxRecordsSent * flooderConfig.threads
+                );
+                relpFlooderIteratorFactory = new SimpleRecordIteratorFactory(flooderConfig);
+                break;
+            case "dynamic":
+                LOGGER.info(
+                        "Sending <[{}]> dynamic records per thread, total of <[{}]> records",
+                        flooderConfig.maxRecordsSent < 0 ? "infinite" : flooderConfig.maxRecordsSent,
+                        flooderConfig.maxRecordsSent < 0 ? "infinite" : flooderConfig.maxRecordsSent * flooderConfig.threads
+                );
+                relpFlooderIteratorFactory = new PerThreadRecordIteratorFactory(flooderConfig);
+                break;
+            case "dynamic-shared":
+                LOGGER.info(
+                        "Sending total of <[{}]> dynamic records across all threads",
+                        flooderConfig.maxRecordsSent < 0 ? "infinite" : flooderConfig.maxRecordsSent * flooderConfig.threads
+                );
+                relpFlooderIteratorFactory = new SharedTotalRecordIteratorFactory(flooderConfig);
+                break;
+            default:
+                LOGGER.error("Invalid mode <[{}]> selected", flooderConfig.mode);
+                throw new IllegalStateException("Unexpected mode: " + flooderConfig.mode);
         }
+        Flooder flooder = new Flooder(relpFlooderConfig, relpFlooderIteratorFactory, flooderConfig.reportInterval);
         LOGGER.info("Waiting for acks: <[{}]>", flooderConfig.waitForAcks);
         LOGGER.info("TLS enabled (FIXME: Implement): <[{}]>", flooderConfig.useTls);
         LOGGER.info("Reporting stats every <[{}]> seconds", flooderConfig.reportInterval);
@@ -83,7 +100,7 @@ class Main {
             try {
                 flooder.stop();
             } catch (InterruptedException | RuntimeException e) {
-                LOGGER.error("Failed to stop properly: {}", e.getMessage());
+                LOGGER.error("Failed to stop properly: <{}>", e.getMessage());
             }
         });
         Runtime.getRuntime().addShutdownHook(shutdownHook);
@@ -91,7 +108,7 @@ class Main {
             flooder.flood();
         }
         catch (Exception e){
-            LOGGER.error("Caught an error while flooding: {}", e.getMessage());
+            LOGGER.error("Caught an error while flooding: <{}>", e.getMessage());
         }
         System.exit(0);
     }

@@ -46,31 +46,44 @@
 
 package com.teragrep.rlp_10;
 
-class FlooderConfig {
-    public final String hostname;
-    public final String appname;
-    public final String target;
-    public final int port;
-    public final int threads;
-    public final boolean useTls;
-    public final int payloadSize;
-    public final int reportInterval;
-    public final long maxRecordsSent;
-    public final int connectTimeout;
-    public final boolean waitForAcks;
-    public final String mode;
-    public FlooderConfig() {
-        this.hostname = System.getProperty("hostname", "localhost");
-        this.appname = System.getProperty("appname", "rlp_10");
-        this.target = System.getProperty("target", "127.0.0.1");
-        this.port = Integer.parseInt(System.getProperty("port", "1601"));
-        this.threads = Integer.parseInt(System.getProperty("threads", "4"));
-        this.useTls = Boolean.parseBoolean(System.getProperty("useTls", "false"));
-        this.payloadSize = Integer.parseInt(System.getProperty("payloadSize", "10"));
-        this.reportInterval = Integer.parseInt(System.getProperty("reportInterval", "10"));
-        this.maxRecordsSent = Long.parseLong(System.getProperty("maxRecordsSent", "-1"));
-        this.connectTimeout = Integer.parseInt(System.getProperty("connectTimeout", "5"));
-        this.waitForAcks = Boolean.parseBoolean(System.getProperty("waitForAcks", "true"));
-        this.mode = System.getProperty("mode", "simple");
+import com.teragrep.rlo_14.Facility;
+import com.teragrep.rlo_14.Severity;
+import com.teragrep.rlo_14.SyslogMessage;
+
+import java.time.Instant;
+import java.util.Iterator;
+
+class SimpleRecordIterator implements Iterator<byte[]> {
+    private int current=0;
+    private final byte[] record;
+    private final FlooderConfig flooderConfig;
+    public SimpleRecordIterator(FlooderConfig flooderConfig, int threadId) {
+        this.flooderConfig = flooderConfig;
+        this.record = new SyslogMessage()
+                .withTimestamp(Instant.now().toEpochMilli())
+                .withAppName(flooderConfig.appname)
+                .withHostname(flooderConfig.hostname)
+                .withFacility(Facility.USER)
+                .withSeverity(Severity.INFORMATIONAL)
+                .withMsg(
+                        String.format(
+                                "Thread %s, padding: %s",
+                                threadId,
+                                new String(new char[flooderConfig.payloadSize]).replace("\0", "X")
+                        )
+                )
+                .toRfc5424SyslogMessage()
+                .getBytes();
+    }
+
+    @Override
+    public boolean hasNext() {
+        return flooderConfig.maxRecordsSent <= -1 || current<flooderConfig.maxRecordsSent;
+    }
+
+    @Override
+    public byte[] next() {
+        current++;
+        return record;
     }
 }

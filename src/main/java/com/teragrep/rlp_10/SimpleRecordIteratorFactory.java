@@ -46,31 +46,19 @@
 
 package com.teragrep.rlp_10;
 
-class FlooderConfig {
-    public final String hostname;
-    public final String appname;
-    public final String target;
-    public final int port;
-    public final int threads;
-    public final boolean useTls;
-    public final int payloadSize;
-    public final int reportInterval;
-    public final long maxRecordsSent;
-    public final int connectTimeout;
-    public final boolean waitForAcks;
-    public final String mode;
-    public FlooderConfig() {
-        this.hostname = System.getProperty("hostname", "localhost");
-        this.appname = System.getProperty("appname", "rlp_10");
-        this.target = System.getProperty("target", "127.0.0.1");
-        this.port = Integer.parseInt(System.getProperty("port", "1601"));
-        this.threads = Integer.parseInt(System.getProperty("threads", "4"));
-        this.useTls = Boolean.parseBoolean(System.getProperty("useTls", "false"));
-        this.payloadSize = Integer.parseInt(System.getProperty("payloadSize", "10"));
-        this.reportInterval = Integer.parseInt(System.getProperty("reportInterval", "10"));
-        this.maxRecordsSent = Long.parseLong(System.getProperty("maxRecordsSent", "-1"));
-        this.connectTimeout = Integer.parseInt(System.getProperty("connectTimeout", "5"));
-        this.waitForAcks = Boolean.parseBoolean(System.getProperty("waitForAcks", "true"));
-        this.mode = System.getProperty("mode", "simple");
+import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Iterator;
+
+public class SimpleRecordIteratorFactory implements RelpFlooderIteratorFactory  {
+    private final FlooderConfig flooderConfig;
+    SimpleRecordIteratorFactory(FlooderConfig flooderConfig) {
+        this.flooderConfig = flooderConfig;
+    }
+    @Override
+    public Iterator<byte[]> get(int threadId) {
+        return new PerThreadRecordIterator(flooderConfig, threadId);
     }
 }
