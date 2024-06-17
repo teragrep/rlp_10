@@ -56,7 +56,7 @@ public class SimpleRecordIteratorFactory implements RelpFlooderIteratorFactory  
         this.flooderConfig = flooderConfig;
     }
     @Override
-    public Iterator<byte[]> get(int threadId) {
+    public Iterator<String> get(int threadId) {
         return new SimpleRecordIterator(flooderConfig, threadId);
     }
 }

@@ -58,7 +58,7 @@ public class SharedTotalRecordIteratorFactory implements RelpFlooderIteratorFact
         this.flooderConfig = flooderConfig;
     }
     @Override
-    public Iterator<byte[]> get(int threadId) {
+    public Iterator<String> get(int threadId) {
         return new SharedTotalRecordIterator(flooderConfig, threadId, recordsSent);
     }
 }

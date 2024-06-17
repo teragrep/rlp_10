@@ -53,7 +53,7 @@ import com.teragrep.rlo_14.SyslogMessage;
 import java.time.Instant;
 import java.util.Iterator;
 
-class PerThreadRecordIterator implements Iterator<byte[]> {
+class PerThreadRecordIterator implements Iterator<String> {
     private int current=0;
     private final FlooderConfig flooderConfig;
     private final String padding;
@@ -75,7 +75,7 @@ class PerThreadRecordIterator implements Iterator<byte[]> {
     }
 
     @Override
-    public byte[] next() {
+    public String next() {
         return new SyslogMessage()
                 .withTimestamp(Instant.now().toEpochMilli())
                 .withAppName(flooderConfig.appname)
@@ -83,7 +83,6 @@ class PerThreadRecordIterator implements Iterator<byte[]> {
                 .withFacility(Facility.USER)
                 .withSeverity(Severity.INFORMATIONAL)
                 .withMsg(createMessage())
-                .toRfc5424SyslogMessage()
-                .getBytes();
+                .toRfc5424SyslogMessage();
     }
 }

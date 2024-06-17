@@ -48,6 +48,8 @@ package com.teragrep.rlp_10;
 
 import com.teragrep.rlp_09.RelpFlooderConfig;
 import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +57,21 @@ class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
     public static void main(String[] args) {
         FlooderConfig flooderConfig = new FlooderConfig();
+        switch(flooderConfig.logging) {
+            case "info":
+                Configurator.setRootLevel(Level.INFO);
+                break;
+            case "debug":
+                Configurator.setRootLevel(Level.DEBUG);
+                break;
+            case "trace":
+                Configurator.setRootLevel(Level.TRACE);
+                break;
+            default:
+                LOGGER.error("Invalid logging level <[{}]>", flooderConfig.logging);
+                throw new IllegalStateException("Invalid logging level: " + flooderConfig.logging);
+        }
+        LOGGER.info("Logging level <[{}]>", flooderConfig.logging);
         RelpFlooderConfig relpFlooderConfig = new RelpFlooderConfig(flooderConfig.target, flooderConfig.port, flooderConfig.threads, flooderConfig.connectTimeout, flooderConfig.waitForAcks);
         LOGGER.info("Using hostname <[{}]>", flooderConfig.hostname);
         LOGGER.info("Using appname <[{}]>", flooderConfig.appname);
@@ -99,7 +116,7 @@ class Main {
             LOGGER.info("Shutting down...");
             try {
                 flooder.stop();
-            } catch (InterruptedException | RuntimeException e) {
+            } catch (RuntimeException e) {
                 LOGGER.error("Failed to stop properly: <{}>", e.getMessage());
             }
         });

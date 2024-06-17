@@ -148,7 +148,7 @@ class Flooder {
         relpFlooder.start();
     }
 
-    void stop() throws InterruptedException {
+    void stop() {
         relpFlooder.stop();
         consoleReporter.stop();
     }

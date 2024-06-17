@@ -54,7 +54,7 @@ import java.time.Instant;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class SharedTotalRecordIterator implements Iterator<byte[]> {
+class SharedTotalRecordIterator implements Iterator<String> {
     private final AtomicInteger recordsSent;
     private final FlooderConfig flooderConfig;
     private final String padding;
@@ -78,7 +78,7 @@ class SharedTotalRecordIterator implements Iterator<byte[]> {
     }
 
     @Override
-    public byte[] next() {
+    public String next() {
         return new SyslogMessage()
                 .withTimestamp(Instant.now().toEpochMilli())
                 .withAppName(flooderConfig.appname)
@@ -86,7 +86,6 @@ class SharedTotalRecordIterator implements Iterator<byte[]> {
                 .withFacility(Facility.USER)
                 .withSeverity(Severity.INFORMATIONAL)
                 .withMsg(createMessage())
-                .toRfc5424SyslogMessage()
-                .getBytes();
+                .toRfc5424SyslogMessage();
     }
 }

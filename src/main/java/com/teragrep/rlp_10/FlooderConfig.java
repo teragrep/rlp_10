@@ -46,6 +46,8 @@
 
 package com.teragrep.rlp_10;
 
+import java.util.Properties;
+
 class FlooderConfig {
     public final String hostname;
     public final String appname;
@@ -59,18 +61,23 @@ class FlooderConfig {
     public final int connectTimeout;
     public final boolean waitForAcks;
     public final String mode;
+    public final String logging;
     public FlooderConfig() {
-        this.hostname = System.getProperty("hostname", "localhost");
-        this.appname = System.getProperty("appname", "rlp_10");
-        this.target = System.getProperty("target", "127.0.0.1");
-        this.port = Integer.parseInt(System.getProperty("port", "1601"));
-        this.threads = Integer.parseInt(System.getProperty("threads", "4"));
-        this.useTls = Boolean.parseBoolean(System.getProperty("useTls", "false"));
-        this.payloadSize = Integer.parseInt(System.getProperty("payloadSize", "10"));
-        this.reportInterval = Integer.parseInt(System.getProperty("reportInterval", "10"));
-        this.maxRecordsSent = Long.parseLong(System.getProperty("maxRecordsSent", "-1"));
-        this.connectTimeout = Integer.parseInt(System.getProperty("connectTimeout", "5"));
-        this.waitForAcks = Boolean.parseBoolean(System.getProperty("waitForAcks", "true"));
-        this.mode = System.getProperty("mode", "simple");
+        this(System.getProperties());
+    }
+    public FlooderConfig(Properties properties) {
+        this.hostname = properties.getProperty("hostname", "localhost");
+        this.appname = properties.getProperty("appname", "rlp_10");
+        this.target = properties.getProperty("target", "127.0.0.1");
+        this.port = Integer.parseInt(properties.getProperty("port", "1601"));
+        this.threads = Integer.parseInt(properties.getProperty("threads", "4"));
+        this.useTls = Boolean.parseBoolean(properties.getProperty("useTls", "false"));
+        this.payloadSize = Integer.parseInt(properties.getProperty("payloadSize", "10"));
+        this.reportInterval = Integer.parseInt(properties.getProperty("reportInterval", "10"));
+        this.maxRecordsSent = Long.parseLong(properties.getProperty("maxRecordsSent", "-1"));
+        this.connectTimeout = Integer.parseInt(properties.getProperty("connectTimeout", "5"));
+        this.waitForAcks = Boolean.parseBoolean(properties.getProperty("waitForAcks", "true"));
+        this.mode = properties.getProperty("mode", "simple");
+        this.logging = properties.getProperty("logging", "info");
     }
 }

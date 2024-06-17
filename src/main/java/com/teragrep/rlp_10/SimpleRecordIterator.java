@@ -53,9 +53,9 @@ import com.teragrep.rlo_14.SyslogMessage;
 import java.time.Instant;
 import java.util.Iterator;
 
-class SimpleRecordIterator implements Iterator<byte[]> {
+class SimpleRecordIterator implements Iterator<String> {
     private int current=0;
-    private final byte[] record;
+    private final String record;
     private final FlooderConfig flooderConfig;
     public SimpleRecordIterator(FlooderConfig flooderConfig, int threadId) {
         this.flooderConfig = flooderConfig;
@@ -72,8 +72,7 @@ class SimpleRecordIterator implements Iterator<byte[]> {
                                 new String(new char[flooderConfig.payloadSize]).replace("\0", "X")
                         )
                 )
-                .toRfc5424SyslogMessage()
-                .getBytes();
+                .toRfc5424SyslogMessage();
     }
 
     @Override
@@ -82,7 +81,7 @@ class SimpleRecordIterator implements Iterator<byte[]> {
     }
 
     @Override
-    public byte[] next() {
+    public String next() {
         current++;
         return record;
     }
