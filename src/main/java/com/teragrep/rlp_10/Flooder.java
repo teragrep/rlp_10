@@ -52,6 +52,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.teragrep.rlp_09.RelpFlooder;
 import com.teragrep.rlp_09.RelpFlooderConfig;
 import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -65,6 +67,7 @@ class Flooder {
     private final ConsoleReporter consoleReporter;
     private Instant startTime;
     private final int reportInterval;
+    private static final Logger LOGGER = LoggerFactory.getLogger(Flooder.class);
     public Flooder(RelpFlooderConfig relpFlooderConfig, RelpFlooderIteratorFactory relpFlooderIteratorFactory, int reportInterval) {
         this.relpFlooder = new RelpFlooder(relpFlooderConfig, relpFlooderIteratorFactory);
         MetricRegistry metricRegistry = new MetricRegistry();
@@ -92,64 +95,85 @@ class Flooder {
     }
 
     private String reportElapsed() {
+        LOGGER.trace("Reporting Elapsed");
         float elapsed = reportElapsedSeconds();
         return String.format("%d:%02d", (int) Math.floor(elapsed/60), (int) elapsed%60);
     }
     private float reportElapsedSeconds() {
+        LOGGER.trace("Reporting ElapsedSeconds");
         return (Instant.now().toEpochMilli()-startTime.toEpochMilli())/1000f;
     }
 
     private float reportTotalMegaBytesSent() {
+        LOGGER.trace("Reporting TotalMegabytesSent");
         return relpFlooder.getTotalBytesSent()/1024f/1024f;
     }
 
 
     private float reportMegaBytesSentPerSecond() {
+        LOGGER.trace("Reporting TotalMegabytesSentPerSecond");
         Instant now = Instant.now();
         float elapsed = (now.toEpochMilli() - startTime.toEpochMilli()) / 1000f;
         return relpFlooder.getTotalBytesSent()/1024f/1024f/elapsed;
     }
 
     private Float reportRecordsPerSecond() {
+        LOGGER.trace("Reporting RecordsPerSecond");
         Instant now = Instant.now();
         float elapsed = (now.toEpochMilli() - startTime.toEpochMilli()) / 1000f;
         return relpFlooder.getTotalRecordsSent()/elapsed;
     }
 
     private HashMap<Integer, Float> reportRecordsPerSecondPerThread() {
+        LOGGER.trace("Reporting RecordsPerSecondPerThread");
         Instant now = Instant.now();
         float elapsed = (now.toEpochMilli() - startTime.toEpochMilli())/1000f;
         HashMap<Integer, Float> recordsPerThread = new HashMap<>();
         for(Map.Entry<Integer, Long> entry : relpFlooder.getRecordsSentPerThread().entrySet()) {
-            recordsPerThread.put(entry.getKey(), entry.getValue()/elapsed);
+            int key = entry.getKey();
+            float value = entry.getValue()/elapsed;
+            LOGGER.debug("Adding key <{}>, value <{}> to RecordsPerSecondPerThread", key, value);
+            recordsPerThread.put(key, value);
         }
         return recordsPerThread;
     }
 
     private Float reportBytesPerSecond() {
+        LOGGER.trace("Reporting BytesPerSecond");
         Instant now = Instant.now();
         float elapsed = (now.toEpochMilli() - startTime.toEpochMilli()) / 1000f;
         return relpFlooder.getTotalBytesSent()/elapsed;
     }
 
     private HashMap<Integer, Float> reportBytesPerSecondPerThread() {
+        LOGGER.trace("Reporting BytesPerSecondPerThread");
         Instant now = Instant.now();
         float elapsed = (now.toEpochMilli() - startTime.toEpochMilli())/1000f;
         HashMap<Integer, Float> bytesPerThread = new HashMap<>();
         for(Map.Entry<Integer, Long> entry : relpFlooder.getTotalBytesSentPerThread().entrySet()) {
-            bytesPerThread.put(entry.getKey(), entry.getValue()/elapsed);
+            int key = entry.getKey();
+            float value = entry.getValue()/elapsed;
+            LOGGER.debug("Adding key <{}>, value <{}> to BytesPerSecondPerThread", key, value);
+            bytesPerThread.put(key, value);
         }
         return bytesPerThread;
     }
 
     public void flood() {
+        LOGGER.trace("Entering flood()");
         startTime = Instant.now();
         consoleReporter.start(reportInterval, TimeUnit.SECONDS);
+        LOGGER.trace("Running relpFlooder.start()");
         relpFlooder.start();
+        LOGGER.trace("Exiting flood()");
     }
 
     void stop() {
+        LOGGER.trace("Entering stop()");
+        LOGGER.trace("Stopping RelpFlooder");
         relpFlooder.stop();
+        LOGGER.trace("Stopping ConsoleReporter");
         consoleReporter.stop();
+        LOGGER.trace("Exiting stop()");
     }
 }

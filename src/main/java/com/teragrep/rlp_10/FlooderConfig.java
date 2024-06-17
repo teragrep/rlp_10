@@ -46,6 +46,8 @@
 
 package com.teragrep.rlp_10;
 
+import org.apache.logging.log4j.Level;
+
 import java.util.Properties;
 
 class FlooderConfig {
@@ -61,7 +63,9 @@ class FlooderConfig {
     public final int connectTimeout;
     public final boolean waitForAcks;
     public final String mode;
-    public final String logging;
+    public final Level selfLogging;
+    public final Level libLogging;
+    public final Level globalLogging;
     public FlooderConfig() {
         this(System.getProperties());
     }
@@ -78,6 +82,8 @@ class FlooderConfig {
         this.connectTimeout = Integer.parseInt(properties.getProperty("connectTimeout", "5"));
         this.waitForAcks = Boolean.parseBoolean(properties.getProperty("waitForAcks", "true"));
         this.mode = properties.getProperty("mode", "simple");
-        this.logging = properties.getProperty("logging", "info");
+        this.selfLogging = Level.toLevel(properties.getProperty("selfLogging", "info"), Level.INFO);
+        this.libLogging = Level.toLevel(properties.getProperty("libLogging", "info"), Level.INFO);
+        this.globalLogging = Level.toLevel(properties.getProperty("globalLogging", "info"), Level.INFO);
     }
 }
