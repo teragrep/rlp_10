@@ -7,16 +7,16 @@
   <name>rlp_10</name>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>8</maven.compiler.source>
-    <maven.compiler.target>8</maven.compiler.target>
-    <java.version>8</java.version>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <java.version>17</java.version>
     <revision>0.0.1</revision>
     <changelist>-SNAPSHOT</changelist>
     <sha1/>
     <dropwizard-metrics.version>4.2.25</dropwizard-metrics.version>
-    <rlp_09.version>2.0.4</rlp_09.version>
-    <log4j2.version>2.22.1</log4j2.version>
-    <slf4j.version>2.0.5</slf4j.version>
+    <rlp_09.version>0.0.2-SNAPSHOT</rlp_09.version>
+    <log4j2.version>2.23.1</log4j2.version>
+    <slf4j.version>2.0.13</slf4j.version>
   </properties>
   <dependencies>
     <!-- dropwizard metrics -->
@@ -34,7 +34,17 @@
     <!-- logging -->
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>${log4j2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
+      <version>${log4j2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j2-impl</artifactId>
       <version>${log4j2.version}</version>
     </dependency>
     <dependency>
@@ -42,12 +52,6 @@
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
-      <version>${slf4j.version}</version>
-    </dependency>
-
   </dependencies>
   <build>
     <finalName>${artifactId}-${revision}${changelist}${sha1}</finalName>
@@ -92,6 +96,8 @@
             <exclude>rpm/**</exclude>
             <!-- assembly file -->
             <exclude>src/main/assembly/jar-with-dependencies.xml</exclude>
+            <!-- log4j2 -->
+            <exclude>src/main/resources/log4j2.xml</exclude>
             <!-- readme -->
             <exclude>README.adoc</exclude>
           </excludes>

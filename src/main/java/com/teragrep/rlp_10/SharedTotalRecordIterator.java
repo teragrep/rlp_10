@@ -52,30 +52,33 @@ import com.teragrep.rlo_14.SyslogMessage;
 
 import java.time.Instant;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 
-class PerThreadMessageIterator implements Iterator<byte[]> {
-    private int current=0;
+class SharedTotalRecordIterator implements Iterator<String> {
+    private final AtomicInteger recordsSent;
     private final FlooderConfig flooderConfig;
     private final String padding;
     private final int threadId;
-    public PerThreadMessageIterator(FlooderConfig flooderConfig, int threadId) {
+    private int currentId;
+    public SharedTotalRecordIterator(FlooderConfig flooderConfig, int threadId, AtomicInteger recordsSent) {
+        this.recordsSent = recordsSent;
         this.flooderConfig = flooderConfig;
         this.padding = new String(new char[flooderConfig.payloadSize]).replace("\0", "X");
         this.threadId = threadId;
     }
 
     private String createMessage() {
-        current++;
-        return String.format("Thread %s - message %s, padding: %s", threadId, current, padding);
+        return String.format("Thread %s - message %s, padding: %s", threadId, currentId, padding);
     }
 
     @Override
     public boolean hasNext() {
-        return flooderConfig.maxMessagesSent <= -1 || current<flooderConfig.maxMessagesSent;
+        currentId = recordsSent.incrementAndGet();
+        return flooderConfig.maxRecordsSent <= -1 || currentId<=flooderConfig.maxRecordsSent;
     }
 
     @Override
-    public byte[] next() {
+    public String next() {
         return new SyslogMessage()
                 .withTimestamp(Instant.now().toEpochMilli())
                 .withAppName(flooderConfig.appname)
@@ -83,7 +86,6 @@ class PerThreadMessageIterator implements Iterator<byte[]> {
                 .withFacility(Facility.USER)
                 .withSeverity(Severity.INFORMATIONAL)
                 .withMsg(createMessage())
-                .toRfc5424SyslogMessage()
-                .getBytes();
+                .toRfc5424SyslogMessage();
     }
 }

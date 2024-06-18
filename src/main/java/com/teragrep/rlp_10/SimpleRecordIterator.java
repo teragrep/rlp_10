@@ -46,44 +46,43 @@
 
 package com.teragrep.rlp_10;
 
-import org.apache.logging.log4j.Level;
+import com.teragrep.rlo_14.Facility;
+import com.teragrep.rlo_14.Severity;
+import com.teragrep.rlo_14.SyslogMessage;
 
-import java.util.Properties;
+import java.time.Instant;
+import java.util.Iterator;
 
-class FlooderConfig {
-    public final String hostname;
-    public final String appname;
-    public final String target;
-    public final int port;
-    public final int threads;
-    public final boolean useTls;
-    public final int payloadSize;
-    public final int reportInterval;
-    public final long maxRecordsSent;
-    public final int connectTimeout;
-    public final boolean waitForAcks;
-    public final String mode;
-    public final Level selfLogging;
-    public final Level libLogging;
-    public final Level globalLogging;
-    public FlooderConfig() {
-        this(System.getProperties());
+class SimpleRecordIterator implements Iterator<String> {
+    private int current=0;
+    private final String record;
+    private final FlooderConfig flooderConfig;
+    public SimpleRecordIterator(FlooderConfig flooderConfig, int threadId) {
+        this.flooderConfig = flooderConfig;
+        this.record = new SyslogMessage()
+                .withTimestamp(Instant.now().toEpochMilli())
+                .withAppName(flooderConfig.appname)
+                .withHostname(flooderConfig.hostname)
+                .withFacility(Facility.USER)
+                .withSeverity(Severity.INFORMATIONAL)
+                .withMsg(
+                        String.format(
+                                "Thread %s, padding: %s",
+                                threadId,
+                                new String(new char[flooderConfig.payloadSize]).replace("\0", "X")
+                        )
+                )
+                .toRfc5424SyslogMessage();
     }
-    public FlooderConfig(Properties properties) {
-        this.hostname = properties.getProperty("hostname", "localhost");
-        this.appname = properties.getProperty("appname", "rlp_10");
-        this.target = properties.getProperty("target", "127.0.0.1");
-        this.port = Integer.parseInt(properties.getProperty("port", "1601"));
-        this.threads = Integer.parseInt(properties.getProperty("threads", "4"));
-        this.useTls = Boolean.parseBoolean(properties.getProperty("useTls", "false"));
-        this.payloadSize = Integer.parseInt(properties.getProperty("payloadSize", "10"));
-        this.reportInterval = Integer.parseInt(properties.getProperty("reportInterval", "10"));
-        this.maxRecordsSent = Long.parseLong(properties.getProperty("maxRecordsSent", "-1"));
-        this.connectTimeout = Integer.parseInt(properties.getProperty("connectTimeout", "5"));
-        this.waitForAcks = Boolean.parseBoolean(properties.getProperty("waitForAcks", "true"));
-        this.mode = properties.getProperty("mode", "simple");
-        this.selfLogging = Level.toLevel(properties.getProperty("selfLogging", "info"), Level.INFO);
-        this.libLogging = Level.toLevel(properties.getProperty("libLogging", "info"), Level.INFO);
-        this.globalLogging = Level.toLevel(properties.getProperty("globalLogging", "info"), Level.INFO);
+
+    @Override
+    public boolean hasNext() {
+        return flooderConfig.maxRecordsSent <= -1 || current<flooderConfig.maxRecordsSent;
+    }
+
+    @Override
+    public String next() {
+        current++;
+        return record;
     }
 }
