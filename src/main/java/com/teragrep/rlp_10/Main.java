@@ -47,6 +47,8 @@
 package com.teragrep.rlp_10;
 
 import com.teragrep.rlp_09.RelpFlooderConfig;
+import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,19 +56,47 @@ class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
     public static void main(String[] args) {
         FlooderConfig flooderConfig = new FlooderConfig();
-        RelpFlooderConfig relpFlooderConfig = new RelpFlooderConfig(flooderConfig.target, flooderConfig.port, flooderConfig.threads);
+        Configurator.setLevel("com.teragrep.rlp_10", flooderConfig.selfLogging);
+        Configurator.setLevel("com.teragrep.rlp_09", flooderConfig.libLogging);
+        Configurator.setRootLevel(flooderConfig.globalLogging);
+        LOGGER.info("Using self logging level <[{}]>, lib logging level <[{}]>, global logging level <[{}]>", flooderConfig.selfLogging, flooderConfig.libLogging, flooderConfig.globalLogging);
+        RelpFlooderConfig relpFlooderConfig = new RelpFlooderConfig(flooderConfig.target, flooderConfig.port, flooderConfig.threads, flooderConfig.connectTimeout, flooderConfig.waitForAcks);
         LOGGER.info("Using hostname <[{}]>", flooderConfig.hostname);
         LOGGER.info("Using appname <[{}]>", flooderConfig.appname);
         LOGGER.info("Adding <[{}]> characters to payload size", flooderConfig.payloadSize);
         LOGGER.info("Sending records to: <[{}]:[{}]>", flooderConfig.target, flooderConfig.port);
-        Flooder flooder;
-        if(flooderConfig.usePerThreadIterator) {
-            LOGGER.info("Sending <[{}]> records per thread, total of <[{}]> records", flooderConfig.maxMessagesSent, flooderConfig.maxMessagesSent * flooderConfig.threads);
-            flooder = new Flooder(relpFlooderConfig, new PerThreadMessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
-        } else {
-            LOGGER.info("Sending total of <[{}]> records across all threads", flooderConfig.maxMessagesSent);
-            flooder = new Flooder(relpFlooderConfig, new SharedTotalMessageIteratorFactory(flooderConfig), flooderConfig.reportInterval);
+        LOGGER.info("Using <[{}]> mode with <[{}]> threads", flooderConfig.mode, flooderConfig.threads);
+        RelpFlooderIteratorFactory relpFlooderIteratorFactory;
+        switch(flooderConfig.mode) {
+            case "simple":
+                LOGGER.info(
+                        "Sending <[{}]> static records per thread, total of <[{}]> records",
+                        flooderConfig.maxRecordsSent < 0 ? "infinite" : flooderConfig.maxRecordsSent,
+                        flooderConfig.maxRecordsSent < 0 ? "infinite" : flooderConfig.maxRecordsSent * flooderConfig.threads
+                );
+                relpFlooderIteratorFactory = new SimpleRecordIteratorFactory(flooderConfig);
+                break;
+            case "dynamic":
+                LOGGER.info(
+                        "Sending <[{}]> dynamic records per thread, total of <[{}]> records",
+                        flooderConfig.maxRecordsSent < 0 ? "infinite" : flooderConfig.maxRecordsSent,
+                        flooderConfig.maxRecordsSent < 0 ? "infinite" : flooderConfig.maxRecordsSent * flooderConfig.threads
+                );
+                relpFlooderIteratorFactory = new PerThreadRecordIteratorFactory(flooderConfig);
+                break;
+            case "dynamic-shared":
+                LOGGER.info(
+                        "Sending total of <[{}]> dynamic records across all threads",
+                        flooderConfig.maxRecordsSent < 0 ? "infinite" : flooderConfig.maxRecordsSent * flooderConfig.threads
+                );
+                relpFlooderIteratorFactory = new SharedTotalRecordIteratorFactory(flooderConfig);
+                break;
+            default:
+                LOGGER.error("Invalid mode <[{}]> selected", flooderConfig.mode);
+                throw new IllegalStateException("Unexpected mode: " + flooderConfig.mode);
         }
+        Flooder flooder = new Flooder(relpFlooderConfig, relpFlooderIteratorFactory, flooderConfig.reportInterval);
+        LOGGER.info("Waiting for acks: <[{}]>", flooderConfig.waitForAcks);
         LOGGER.info("TLS enabled (FIXME: Implement): <[{}]>", flooderConfig.useTls);
         LOGGER.info("Reporting stats every <[{}]> seconds", flooderConfig.reportInterval);
 
@@ -74,8 +104,8 @@ class Main {
             LOGGER.info("Shutting down...");
             try {
                 flooder.stop();
-            } catch (InterruptedException | RuntimeException e) {
-                LOGGER.error("Failed to stop properly: {}", e.getMessage());
+            } catch (RuntimeException e) {
+                LOGGER.error("Failed to stop properly: <{}>", e.getMessage());
             }
         });
         Runtime.getRuntime().addShutdownHook(shutdownHook);
@@ -83,7 +113,7 @@ class Main {
             flooder.flood();
         }
         catch (Exception e){
-            LOGGER.error("Caught an error while flooding: {}", e.getMessage());
+            LOGGER.error("Caught an error while flooding: <{}>", e.getMessage());
         }
         System.exit(0);
     }

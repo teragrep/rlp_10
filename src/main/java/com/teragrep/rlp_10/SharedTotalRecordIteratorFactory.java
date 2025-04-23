@@ -46,44 +46,19 @@
 
 package com.teragrep.rlp_10;
 
-import org.apache.logging.log4j.Level;
+import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
 
-import java.util.Properties;
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 
-class FlooderConfig {
-    public final String hostname;
-    public final String appname;
-    public final String target;
-    public final int port;
-    public final int threads;
-    public final boolean useTls;
-    public final int payloadSize;
-    public final int reportInterval;
-    public final long maxRecordsSent;
-    public final int connectTimeout;
-    public final boolean waitForAcks;
-    public final String mode;
-    public final Level selfLogging;
-    public final Level libLogging;
-    public final Level globalLogging;
-    public FlooderConfig() {
-        this(System.getProperties());
+public class SharedTotalRecordIteratorFactory implements RelpFlooderIteratorFactory {
+    private final AtomicInteger recordsSent = new AtomicInteger(0);
+    private final FlooderConfig flooderConfig;
+    SharedTotalRecordIteratorFactory(FlooderConfig flooderConfig) {
+        this.flooderConfig = flooderConfig;
     }
-    public FlooderConfig(Properties properties) {
-        this.hostname = properties.getProperty("hostname", "localhost");
-        this.appname = properties.getProperty("appname", "rlp_10");
-        this.target = properties.getProperty("target", "127.0.0.1");
-        this.port = Integer.parseInt(properties.getProperty("port", "1601"));
-        this.threads = Integer.parseInt(properties.getProperty("threads", "4"));
-        this.useTls = Boolean.parseBoolean(properties.getProperty("useTls", "false"));
-        this.payloadSize = Integer.parseInt(properties.getProperty("payloadSize", "10"));
-        this.reportInterval = Integer.parseInt(properties.getProperty("reportInterval", "10"));
-        this.maxRecordsSent = Long.parseLong(properties.getProperty("maxRecordsSent", "-1"));
-        this.connectTimeout = Integer.parseInt(properties.getProperty("connectTimeout", "5"));
-        this.waitForAcks = Boolean.parseBoolean(properties.getProperty("waitForAcks", "true"));
-        this.mode = properties.getProperty("mode", "simple");
-        this.selfLogging = Level.toLevel(properties.getProperty("selfLogging", "info"), Level.INFO);
-        this.libLogging = Level.toLevel(properties.getProperty("libLogging", "info"), Level.INFO);
-        this.globalLogging = Level.toLevel(properties.getProperty("globalLogging", "info"), Level.INFO);
+    @Override
+    public Iterator<String> get(int threadId) {
+        return new SharedTotalRecordIterator(flooderConfig, threadId, recordsSent);
     }
 }
