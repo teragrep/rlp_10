@@ -88,6 +88,8 @@ class Initiator implements Runnable {
             final MetricRegistry metricRegistry,
             final int messageCount,
             final long connectTimeout
+            final MetricRegistry metricRegistry,
+            final int messageCount
     ) {
         this.relpClientFactory = relpClientFactory;
         this.recordStream = recordStream;
