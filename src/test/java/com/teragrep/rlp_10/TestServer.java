@@ -109,16 +109,21 @@ public class TestServer {
         messageList.clear();
     }
 
+    // TODO: get rid of Thread.sleep somehow
     @Test
     public void testBenchmark() {
+        int clients = 50;
+        int messageCount = 250;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(50,250);
         final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000,1);
         final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
         final TimeoutConfiguration timeoutConfiguration = new TimeoutConfiguration();
         final Benchmark benchmark = new Benchmark(initiatorConfig, metricsConfiguration, prometheusConfiguration, timeoutConfiguration);
         benchmark.startBenchmark();
-        Assertions.assertDoesNotThrow(() -> Thread.sleep(120000));
+        Assertions.assertDoesNotThrow(() -> Thread.sleep(10000));
         benchmark.stopBenchmark();
-        Assertions.assertDoesNotThrow(() -> Thread.sleep(1000));
+        Assertions.assertDoesNotThrow(() -> Thread.sleep(200));
+        Assertions.assertTrue(!messageList.isEmpty());
+        Assertions.assertTrue(messageList.size() <= clients * messageCount);
     }
 }

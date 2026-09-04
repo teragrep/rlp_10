@@ -105,7 +105,7 @@ class Initiator implements Runnable {
         // producer threads
 
         try (
-                final RelpClient relpClient = relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.SECONDS);
+                RelpClient relpClient = relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.SECONDS);
         ) {
             Counter connects = metricRegistry.counter("connects");
             Counter retriedConnects = metricRegistry.counter("retriedConnects");
@@ -142,9 +142,7 @@ class Initiator implements Runnable {
             }
 
             // send close
-            final CompletableFuture<RelpFrame> close = relpClient.transmit(relpFrameFactory.create("close", ""));
-            close.get();
-            metricRegistry.counter("disconnects").inc();
+            close(relpClient);
 
         }
         catch (final Exception e) {
@@ -154,7 +152,7 @@ class Initiator implements Runnable {
         }
     }
 
-    private boolean connect(RelpClient relpClient){
+    private boolean connect(RelpClient relpClient) throws InterruptedException, ExecutionException{
         final boolean connected;
         final CompletableFuture<RelpFrame> open = relpClient
                 .transmit(relpFrameFactory.create("open", "a hallo yo client"));
@@ -163,11 +161,14 @@ class Initiator implements Runnable {
             connected = true;
         } catch (TimeoutException timeoutException){
             return false;
-        } catch (InterruptedException | ExecutionException exception){
-            //TODO: log and close
-            throw new RuntimeException(exception);
         }
         return connected;
+    }
+
+    private void close(RelpClient relpClient) throws ExecutionException, InterruptedException {
+        final CompletableFuture<RelpFrame> close = relpClient.transmit(relpFrameFactory.create("close", ""));
+        close.get();
+        metricRegistry.counter("disconnects").inc();
     }
 
     public void stop() {
