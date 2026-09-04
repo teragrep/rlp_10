@@ -141,7 +141,8 @@ public class Benchmark {
                         socketAddressConfig.port(),
                         metricRegistry,
                         initiatorConfig.messageCount(),
-                        timeoutConfiguration.openTimeout()
+                        timeoutConfiguration.openTimeout(),
+                        timeoutConfiguration.payloadTimeout()
                 );
                 executorService.submit(initiator);
                 initiators.add(initiator);
