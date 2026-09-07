@@ -56,6 +56,10 @@ import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -132,5 +136,48 @@ public class TestServer {
         Assertions.assertDoesNotThrow(() -> Thread.sleep(200));
         Assertions.assertTrue(!messageList.isEmpty());
         Assertions.assertTrue(messageList.size() <= clients * messageCount);
+    }
+
+    @Test
+    public void testPrometheusServer() {
+        int clients = 50;
+        int messageCount = 250;
+        int retryTransmissionCount = 3;
+        int retryConnectionCount = 3;
+        final InitiatorConfig initiatorConfig = new InitiatorConfig(clients, messageCount, retryTransmissionCount, retryConnectionCount);
+        final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000, 1);
+        final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
+        final TimeoutConfiguration timeoutConfiguration = new TimeoutConfiguration();
+        final Benchmark benchmark = new Benchmark(
+                initiatorConfig,
+                metricsConfiguration,
+                prometheusConfiguration,
+                timeoutConfiguration
+        );
+        benchmark.startBenchmark();
+        Assertions.assertDoesNotThrow(() -> Thread.sleep(12000));
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder().uri(URI.create("http://localhost:"+prometheusConfiguration.port()+"/metrics"))
+                .GET()
+                .build();
+
+        // send a GET request to prometheus URL. Expect to receive a response containing each ot the metrics.
+        HttpResponse<String> response = Assertions.assertDoesNotThrow(()->client.send(request, HttpResponse.BodyHandlers.ofString()));
+        Assertions.assertEquals(200,response.statusCode());
+        benchmark.stopBenchmark();
+
+        int expectedRecords = clients * messageCount;
+        int expectedResends = 0;
+        int expectedReconnects = 0;
+
+        Assertions.assertTrue(response.body().contains("connects "+clients));
+        Assertions.assertTrue(response.body().contains("records "+expectedRecords));
+        Assertions.assertTrue(response.body().contains("connectLatency_count "+clients));
+        Assertions.assertTrue(response.body().contains("transactionLatency_count "+expectedRecords));
+        Assertions.assertTrue(response.body().contains("transmitLatency_count "+expectedRecords));
+        Assertions.assertTrue(response.body().contains("receiveLatency_count "+expectedRecords));
+        Assertions.assertTrue(response.body().contains("retriedConnects "+expectedReconnects));
+        Assertions.assertTrue(response.body().contains("transmitLatency_count "+expectedRecords));
+        Assertions.assertTrue(response.body().contains("resends "+expectedResends));
     }
 }
