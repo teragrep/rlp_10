@@ -89,12 +89,12 @@ public class Benchmark {
     public void startBenchmark() {
         // todo configs
 
-        final MetricRegistry metricRegistry = metricsConfiguration.createRegistry();
+        final Metrics metrics = new Metrics(metricsConfiguration);
         final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
 
         // reports
-        PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(metricRegistry,metricsConfiguration,prometheusConfiguration);
-        Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metricRegistry, metricsConfiguration);
+        PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(metrics,prometheusConfiguration);
+        Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metrics);
         reports.add(prometheusMetricsReport);
         reports.add(slf4JMetricsReport);
 
@@ -139,7 +139,7 @@ public class Benchmark {
                         delayedStream,
                         socketAddressConfig.hostname(),
                         socketAddressConfig.port(),
-                        metricRegistry,
+                        metrics,
                         initiatorConfig.messageCount(),
                         timeoutConfiguration.openTimeout(),
                         timeoutConfiguration.payloadTimeout(),

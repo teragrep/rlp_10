@@ -1,6 +1,7 @@
 package com.teragrep.rlp_10.report;
 
 import com.codahale.metrics.MetricRegistry;
+import com.teragrep.rlp_10.Metrics;
 import com.teragrep.rlp_10.config.MetricsConfiguration;
 import com.teragrep.rlp_10.config.PrometheusConfiguration;
 import io.prometheus.client.CollectorRegistry;
@@ -14,21 +15,21 @@ import org.slf4j.LoggerFactory;
 
 public class PrometheusMetricsReport implements MetricsReport {
     private static final Logger LOGGER = LoggerFactory.getLogger(PrometheusMetricsReport.class);
-    private final MetricRegistry metricRegistry;
+    private final Metrics metrics;
     private final Server prometheusMetricsServer;
 
-    public PrometheusMetricsReport(final MetricRegistry metricRegistry){
-        this(metricRegistry, new MetricsConfiguration(), new PrometheusConfiguration());
+    public PrometheusMetricsReport(final Metrics metrics){
+        this(metrics, new PrometheusConfiguration());
     }
 
-    public PrometheusMetricsReport(final MetricRegistry metricRegistry, final MetricsConfiguration metricsConfiguration, final PrometheusConfiguration prometheusConfiguration){
-        this.metricRegistry = metricRegistry;
+    public PrometheusMetricsReport(final Metrics metrics, final PrometheusConfiguration prometheusConfiguration){
+        this.metrics = metrics;
         this.prometheusMetricsServer = new Server(prometheusConfiguration.port());
     }
 
     @Override
     public void start(){
-        CollectorRegistry.defaultRegistry.register(new DropwizardExports(metricRegistry));
+        CollectorRegistry.defaultRegistry.register(new DropwizardExports(metrics.registry()));
 
         final ServletContextHandler context = new ServletContextHandler();
         context.setContextPath("/");

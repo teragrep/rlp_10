@@ -45,8 +45,6 @@
  */
 package com.teragrep.rlp_10;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.teragrep.rlp_03.client.RelpClient;
 import com.teragrep.rlp_03.client.RelpClientFactory;
@@ -69,7 +67,7 @@ class Initiator implements Runnable {
     private static final RelpFrameFactory relpFrameFactory = new RelpFrameFactory();
     private final RelpClientFactory relpClientFactory;
     private final RecordStream recordStream;
-    private final MetricRegistry metricRegistry;
+    private final Metrics metrics;
     private final String hostname;
     private final int port;
     private final int messageCount;
@@ -77,22 +75,12 @@ class Initiator implements Runnable {
     private final long payloadTimeout;
     private final int retryTransmissionCount;
 
-    private final Counter records;
-    private final Timer transactionLatency;
-    private final Timer transmitLatency;
-    private final Timer receiveLatency;
-    private final Counter connects;
-    private final Counter disconnects;
-    private final Counter retriedConnects;
-    private final Counter resends;
-    private final Timer connectLatency;
-
 
     private volatile boolean run = true;
 
     //TODO: All initiators are currently in one eventLoop, allow for multiples.
-    public Initiator(final RelpClientFactory relpClientFactory, final RecordStream recordStream, final MetricRegistry metricRegistry, int messageCount, int openTimeout, long payloadTimeout, int retryTransmissionCount) {
-        this(relpClientFactory, recordStream, "localhost", 1601, metricRegistry, messageCount, openTimeout, payloadTimeout, retryTransmissionCount);
+    public Initiator(final RelpClientFactory relpClientFactory, final RecordStream recordStream, final Metrics metrics, int messageCount, int openTimeout, long payloadTimeout, int retryTransmissionCount) {
+        this(relpClientFactory, recordStream, "localhost", 1601, metrics, messageCount, openTimeout, payloadTimeout, retryTransmissionCount);
     }
 
     public Initiator(
@@ -100,7 +88,7 @@ class Initiator implements Runnable {
             final RecordStream recordStream,
             final String hostName,
             final int port,
-            final MetricRegistry metricRegistry,
+            final Metrics metrics,
             final int messageCount,
             final long connectTimeout,
             final long payloadTimeout,
@@ -110,21 +98,11 @@ class Initiator implements Runnable {
         this.recordStream = recordStream;
         this.hostname = hostName;
         this.port = port;
-        this.metricRegistry = metricRegistry;
+        this.metrics = metrics;
         this.messageCount = messageCount;
         this.openTimeout = connectTimeout;
         this.payloadTimeout = payloadTimeout;
         this.retryTransmissionCount = retryTransmissionCount;
-        this.records = metricRegistry.counter("records");
-        this.transactionLatency = metricRegistry.timer("transactionLatency");
-        this.transmitLatency = metricRegistry.timer("transmitLatency");
-        this.receiveLatency = metricRegistry.timer("receiveLatency");
-        this.connects = metricRegistry.counter("connects");
-        this.disconnects = metricRegistry.counter("disconnects");
-        this.retriedConnects = metricRegistry.counter("retriedConnects");
-        this.resends = metricRegistry.counter("resends");
-        this.connectLatency = metricRegistry.timer("connectLatency");
-
     }
 
     @Override
@@ -136,13 +114,13 @@ class Initiator implements Runnable {
         ) {
             // try to connect, retrying until connection is established.
             // TODO: will this Timer skew connection statistics if a connection fails?
-            try(final Timer.Context timerContext = connectLatency.time()) {
-                connects.inc();
+            try(final Timer.Context timerContext = metrics.connectLatency().time()) {
+                metrics.connects().inc();
                 boolean connected = false;
                 while(!connected){
                     connected = connect(relpClient);
                     if(!connected){
-                        retriedConnects.inc();
+                        metrics.retriedConnects().inc();
                     }
                 }
             }
@@ -155,13 +133,13 @@ class Initiator implements Runnable {
                 while(!sent && retries < retryTransmissionCount){
                     sent = send(relpClient);
                     retries++;
-                    resends.inc();
+                    metrics.resends().inc();
                 }
             }
 
             // send close
             close(relpClient);
-            disconnects.inc();
+            metrics.disconnects().inc();
 
         }
         catch (final Exception e) {
@@ -187,21 +165,21 @@ class Initiator implements Runnable {
     private boolean send(RelpClient relpClient){
         try {
             // start transaction and transmit timers
-            Timer.Context transactionTimer = transactionLatency.time();
-            Timer.Context transmitTimer = transmitLatency.time();
-            final AtomicReference<Timer.Context> receiveTimer = new AtomicReference<Timer.Context>();
+            Timer.Context transactionTimer = metrics.transactionLatency().time();
+            Timer.Context transmitTimer = metrics.transmitLatency().time();
+            AtomicReference<Timer.Context> receiveTimer = new AtomicReference<Timer.Context>();
             // stop transmit timer as soon as relpClient.transmit() finishes and start receiveTimer.
             CompletableFuture<RelpFrame> syslog = relpClient.transmit(relpFrameFactory.create("syslog", new String(recordStream.get(), StandardCharsets.UTF_8)))
                     .handleAsync((relpFrame, exception) ->{
                         transmitTimer.close();
-                        receiveTimer.set(receiveLatency.time());
+                        receiveTimer.set(metrics.receiveLatency().time());
                         return relpFrame;
                     });
             syslog.get(payloadTimeout, TimeUnit.SECONDS);
             // stop receiveTimer and transaction timer once the syslog future resolves.
             receiveTimer.get().close();
             transactionTimer.close();
-            records.inc();
+            metrics.records().inc();
             return true;
         }
         catch (TimeoutException timeoutException) {
