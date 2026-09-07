@@ -142,7 +142,8 @@ public class Benchmark {
                         metricRegistry,
                         initiatorConfig.messageCount(),
                         timeoutConfiguration.openTimeout(),
-                        timeoutConfiguration.payloadTimeout()
+                        timeoutConfiguration.payloadTimeout(),
+                        initiatorConfig.retryTransmissionCount()
                 );
                 executorService.submit(initiator);
                 initiators.add(initiator);

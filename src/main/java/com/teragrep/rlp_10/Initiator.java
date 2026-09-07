@@ -75,6 +75,7 @@ class Initiator implements Runnable {
     private final int messageCount;
     private final long openTimeout;
     private final long payloadTimeout;
+    private final int retryTransmissionCount;
 
     private final Counter records;
     private final Timer transactionLatency;
@@ -90,8 +91,8 @@ class Initiator implements Runnable {
     private volatile boolean run = true;
 
     //TODO: All initiators are currently in one eventLoop, allow for multiples.
-    public Initiator(final RelpClientFactory relpClientFactory, final RecordStream recordStream, final MetricRegistry metricRegistry, int messageCount, int openTimeout, long payloadTimeout) {
-        this(relpClientFactory, recordStream, "localhost", 1601, metricRegistry, messageCount, openTimeout, payloadTimeout);
+    public Initiator(final RelpClientFactory relpClientFactory, final RecordStream recordStream, final MetricRegistry metricRegistry, int messageCount, int openTimeout, long payloadTimeout, int retryTransmissionCount) {
+        this(relpClientFactory, recordStream, "localhost", 1601, metricRegistry, messageCount, openTimeout, payloadTimeout, retryTransmissionCount);
     }
 
     public Initiator(
@@ -102,7 +103,8 @@ class Initiator implements Runnable {
             final MetricRegistry metricRegistry,
             final int messageCount,
             final long connectTimeout,
-            final long payloadTimeout
+            final long payloadTimeout,
+            final int retryTransmissionCount
     ) {
         this.relpClientFactory = relpClientFactory;
         this.recordStream = recordStream;
@@ -112,6 +114,7 @@ class Initiator implements Runnable {
         this.messageCount = messageCount;
         this.openTimeout = connectTimeout;
         this.payloadTimeout = payloadTimeout;
+        this.retryTransmissionCount = retryTransmissionCount;
         this.records = metricRegistry.counter("records");
         this.transactionLatency = metricRegistry.timer("transactionLatency");
         this.transmitLatency = metricRegistry.timer("transmitLatency");
@@ -147,7 +150,13 @@ class Initiator implements Runnable {
             // send syslog messageCount number of times
             int sentMessages = 0;
             while (run && ++sentMessages <= messageCount) {
-                send(relpClient);
+                boolean sent = send(relpClient);
+                int retries = 0;
+                while(!sent && retries < retryTransmissionCount){
+                    sent = send(relpClient);
+                    retries++;
+                    resends.inc();
+                }
             }
 
             // send close

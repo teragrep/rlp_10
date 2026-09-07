@@ -49,18 +49,21 @@ public class InitiatorConfig {
 
     private final int initiatorCount;
     private final int messageCount;
+    private final int retryTransmissionCount;
 
     public InitiatorConfig() {
-        this(1,0);
+        this(1,0,3);
     }
 
-    public InitiatorConfig(final int clients, final int messageCount) {
+    public InitiatorConfig(final int clients, final int messageCount, final int retryTransmissionCount) {
         this.initiatorCount = clients;
         this.messageCount = messageCount;
+        this.retryTransmissionCount = retryTransmissionCount;
     }
 
     public int count() {
         return initiatorCount;
     }
     public int messageCount(){ return messageCount;}
+    public int retryTransmissionCount(){ return retryTransmissionCount;}
 }
