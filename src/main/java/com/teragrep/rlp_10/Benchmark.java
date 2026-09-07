@@ -73,10 +73,20 @@ public class Benchmark {
     private final List<MetricsReport> reports;
 
     public Benchmark() {
-        this(new InitiatorConfig(), new MetricsConfiguration(), new PrometheusConfiguration(), new TimeoutConfiguration());
+        this(
+                new InitiatorConfig(),
+                new MetricsConfiguration(),
+                new PrometheusConfiguration(),
+                new TimeoutConfiguration()
+        );
     }
 
-    public Benchmark(final InitiatorConfig initiatorConfig, final MetricsConfiguration metricsConfiguration, final PrometheusConfiguration prometheusConfiguration, final TimeoutConfiguration timeoutConfiguration){
+    public Benchmark(
+            final InitiatorConfig initiatorConfig,
+            final MetricsConfiguration metricsConfiguration,
+            final PrometheusConfiguration prometheusConfiguration,
+            final TimeoutConfiguration timeoutConfiguration
+    ) {
         this.executorService = Executors.newVirtualThreadPerTaskExecutor();
         this.initiatorConfig = initiatorConfig;
         this.metricsConfiguration = metricsConfiguration;
@@ -93,12 +103,12 @@ public class Benchmark {
         final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
 
         // reports
-        PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(metrics,prometheusConfiguration);
+        PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(metrics, prometheusConfiguration);
         Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metrics);
         reports.add(prometheusMetricsReport);
         reports.add(slf4JMetricsReport);
 
-        for(MetricsReport report : reports){
+        for (MetricsReport report : reports) {
             report.start();
         }
 
@@ -110,7 +120,10 @@ public class Benchmark {
 
             final SocketFactory socketFactory = new PlainFactory();
 
-            final ConnectContextFactory connectContextFactory = new ConnectContextFactory(executorService, socketFactory);
+            final ConnectContextFactory connectContextFactory = new ConnectContextFactory(
+                    executorService,
+                    socketFactory
+            );
 
             final RelpClientFactory relpClientFactory = new RelpClientFactory(connectContextFactory, eventLoop);
 
@@ -131,7 +144,6 @@ public class Benchmark {
             else {
                 delayedStream = recordStream;
             }
-
 
             for (int initiatorCount = 0; initiatorCount < initiatorConfig.count(); initiatorCount++) {
                 final Initiator initiator = new Initiator(
@@ -158,15 +170,15 @@ public class Benchmark {
         }
     }
 
-    public void join(){
+    public void join() {
 
     }
 
-    public void stopBenchmark(){
-        for (final Initiator initiator : initiators){
+    public void stopBenchmark() {
+        for (final Initiator initiator : initiators) {
             initiator.stop();
         }
-        for (final MetricsReport report : reports){
+        for (final MetricsReport report : reports) {
             report.stop();
         }
     }

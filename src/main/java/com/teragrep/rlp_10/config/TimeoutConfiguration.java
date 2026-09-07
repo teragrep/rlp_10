@@ -51,8 +51,8 @@ public class TimeoutConfiguration {
     private final long closeTimeout;
     private final long payloadTimeout;
 
-    public TimeoutConfiguration(){
-        this(1,5,2);
+    public TimeoutConfiguration() {
+        this(1, 5, 2);
     }
 
     public TimeoutConfiguration(final long openTimeout, final long closeTimeout, final long payloadTimeout) {
@@ -61,11 +61,11 @@ public class TimeoutConfiguration {
         this.payloadTimeout = payloadTimeout;
     }
 
-    public long openTimeout(){
+    public long openTimeout() {
         return openTimeout;
     }
 
-    public long payloadTimeout(){
+    public long payloadTimeout() {
         return payloadTimeout;
     }
 

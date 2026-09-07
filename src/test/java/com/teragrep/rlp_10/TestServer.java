@@ -115,11 +115,16 @@ public class TestServer {
         int clients = 50;
         int messageCount = 250;
         int retryTransmissionCount = 3;
-        final InitiatorConfig initiatorConfig = new InitiatorConfig(clients,messageCount, retryTransmissionCount);
-        final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000,1);
+        final InitiatorConfig initiatorConfig = new InitiatorConfig(clients, messageCount, retryTransmissionCount);
+        final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000, 1);
         final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
         final TimeoutConfiguration timeoutConfiguration = new TimeoutConfiguration();
-        final Benchmark benchmark = new Benchmark(initiatorConfig, metricsConfiguration, prometheusConfiguration, timeoutConfiguration);
+        final Benchmark benchmark = new Benchmark(
+                initiatorConfig,
+                metricsConfiguration,
+                prometheusConfiguration,
+                timeoutConfiguration
+        );
         benchmark.startBenchmark();
         Assertions.assertDoesNotThrow(() -> Thread.sleep(10000));
         benchmark.stopBenchmark();

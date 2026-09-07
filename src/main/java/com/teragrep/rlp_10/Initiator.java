@@ -75,12 +75,29 @@ class Initiator implements Runnable {
     private final long payloadTimeout;
     private final int retryTransmissionCount;
 
-
     private volatile boolean run = true;
 
     //TODO: All initiators are currently in one eventLoop, allow for multiples.
-    public Initiator(final RelpClientFactory relpClientFactory, final RecordStream recordStream, final Metrics metrics, int messageCount, int openTimeout, long payloadTimeout, int retryTransmissionCount) {
-        this(relpClientFactory, recordStream, "localhost", 1601, metrics, messageCount, openTimeout, payloadTimeout, retryTransmissionCount);
+    public Initiator(
+            final RelpClientFactory relpClientFactory,
+            final RecordStream recordStream,
+            final Metrics metrics,
+            int messageCount,
+            int openTimeout,
+            long payloadTimeout,
+            int retryTransmissionCount
+    ) {
+        this(
+                relpClientFactory,
+                recordStream,
+                "localhost",
+                1601,
+                metrics,
+                messageCount,
+                openTimeout,
+                payloadTimeout,
+                retryTransmissionCount
+        );
     }
 
     public Initiator(
@@ -114,12 +131,12 @@ class Initiator implements Runnable {
         ) {
             // try to connect, retrying until connection is established.
             // TODO: will this Timer skew connection statistics if a connection fails?
-            try(final Timer.Context timerContext = metrics.connectLatency().time()) {
+            try (final Timer.Context timerContext = metrics.connectLatency().time()) {
                 metrics.connects().inc();
                 boolean connected = false;
-                while(!connected){
+                while (!connected) {
                     connected = connect(relpClient);
-                    if(!connected){
+                    if (!connected) {
                         metrics.retriedConnects().inc();
                     }
                 }
@@ -130,7 +147,7 @@ class Initiator implements Runnable {
             while (run && ++sentMessages <= messageCount) {
                 boolean sent = send(relpClient);
                 int retries = 0;
-                while(!sent && retries < retryTransmissionCount){
+                while (!sent && retries < retryTransmissionCount) {
                     sent = send(relpClient);
                     retries++;
                     metrics.resends().inc();
@@ -149,28 +166,30 @@ class Initiator implements Runnable {
         }
     }
 
-    private boolean connect(RelpClient relpClient) throws InterruptedException, ExecutionException{
+    private boolean connect(RelpClient relpClient) throws InterruptedException, ExecutionException {
         final boolean connected;
         final CompletableFuture<RelpFrame> open = relpClient
                 .transmit(relpFrameFactory.create("open", "a hallo yo client"));
-        try{
+        try {
             open.get(openTimeout, TimeUnit.SECONDS);
             connected = true;
-        } catch (TimeoutException timeoutException){
+        }
+        catch (TimeoutException timeoutException) {
             return false;
         }
         return connected;
     }
 
-    private boolean send(RelpClient relpClient){
+    private boolean send(RelpClient relpClient) {
         try {
             // start transaction and transmit timers
             Timer.Context transactionTimer = metrics.transactionLatency().time();
             Timer.Context transmitTimer = metrics.transmitLatency().time();
-            AtomicReference<Timer.Context> receiveTimer = new AtomicReference<Timer.Context>();
+            AtomicReference<Timer.Context> receiveTimer = new AtomicReference<Timer.Context>(); // AtomicReference to deal with variables needing to be final in lambdas
             // stop transmit timer as soon as relpClient.transmit() finishes and start receiveTimer.
-            CompletableFuture<RelpFrame> syslog = relpClient.transmit(relpFrameFactory.create("syslog", new String(recordStream.get(), StandardCharsets.UTF_8)))
-                    .handleAsync((relpFrame, exception) ->{
+            CompletableFuture<RelpFrame> syslog = relpClient
+                    .transmit(relpFrameFactory.create("syslog", new String(recordStream.get(), StandardCharsets.UTF_8)))
+                    .handleAsync((relpFrame, exception) -> {
                         transmitTimer.close();
                         receiveTimer.set(metrics.receiveLatency().time());
                         return relpFrame;

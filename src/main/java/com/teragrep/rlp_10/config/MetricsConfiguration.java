@@ -69,12 +69,12 @@ public class MetricsConfiguration {
         return interval;
     }
 
-
     /**
      * Creates a new MetricRegistry with configured options and predefined counters
+     * 
      * @return a new MetricRegistry instance
      */
-    public MetricRegistry createRegistry(){
+    public MetricRegistry createRegistry() {
         final MetricRegistry metricRegistry = new MetricRegistry();
         metricRegistry.counter("records");
         metricRegistry.counter("resends");
@@ -84,8 +84,7 @@ public class MetricsConfiguration {
         metricRegistry.timer("transactionLatency", () -> new Timer(new SlidingWindowReservoir(window())));
         metricRegistry.timer("transmitLatency", () -> new Timer(new SlidingWindowReservoir(window())));
         metricRegistry.timer("receiveLatency", () -> new Timer(new SlidingWindowReservoir(window())));
-        metricRegistry
-                .timer("connectLatency", () -> new Timer(new SlidingWindowReservoir(window())));
+        metricRegistry.timer("connectLatency", () -> new Timer(new SlidingWindowReservoir(window())));
         return metricRegistry;
     }
 }

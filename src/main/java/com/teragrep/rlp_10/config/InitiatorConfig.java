@@ -52,7 +52,7 @@ public class InitiatorConfig {
     private final int retryTransmissionCount;
 
     public InitiatorConfig() {
-        this(1,0,3);
+        this(1, 0, 3);
     }
 
     public InitiatorConfig(final int clients, final int messageCount, final int retryTransmissionCount) {
@@ -64,6 +64,12 @@ public class InitiatorConfig {
     public int count() {
         return initiatorCount;
     }
-    public int messageCount(){ return messageCount;}
-    public int retryTransmissionCount(){ return retryTransmissionCount;}
+
+    public int messageCount() {
+        return messageCount;
+    }
+
+    public int retryTransmissionCount() {
+        return retryTransmissionCount;
+    }
 }
