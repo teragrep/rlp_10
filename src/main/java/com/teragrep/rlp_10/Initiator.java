@@ -75,6 +75,7 @@ class Initiator implements Runnable {
     private final long openTimeout;
     private final long payloadTimeout;
     private final int retryTransmissionCount;
+    private final int retryConnectCount;
 
     private volatile boolean run = true;
 
@@ -86,7 +87,8 @@ class Initiator implements Runnable {
             int messageCount,
             int openTimeout,
             long payloadTimeout,
-            int retryTransmissionCount
+            int retryTransmissionCount,
+            int retryConnectionCount
     ) {
         this(
                 relpClientFactory,
@@ -97,7 +99,8 @@ class Initiator implements Runnable {
                 messageCount,
                 openTimeout,
                 payloadTimeout,
-                retryTransmissionCount
+                retryTransmissionCount,
+                retryConnectionCount
         );
     }
 
@@ -110,7 +113,8 @@ class Initiator implements Runnable {
             final int messageCount,
             final long connectTimeout,
             final long payloadTimeout,
-            final int retryTransmissionCount
+            final int retryTransmissionCount,
+            final int retryConnectCount
     ) {
         this.relpClientFactory = relpClientFactory;
         this.recordStream = recordStream;
@@ -121,6 +125,7 @@ class Initiator implements Runnable {
         this.openTimeout = connectTimeout;
         this.payloadTimeout = payloadTimeout;
         this.retryTransmissionCount = retryTransmissionCount;
+        this.retryConnectCount = retryConnectCount;
     }
 
     @Override
@@ -130,27 +135,19 @@ class Initiator implements Runnable {
         try (
                 RelpClient relpClient = relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.SECONDS);
         ) {
-            // try to connect, retrying until connection is established.
-            // TODO: will this Timer skew connection statistics if a connection fails?
+            // try to connect, retrying until connection is established or a configured retry limit is reached
             try (final Timer.Context timerContext = metrics.connectLatency().time()) {
-                metrics.connects().inc();
-                boolean connected = connect(relpClient);
-                while (!connected) {
-                    metrics.retriedConnects().inc();
-                    connected = connect(relpClient);
+                if(!connect(relpClient, retryConnectCount)){
+                    close(relpClient);
+                    throw new RuntimeException("Failed to connect to server in "+retryConnectCount+" tries, stopping!");
                 }
+                metrics.connects().inc();
             }
 
             // send syslog messageCount number of times
             int sentMessages = 0;
             while (run && ++sentMessages <= messageCount) {
-                boolean sent = send(relpClient);
-                int retries = 0;
-                while (!sent && retries < retryTransmissionCount) {
-                    sent = send(relpClient);
-                    retries++;
-                    metrics.resends().inc();
-                }
+                send(relpClient, retryTransmissionCount);
             }
 
             // send close
@@ -165,6 +162,17 @@ class Initiator implements Runnable {
         }
     }
 
+    private boolean connect(RelpClient relpClient, int retryCount) throws InterruptedException, ExecutionException{
+        int retries = 0;
+        boolean connected = connect(relpClient);
+        while(!connected && retries < retryCount){
+            retries++;
+            metrics.retriedConnects().inc();
+            connected = connect(relpClient);
+        }
+        return connected;
+    }
+
     private boolean connect(RelpClient relpClient) throws InterruptedException, ExecutionException {
         final boolean connected;
         final CompletableFuture<RelpFrame> open = relpClient
@@ -177,6 +185,17 @@ class Initiator implements Runnable {
             return false;
         }
         return connected;
+    }
+
+    private boolean send(RelpClient relpClient, int retryCount){
+        int retries = 0;
+        boolean sent = send(relpClient);
+        while(!sent && retries < retryCount){
+            retries++;
+            metrics.resends().inc();
+            sent = send(relpClient);
+        }
+        return sent;
     }
 
     private boolean send(RelpClient relpClient) {

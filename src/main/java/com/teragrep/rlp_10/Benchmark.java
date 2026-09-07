@@ -155,7 +155,8 @@ public class Benchmark {
                         initiatorConfig.messageCount(),
                         timeoutConfiguration.openTimeout(),
                         timeoutConfiguration.payloadTimeout(),
-                        initiatorConfig.retryTransmissionCount()
+                        initiatorConfig.retryTransmissionCount(),
+                        initiatorConfig.retryConnectionCount()
                 );
                 executorService.submit(initiator);
                 initiators.add(initiator);

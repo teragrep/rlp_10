@@ -115,7 +115,8 @@ public class TestServer {
         int clients = 50;
         int messageCount = 250;
         int retryTransmissionCount = 3;
-        final InitiatorConfig initiatorConfig = new InitiatorConfig(clients, messageCount, retryTransmissionCount);
+        int retryConnectionCount = 3;
+        final InitiatorConfig initiatorConfig = new InitiatorConfig(clients, messageCount, retryTransmissionCount, retryConnectionCount);
         final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000, 1);
         final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
         final TimeoutConfiguration timeoutConfiguration = new TimeoutConfiguration();
