@@ -116,10 +116,10 @@ public class TestServer {
     // TODO: get rid of Thread.sleep somehow
     @Test
     public void testBenchmark() {
-        int clients = 50;
-        int messageCount = 250;
-        int retryTransmissionCount = 3;
-        int retryConnectionCount = 3;
+        final int clients = 50;
+        final int messageCount = 250;
+        final int retryTransmissionCount = 3;
+        final int retryConnectionCount = 3;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(clients, messageCount, retryTransmissionCount, retryConnectionCount);
         final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000, 1);
         final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
@@ -140,10 +140,10 @@ public class TestServer {
 
     @Test
     public void testPrometheusServer() {
-        int clients = 50;
-        int messageCount = 250;
-        int retryTransmissionCount = 3;
-        int retryConnectionCount = 3;
+        final int clients = 50;
+        final int messageCount = 250;
+        final int retryTransmissionCount = 3;
+        final int retryConnectionCount = 3;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(clients, messageCount, retryTransmissionCount, retryConnectionCount);
         final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000, 1);
         final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
@@ -156,19 +156,19 @@ public class TestServer {
         );
         benchmark.startBenchmark();
         Assertions.assertDoesNotThrow(() -> Thread.sleep(12000));
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder().uri(URI.create("http://localhost:"+prometheusConfiguration.port()+"/metrics"))
+        final HttpClient client = HttpClient.newHttpClient();
+        final HttpRequest request = HttpRequest.newBuilder().uri(URI.create("http://localhost:"+prometheusConfiguration.port()+"/metrics"))
                 .GET()
                 .build();
 
         // send a GET request to prometheus URL. Expect to receive a response containing each ot the metrics.
-        HttpResponse<String> response = Assertions.assertDoesNotThrow(()->client.send(request, HttpResponse.BodyHandlers.ofString()));
+        final HttpResponse<String> response = Assertions.assertDoesNotThrow(()->client.send(request, HttpResponse.BodyHandlers.ofString()));
         Assertions.assertEquals(200,response.statusCode());
         benchmark.stopBenchmark();
 
-        int expectedRecords = clients * messageCount;
-        int expectedResends = 0;
-        int expectedReconnects = 0;
+        final int expectedRecords = clients * messageCount;
+        final int expectedResends = 0;
+        final int expectedReconnects = 0;
 
         Assertions.assertTrue(response.body().contains("connects "+clients));
         Assertions.assertTrue(response.body().contains("records "+expectedRecords));

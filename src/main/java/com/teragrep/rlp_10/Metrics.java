@@ -65,7 +65,7 @@ public class Metrics {
     private final Timer receiveLatency;
     private final Timer connectLatency;
 
-    public Metrics(MetricsConfiguration metricsConfiguration) {
+    public Metrics(final MetricsConfiguration metricsConfiguration) {
         this.metricsConfiguration = metricsConfiguration;
         metricRegistry = new MetricRegistry();
         records = metricRegistry.counter("records");

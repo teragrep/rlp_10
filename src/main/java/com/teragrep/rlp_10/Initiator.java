@@ -84,11 +84,11 @@ class Initiator implements Runnable {
             final RelpClientFactory relpClientFactory,
             final RecordStream recordStream,
             final Metrics metrics,
-            int messageCount,
-            int openTimeout,
-            long payloadTimeout,
-            int retryTransmissionCount,
-            int retryConnectionCount
+            final int messageCount,
+            final int openTimeout,
+            final long payloadTimeout,
+            final int retryTransmissionCount,
+            final int retryConnectionCount
     ) {
         this(
                 relpClientFactory,
@@ -133,7 +133,7 @@ class Initiator implements Runnable {
         // producer threads
 
         try (
-                RelpClient relpClient = relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.SECONDS);
+                final RelpClient relpClient = relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.SECONDS);
         ) {
             // try to connect, retrying until connection is established or a configured retry limit is reached
             try (final Timer.Context timerContext = metrics.connectLatency().time()) {
@@ -162,7 +162,7 @@ class Initiator implements Runnable {
         }
     }
 
-    private boolean connect(RelpClient relpClient, int retryCount) throws InterruptedException, ExecutionException{
+    private boolean connect(final RelpClient relpClient, final int retryCount) throws InterruptedException, ExecutionException{
         int retries = 0;
         boolean connected = connect(relpClient);
         while(!connected && retries < retryCount){
@@ -173,7 +173,7 @@ class Initiator implements Runnable {
         return connected;
     }
 
-    private boolean connect(RelpClient relpClient) throws InterruptedException, ExecutionException {
+    private boolean connect(final RelpClient relpClient) throws InterruptedException, ExecutionException {
         final boolean connected;
         final CompletableFuture<RelpFrame> open = relpClient
                 .transmit(relpFrameFactory.create("open", "a hallo yo client"));
@@ -181,13 +181,13 @@ class Initiator implements Runnable {
             open.get(openTimeout, TimeUnit.SECONDS);
             connected = true;
         }
-        catch (TimeoutException timeoutException) {
+        catch (final TimeoutException timeoutException) {
             return false;
         }
         return connected;
     }
 
-    private boolean send(RelpClient relpClient, int retryCount){
+    private boolean send(final RelpClient relpClient, final int retryCount){
         int retries = 0;
         boolean sent = send(relpClient);
         while(!sent && retries < retryCount){
@@ -198,14 +198,14 @@ class Initiator implements Runnable {
         return sent;
     }
 
-    private boolean send(RelpClient relpClient) {
+    private boolean send(final RelpClient relpClient) {
         try {
             // start transaction and transmit timers
-            Timer.Context transactionTimer = metrics.transactionLatency().time();
-            Timer.Context transmitTimer = metrics.transmitLatency().time();
-            AtomicReference<Timer.Context> receiveTimer = new AtomicReference<Timer.Context>(); // AtomicReference to deal with variables needing to be final in lambdas
+            final Timer.Context transactionTimer = metrics.transactionLatency().time();
+            final Timer.Context transmitTimer = metrics.transmitLatency().time();
+            final AtomicReference<Timer.Context> receiveTimer = new AtomicReference<Timer.Context>(); // AtomicReference to deal with variables needing to be final in lambdas
             // stop transmit timer as soon as relpClient.transmit() finishes and start receiveTimer.
-            CompletableFuture<RelpFrame> syslog = relpClient
+            final CompletableFuture<RelpFrame> syslog = relpClient
                     .transmit(relpFrameFactory.create("syslog", new String(recordStream.get(), StandardCharsets.UTF_8)))
                     .handleAsync((relpFrame, exception) -> {
                         transmitTimer.close();
@@ -222,17 +222,17 @@ class Initiator implements Runnable {
             metrics.records().inc();
             return true;
         }
-        catch (TimeoutException timeoutException) {
+        catch (final TimeoutException timeoutException) {
             // Timeout exceeded, retry transmission.
             return false;
         }
-        catch (ExecutionException | InterruptedException | TransmissionException e) {
+        catch (final ExecutionException | InterruptedException | TransmissionException e) {
             // Unrecoverable error cases
             throw new RuntimeException(e);
         }
     }
 
-    private void close(RelpClient relpClient) throws ExecutionException, InterruptedException {
+    private void close(final RelpClient relpClient) throws ExecutionException, InterruptedException {
         final CompletableFuture<RelpFrame> close = relpClient.transmit(relpFrameFactory.create("close", ""));
         close.get();
     }

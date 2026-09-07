@@ -1,7 +1,7 @@
 package com.teragrep.rlp_10.exception;
 
 public class TransmissionException extends RuntimeException {
-    public TransmissionException(String message) {
+    public TransmissionException(final String message) {
         super(message);
     }
     public TransmissionException(final String message, final Throwable cause) {

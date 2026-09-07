@@ -103,12 +103,12 @@ public class Benchmark {
         final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
 
         // reports
-        PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(metrics, prometheusConfiguration);
-        Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metrics);
+        final PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(metrics, prometheusConfiguration);
+        final Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metrics);
         reports.add(prometheusMetricsReport);
         reports.add(slf4JMetricsReport);
 
-        for (MetricsReport report : reports) {
+        for (final MetricsReport report : reports) {
             report.start();
         }
 
