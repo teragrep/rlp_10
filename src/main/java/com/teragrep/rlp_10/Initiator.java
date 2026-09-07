@@ -52,6 +52,8 @@ import com.teragrep.rlp_03.client.RelpClient;
 import com.teragrep.rlp_03.client.RelpClientFactory;
 import com.teragrep.rlp_03.frame.RelpFrame;
 import com.teragrep.rlp_03.frame.RelpFrameFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -59,13 +61,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 class Initiator implements Runnable {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Initiator.class);
     private static final RelpFrameFactory relpFrameFactory = new RelpFrameFactory();
-
     private final RelpClientFactory relpClientFactory;
-
     private final RecordStream recordStream;
     private final MetricRegistry metricRegistry;
     private final String hostname;
@@ -73,6 +75,17 @@ class Initiator implements Runnable {
     private final int messageCount;
     private final long openTimeout;
     private final long payloadTimeout;
+
+    private final Counter records;
+    private final Timer transactionLatency;
+    private final Timer transmitLatency;
+    private final Timer receiveLatency;
+    private final Counter connects;
+    private final Counter disconnects;
+    private final Counter retriedConnects;
+    private final Counter resends;
+    private final Timer connectLatency;
+
 
     private volatile boolean run = true;
 
@@ -99,6 +112,16 @@ class Initiator implements Runnable {
         this.messageCount = messageCount;
         this.openTimeout = connectTimeout;
         this.payloadTimeout = payloadTimeout;
+        this.records = metricRegistry.counter("records");
+        this.transactionLatency = metricRegistry.timer("transactionLatency");
+        this.transmitLatency = metricRegistry.timer("transmitLatency");
+        this.receiveLatency = metricRegistry.timer("receiveLatency");
+        this.connects = metricRegistry.counter("connects");
+        this.disconnects = metricRegistry.counter("disconnects");
+        this.retriedConnects = metricRegistry.counter("retriedConnects");
+        this.resends = metricRegistry.counter("resends");
+        this.connectLatency = metricRegistry.timer("connectLatency");
+
     }
 
     @Override
@@ -108,17 +131,9 @@ class Initiator implements Runnable {
         try (
                 RelpClient relpClient = relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.SECONDS);
         ) {
-            Counter connects = metricRegistry.counter("connects");
-            Counter disconnects = metricRegistry.counter("disconnects");
-            Counter retriedConnects = metricRegistry.counter("retriedConnects");
-            Counter records = metricRegistry.counter("records");
-            Counter resends = metricRegistry.counter("resends");
-            Timer connectionLatency = metricRegistry.timer("connectLatency");
-            Timer sendLatency = metricRegistry.timer("sendLatency");
-
             // try to connect, retrying until connection is established.
             // TODO: will this Timer skew connection statistics if a connection fails?
-            try(final Timer.Context timerContext = connectionLatency.time()) {
+            try(final Timer.Context timerContext = connectLatency.time()) {
                 connects.inc();
                 boolean connected = false;
                 while(!connected){
@@ -129,16 +144,10 @@ class Initiator implements Runnable {
                 }
             }
 
+            // send syslog messageCount number of times
             int sentMessages = 0;
             while (run && ++sentMessages <= messageCount) {
-                try(final Timer.Context timerContext = sendLatency.time()) {
-                    boolean sent = send(relpClient);
-                    while(!sent){
-                        sent = send(relpClient);
-                        resends.inc();
-                    }
-                    records.inc();
-                }
+                send(relpClient);
             }
 
             // send close
@@ -166,22 +175,32 @@ class Initiator implements Runnable {
         return connected;
     }
 
-    private boolean send(RelpClient relpClient) throws ExecutionException, InterruptedException{
-        // todo use custom factory instead that takes bytes and not new String
-        // send syslog
-
-        final CompletableFuture<RelpFrame> syslog = relpClient
-                .transmit(
-                        relpFrameFactory.create("syslog", new String(recordStream.get(), StandardCharsets.UTF_8))
-                );
-
-        // todo might want to configure multiple per batch and verify with .handleAsync();
-        try{
+    private boolean send(RelpClient relpClient){
+        try {
+            // start transaction and transmit timers
+            Timer.Context transactionTimer = transactionLatency.time();
+            Timer.Context transmitTimer = transmitLatency.time();
+            final AtomicReference<Timer.Context> receiveTimer = new AtomicReference<Timer.Context>();
+            // stop transmit timer as soon as relpClient.transmit() finishes and start receiveTimer.
+            CompletableFuture<RelpFrame> syslog = relpClient.transmit(relpFrameFactory.create("syslog", new String(recordStream.get(), StandardCharsets.UTF_8)))
+                    .handleAsync((relpFrame, exception) ->{
+                        transmitTimer.close();
+                        receiveTimer.set(receiveLatency.time());
+                        return relpFrame;
+                    });
             syslog.get(payloadTimeout, TimeUnit.SECONDS);
-        } catch (TimeoutException timeoutException){
+            // stop receiveTimer and transaction timer once the syslog future resolves.
+            receiveTimer.get().close();
+            transactionTimer.close();
+            records.inc();
+            return true;
+        }
+        catch (TimeoutException timeoutException) {
             return false;
         }
-        return true;
+        catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void close(RelpClient relpClient) throws ExecutionException, InterruptedException {

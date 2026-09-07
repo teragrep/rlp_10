@@ -81,7 +81,9 @@ public class MetricsConfiguration {
         metricRegistry.counter("connects");
         metricRegistry.counter("disconnects");
         metricRegistry.counter("retriedConnects");
-        metricRegistry.timer("sendLatency", () -> new Timer(new SlidingWindowReservoir(window())));
+        metricRegistry.timer("transactionLatency", () -> new Timer(new SlidingWindowReservoir(window())));
+        metricRegistry.timer("transmitLatency", () -> new Timer(new SlidingWindowReservoir(window())));
+        metricRegistry.timer("receiveLatency", () -> new Timer(new SlidingWindowReservoir(window())));
         metricRegistry
                 .timer("connectLatency", () -> new Timer(new SlidingWindowReservoir(window())));
         return metricRegistry;

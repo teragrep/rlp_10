@@ -114,7 +114,7 @@ public class TestServer {
     public void testBenchmark() {
         int clients = 50;
         int messageCount = 250;
-        final InitiatorConfig initiatorConfig = new InitiatorConfig(50,250);
+        final InitiatorConfig initiatorConfig = new InitiatorConfig(clients,messageCount);
         final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000,1);
         final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
         final TimeoutConfiguration timeoutConfiguration = new TimeoutConfiguration();
