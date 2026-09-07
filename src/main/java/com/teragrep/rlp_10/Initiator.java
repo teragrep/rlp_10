@@ -50,6 +50,7 @@ import com.teragrep.rlp_03.client.RelpClient;
 import com.teragrep.rlp_03.client.RelpClientFactory;
 import com.teragrep.rlp_03.frame.RelpFrame;
 import com.teragrep.rlp_03.frame.RelpFrameFactory;
+import com.teragrep.rlp_10.exception.TransmissionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -133,12 +134,10 @@ class Initiator implements Runnable {
             // TODO: will this Timer skew connection statistics if a connection fails?
             try (final Timer.Context timerContext = metrics.connectLatency().time()) {
                 metrics.connects().inc();
-                boolean connected = false;
+                boolean connected = connect(relpClient);
                 while (!connected) {
+                    metrics.retriedConnects().inc();
                     connected = connect(relpClient);
-                    if (!connected) {
-                        metrics.retriedConnects().inc();
-                    }
                 }
             }
 
@@ -191,6 +190,9 @@ class Initiator implements Runnable {
                     .transmit(relpFrameFactory.create("syslog", new String(recordStream.get(), StandardCharsets.UTF_8)))
                     .handleAsync((relpFrame, exception) -> {
                         transmitTimer.close();
+                        if(exception != null){
+                            throw new TransmissionException(exception);
+                        }
                         receiveTimer.set(metrics.receiveLatency().time());
                         return relpFrame;
                     });
@@ -202,9 +204,11 @@ class Initiator implements Runnable {
             return true;
         }
         catch (TimeoutException timeoutException) {
+            // Timeout exceeded, retry transmission.
             return false;
         }
-        catch (ExecutionException | InterruptedException e) {
+        catch (ExecutionException | InterruptedException | TransmissionException e) {
+            // Unrecoverable error cases
             throw new RuntimeException(e);
         }
     }
