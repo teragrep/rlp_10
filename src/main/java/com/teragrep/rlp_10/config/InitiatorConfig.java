@@ -56,7 +56,12 @@ public class InitiatorConfig {
         this(1, 0, 3, 3);
     }
 
-    public InitiatorConfig(final int clients, final int messageCount, final int retryTransmissionCount, final int retryConnectionCount) {
+    public InitiatorConfig(
+            final int clients,
+            final int messageCount,
+            final int retryTransmissionCount,
+            final int retryConnectionCount
+    ) {
         this.initiatorCount = clients;
         this.messageCount = messageCount;
         this.retryTransmissionCount = retryTransmissionCount;
@@ -74,6 +79,7 @@ public class InitiatorConfig {
     public int retryTransmissionCount() {
         return retryTransmissionCount;
     }
+
     public int retryConnectionCount() {
         return retryConnectionCount;
     }

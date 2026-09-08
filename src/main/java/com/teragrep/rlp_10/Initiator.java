@@ -137,9 +137,11 @@ class Initiator implements Runnable {
         ) {
             // try to connect, retrying until connection is established or a configured retry limit is reached
             try (final Timer.Context timerContext = metrics.connectLatency().time()) {
-                if(!connect(relpClient, retryConnectCount)){
+                if (!connect(relpClient, retryConnectCount)) {
                     close(relpClient);
-                    throw new RuntimeException("Failed to connect to server in "+retryConnectCount+" tries, stopping!");
+                    throw new RuntimeException(
+                            "Failed to connect to server in " + retryConnectCount + " tries, stopping!"
+                    );
                 }
                 metrics.connects().inc();
             }
@@ -162,10 +164,11 @@ class Initiator implements Runnable {
         }
     }
 
-    private boolean connect(final RelpClient relpClient, final int retryCount) throws InterruptedException, ExecutionException{
+    private boolean connect(final RelpClient relpClient, final int retryCount)
+            throws InterruptedException, ExecutionException {
         int retries = 0;
         boolean connected = connect(relpClient);
-        while(!connected && retries < retryCount){
+        while (!connected && retries < retryCount) {
             retries++;
             metrics.retriedConnects().inc();
             connected = connect(relpClient);
@@ -187,10 +190,10 @@ class Initiator implements Runnable {
         return connected;
     }
 
-    private boolean send(final RelpClient relpClient, final int retryCount){
+    private boolean send(final RelpClient relpClient, final int retryCount) {
         int retries = 0;
         boolean sent = send(relpClient);
-        while(!sent && retries < retryCount){
+        while (!sent && retries < retryCount) {
             retries++;
             metrics.resends().inc();
             sent = send(relpClient);
@@ -209,7 +212,7 @@ class Initiator implements Runnable {
                     .transmit(relpFrameFactory.create("syslog", new String(recordStream.get(), StandardCharsets.UTF_8)))
                     .handleAsync((relpFrame, exception) -> {
                         transmitTimer.close();
-                        if(exception != null){
+                        if (exception != null) {
                             throw new TransmissionException(exception);
                         }
                         receiveTimer.set(metrics.receiveLatency().time());

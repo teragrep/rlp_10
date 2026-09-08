@@ -45,7 +45,6 @@
  */
 package com.teragrep.rlp_10;
 
-import com.teragrep.net_01.channel.socket.PlainFactory;
 import com.teragrep.net_01.channel.socket.TLSFactory;
 import com.teragrep.net_01.eventloop.EventLoop;
 import com.teragrep.net_01.eventloop.EventLoopFactory;
@@ -103,8 +102,15 @@ public class TestTLSServer {
         eventLoopThread.start();
         executorService = Executors.newSingleThreadExecutor();
 
-        try{
-            final TransportConfig transportConfiguration = new TransportConfig(true, Path.of("src/test/resources/tls/keystore-server.jks"),Path.of("src/test/resources/tls/truststore.jks"),"changeit","changeit","TLSv1.3");
+        try {
+            final TransportConfig transportConfiguration = new TransportConfig(
+                    true,
+                    Path.of("src/test/resources/tls/keystore-server.jks"),
+                    Path.of("src/test/resources/tls/truststore.jks"),
+                    "changeit",
+                    "changeit",
+                    "TLSv1.3"
+            );
 
             SSLContext sslContext = SSLContext.getInstance(transportConfiguration.protocol());
             KeyStore ks = KeyStore.getInstance("JKS");
@@ -112,11 +118,9 @@ public class TestTLSServer {
             File file = new File(transportConfiguration.keyStorePath().toUri());
             try (FileInputStream fileInputStream = new FileInputStream(file)) {
                 ks.load(fileInputStream, transportConfiguration.keyStorePassword().toCharArray());
-                TrustManagerFactory tmf =
-                        TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
                 tmf.init(ks);
-                KeyManagerFactory kmf =
-                        KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                 kmf.init(ks, transportConfiguration.keyStorePassword().toCharArray());
                 sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
             }
@@ -130,14 +134,15 @@ public class TestTLSServer {
             final ServerFactory serverFactory = new ServerFactory(
                     eventLoop,
                     executorService,
-                    new TLSFactory(sslContext,sslEngineFunction),
+                    new TLSFactory(sslContext, sslEngineFunction),
                     new FrameDelegationClockFactory(() -> new DefaultFrameDelegate((frame) -> messageList.add(frame.relpFrame().payload().toBytes())))
             );
             Assertions.assertDoesNotThrow(() -> serverFactory.create(socketAddressConfig.port()));
         }
-        catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e){
+        catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
             //TODO handle error
-        } catch (UnrecoverableKeyException | KeyManagementException e) {
+        }
+        catch (UnrecoverableKeyException | KeyManagementException e) {
             //TODO handle error
             throw new RuntimeException(e);
         }
@@ -162,11 +167,23 @@ public class TestTLSServer {
         final int messageCount = 150;
         final int retryTransmissionCount = 0;
         final int retryConnectionCount = 0;
-        final InitiatorConfig initiatorConfig = new InitiatorConfig(clients, messageCount, retryTransmissionCount, retryConnectionCount);
+        final InitiatorConfig initiatorConfig = new InitiatorConfig(
+                clients,
+                messageCount,
+                retryTransmissionCount,
+                retryConnectionCount
+        );
         final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000, 1);
         final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
         final TimeoutConfiguration timeoutConfiguration = new TimeoutConfiguration();
-        final TransportConfig transportConfiguration = new TransportConfig(true, Path.of("src/test/resources/tls/keystore-client.jks"),Path.of("src/test/resources/tls/truststore.jks"),"changeit","changeit","TLSv1.3");
+        final TransportConfig transportConfiguration = new TransportConfig(
+                true,
+                Path.of("src/test/resources/tls/keystore-client.jks"),
+                Path.of("src/test/resources/tls/truststore.jks"),
+                "changeit",
+                "changeit",
+                "TLSv1.3"
+        );
         final Benchmark benchmark = new Benchmark(
                 initiatorConfig,
                 metricsConfiguration,
@@ -177,27 +194,30 @@ public class TestTLSServer {
         benchmark.startBenchmark();
         Assertions.assertDoesNotThrow(() -> Thread.sleep(12000));
         final HttpClient client = HttpClient.newHttpClient();
-        final HttpRequest request = HttpRequest.newBuilder().uri(URI.create("http://localhost:"+prometheusConfiguration.port()+"/metrics"))
+        final HttpRequest request = HttpRequest
+                .newBuilder()
+                .uri(URI.create("http://localhost:" + prometheusConfiguration.port() + "/metrics"))
                 .GET()
                 .build();
 
         // send a GET request to prometheus URL. Expect to receive a response containing each ot the metrics.
-        final HttpResponse<String> response = Assertions.assertDoesNotThrow(()->client.send(request, HttpResponse.BodyHandlers.ofString()));
-        Assertions.assertEquals(200,response.statusCode());
+        final HttpResponse<String> response = Assertions
+                .assertDoesNotThrow(() -> client.send(request, HttpResponse.BodyHandlers.ofString()));
+        Assertions.assertEquals(200, response.statusCode());
         benchmark.stopBenchmark();
 
         final int expectedRecords = clients * messageCount;
         final int expectedResends = 0;
         final int expectedReconnects = 0;
 
-        Assertions.assertTrue(response.body().contains("connects "+clients));
-        Assertions.assertTrue(response.body().contains("records "+expectedRecords));
-        Assertions.assertTrue(response.body().contains("connectLatency_count "+clients));
-        Assertions.assertTrue(response.body().contains("transactionLatency_count "+expectedRecords));
-        Assertions.assertTrue(response.body().contains("transmitLatency_count "+expectedRecords));
-        Assertions.assertTrue(response.body().contains("receiveLatency_count "+expectedRecords));
-        Assertions.assertTrue(response.body().contains("retriedConnects "+expectedReconnects));
-        Assertions.assertTrue(response.body().contains("transmitLatency_count "+expectedRecords));
-        Assertions.assertTrue(response.body().contains("resends "+expectedResends));
+        Assertions.assertTrue(response.body().contains("connects " + clients));
+        Assertions.assertTrue(response.body().contains("records " + expectedRecords));
+        Assertions.assertTrue(response.body().contains("connectLatency_count " + clients));
+        Assertions.assertTrue(response.body().contains("transactionLatency_count " + expectedRecords));
+        Assertions.assertTrue(response.body().contains("transmitLatency_count " + expectedRecords));
+        Assertions.assertTrue(response.body().contains("receiveLatency_count " + expectedRecords));
+        Assertions.assertTrue(response.body().contains("retriedConnects " + expectedReconnects));
+        Assertions.assertTrue(response.body().contains("transmitLatency_count " + expectedRecords));
+        Assertions.assertTrue(response.body().contains("resends " + expectedResends));
     }
 }
