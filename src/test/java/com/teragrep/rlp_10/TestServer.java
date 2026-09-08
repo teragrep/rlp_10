@@ -76,6 +76,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * These are a copy from rlp_03 test suite
@@ -122,7 +123,7 @@ public class TestServer {
         executorService = Executors.newSingleThreadExecutor();
 
         try{
-            final TransportConfig transportConfiguration = new TransportConfig(true, Path.of("src/test/resources/client-keystore.p12"),"password","TLSv1.3");
+            final TransportConfig transportConfiguration = new TransportConfig(true, Path.of("src/test/resources/tls/keystore-server.jks"),Path.of("src/test/resources/tls/truststore.jks"),"changeit","changeit","TLSv1.3");
 
             SSLContext sslContext = SSLContext.getInstance(transportConfiguration.protocol());
             KeyStore ks = KeyStore.getInstance("JKS");
@@ -130,9 +131,11 @@ public class TestServer {
             File file = new File(transportConfiguration.keyStorePath().toUri());
             try (FileInputStream fileInputStream = new FileInputStream(file)) {
                 ks.load(fileInputStream, transportConfiguration.keyStorePassword().toCharArray());
-                TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                TrustManagerFactory tmf =
+                        TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
                 tmf.init(ks);
-                KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                KeyManagerFactory kmf =
+                        KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                 kmf.init(ks, transportConfiguration.keyStorePassword().toCharArray());
                 sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
             }
@@ -140,8 +143,6 @@ public class TestServer {
             Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
                 SSLEngine engine = context.createSSLEngine();
                 engine.setUseClientMode(false);
-                engine.setEnabledProtocols(new String[] { "TLSv1.3" });
-                engine.setEnabledCipherSuites(new String[]{"TLS_AES_128_GCM_SHA256"});
                 return engine;
             };
 
@@ -185,7 +186,7 @@ public class TestServer {
         final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000, 1);
         final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
         final TimeoutConfiguration timeoutConfiguration = new TimeoutConfiguration();
-        final TransportConfig transportConfiguration = new TransportConfig(true, Path.of("src/test/resources/client-keystore.p12"),"password","TLSv1.3");
+        final TransportConfig transportConfiguration = new TransportConfig(true, Path.of("src/test/resources/tls/keystore-client.jks"),Path.of("src/test/resources/tls/truststore.jks"),"changeit","changeit","TLSv1.3");
         final Benchmark benchmark = new Benchmark(
                 initiatorConfig,
                 metricsConfiguration,

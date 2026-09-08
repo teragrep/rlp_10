@@ -52,7 +52,10 @@ import com.teragrep.net_01.channel.socket.SocketFactory;
 import com.teragrep.net_01.channel.socket.TLSFactory;
 import com.teragrep.net_01.eventloop.EventLoop;
 import com.teragrep.net_01.eventloop.EventLoopFactory;
+import com.teragrep.net_01.server.ServerFactory;
 import com.teragrep.rlp_03.client.RelpClientFactory;
+import com.teragrep.rlp_03.frame.FrameDelegationClockFactory;
+import com.teragrep.rlp_03.frame.delegate.DefaultFrameDelegate;
 import com.teragrep.rlp_10.config.*;
 import com.teragrep.rlp_10.report.MetricsReport;
 import com.teragrep.rlp_10.report.PrometheusMetricsReport;
@@ -64,7 +67,10 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.FileInputStream;
-import java.security.KeyStore;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -134,28 +140,42 @@ public class Benchmark {
             final SocketFactory socketFactory;
 
             if(transportConfiguration.tls()){
-                SSLContext sslContext = SSLContext.getInstance(transportConfiguration.protocol());
-                KeyStore ks = KeyStore.getInstance("JKS");
+                try{
+                    SSLContext sslContext = SSLContext.getInstance(transportConfiguration.protocol());
+                    KeyStore ks = KeyStore.getInstance("JKS");
+                    KeyStore ts = KeyStore.getInstance("JKS");
 
-                File file = new File(transportConfiguration.keyStorePath().toUri());
-                try (FileInputStream fileInputStream = new FileInputStream(file)) {
-                    ks.load(fileInputStream, transportConfiguration.keyStorePassword().toCharArray());
-                    TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                    tmf.init(ks);
-                    KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                    kmf.init(ks, transportConfiguration.keyStorePassword().toCharArray());
-                    sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+                    File ksFile = new File(transportConfiguration.keyStorePath().toUri());
+                    File tsFile = new File(transportConfiguration.trustStorePath().toUri());
+
+                    try (FileInputStream ksFileIS = new FileInputStream(ksFile)) {
+                        try (FileInputStream tsFileIS = new FileInputStream(tsFile)) {
+                            ts.load(tsFileIS, transportConfiguration.trustStorePassword().toCharArray());
+                            TrustManagerFactory tmf = TrustManagerFactory
+                                    .getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                            tmf.init(ts);
+
+                            ks.load(ksFileIS, transportConfiguration.keyStorePassword().toCharArray());
+                            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                            kmf.init(ks, transportConfiguration.keyStorePassword().toCharArray());
+                            sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+                        }
+                    }
+
+                    Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
+                        SSLEngine engine = context.createSSLEngine();
+                        engine.setUseClientMode(true);
+                        return engine;
+                    };
+                    socketFactory = new TLSFactory(sslContext, sslEngineFunction);
                 }
-
-                Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
-                    SSLEngine engine = context.createSSLEngine();
-                    engine.setUseClientMode(true);
-                    engine.setEnabledProtocols(new String[] { "TLSv1.3" });
-                    engine.setEnabledCipherSuites(new String[]{"TLS_AES_128_GCM_SHA256"});
-                    return engine;
-                };
-
-                socketFactory = new TLSFactory(sslContext, sslEngineFunction);
+                catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e){
+                    throw new RuntimeException(e);
+                    //TODO handle error
+                } catch (UnrecoverableKeyException | KeyManagementException e) {
+                    //TODO handle error
+                    throw new RuntimeException(e);
+                }
             }
             else {
                 socketFactory = new PlainFactory();

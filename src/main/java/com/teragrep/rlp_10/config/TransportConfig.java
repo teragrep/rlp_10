@@ -52,17 +52,21 @@ public class TransportConfig {
 
     private final boolean tls;
     private final Path keystorePath;
+    private final Path truststorePath;
     private final String keystorePassword;
+    private final String truststorePassword;
     private final String protocol;
 
     public TransportConfig() {
-        this(false, Paths.get("/opt/teragrep/rlp_10/etc/keystore.p12"),"password","TLSv1.3");
+        this(false, Paths.get("/opt/teragrep/rlp_10/etc/keystore.jks"),Paths.get("/opt/teragrep/rlp_10/etc/truststore.jks"),"password","password","TLSv1.3");
     }
 
-    public TransportConfig(final boolean tls, final Path keystorePath, final String keystorePassword, final String protocol) {
+    public TransportConfig(final boolean tls, final Path keystorePath, final Path truststorePath, final String keystorePassword, final String truststorePassword, final String protocol) {
         this.tls = tls;
         this.keystorePath = keystorePath;
+        this.truststorePath = truststorePath;
         this.keystorePassword = keystorePassword;
+        this.truststorePassword = truststorePassword;
         this.protocol = protocol;
     }
 
@@ -75,8 +79,16 @@ public class TransportConfig {
         return keystorePath;
     }
 
+    public Path trustStorePath() {
+        return truststorePath;
+    }
+
     public String keyStorePassword() {
         return keystorePassword;
+    }
+
+    public String trustStorePassword() {
+        return truststorePassword;
     }
 
     public String protocol() {
