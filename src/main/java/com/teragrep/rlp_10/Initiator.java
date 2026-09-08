@@ -138,7 +138,7 @@ class Initiator implements Runnable {
             // try to connect, retrying until connection is established or a configured retry limit is reached
             try (final Timer.Context timerContext = metrics.connectLatency().time()) {
                 if (!connect(relpClient, retryConnectCount)) {
-                    close(relpClient);
+                    stop();
                     throw new RuntimeException(
                             "Failed to connect to server in " + retryConnectCount + " tries, stopping!"
                     );
@@ -148,7 +148,7 @@ class Initiator implements Runnable {
 
             // send syslog messageCount number of times
             int sentMessages = 0;
-            while (run && ++sentMessages <= messageCount) {
+            while (run && (messageCount == 0 || ++sentMessages <= messageCount)) {
                 send(relpClient, retryTransmissionCount);
             }
 

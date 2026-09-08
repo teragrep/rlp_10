@@ -45,7 +45,6 @@
  */
 package com.teragrep.rlp_10;
 
-import com.codahale.metrics.*;
 import com.teragrep.net_01.channel.context.ConnectContextFactory;
 import com.teragrep.net_01.channel.socket.PlainFactory;
 import com.teragrep.net_01.channel.socket.SocketFactory;
@@ -71,6 +70,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 
 public class Benchmark {
@@ -83,6 +83,7 @@ public class Benchmark {
     private final TransportConfig transportConfiguration;
     private final List<Initiator> initiators;
     private final List<MetricsReport> reports;
+    private final List<Future> executorTasks;
 
     public Benchmark() {
         this(
@@ -109,6 +110,7 @@ public class Benchmark {
         this.transportConfiguration = transportConfiguration;
         this.initiators = new ArrayList<>(initiatorConfig.count());
         this.reports = new ArrayList<>();
+        this.executorTasks = new ArrayList<>();
     }
 
     public void startBenchmark() {
@@ -220,20 +222,23 @@ public class Benchmark {
                         initiatorConfig.retryTransmissionCount(),
                         initiatorConfig.retryConnectionCount()
                 );
-                executorService.submit(initiator);
+                executorTasks.add(executorService.submit(initiator));
                 initiators.add(initiator);
             }
 
-            // todo proper shutdown criteria. i.e. shutdown hook for ^C or count depleted
+            // shutdown hook in case JVM is terminated
+            Thread shutdownHook = new Thread(this::stopBenchmark);
+            Runtime.getRuntime().addShutdownHook(shutdownHook);
 
-            //LockSupport.parkNanos(Long.MAX_VALUE);
+            // block until each task is complete
+            for (Future task : executorTasks) {
+                task.get();
+            }
+            stopBenchmark();
         }
         catch (final Exception ignored) {
             // todo handle properly
         }
-    }
-
-    public void join() {
 
     }
 

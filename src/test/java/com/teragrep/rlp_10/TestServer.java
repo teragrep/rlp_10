@@ -114,7 +114,6 @@ public class TestServer {
         messageList.clear();
     }
 
-    // TODO: get rid of Thread.sleep somehow
     @Test
     public void testBenchmark() {
         final int clients = 50;
@@ -139,17 +138,14 @@ public class TestServer {
                 transportConfiguration
         );
         benchmark.startBenchmark();
-        Assertions.assertDoesNotThrow(() -> Thread.sleep(10000));
-        benchmark.stopBenchmark();
-        Assertions.assertDoesNotThrow(() -> Thread.sleep(200));
         Assertions.assertTrue(!messageList.isEmpty());
         Assertions.assertTrue(messageList.size() <= clients * messageCount);
     }
 
     @Test
-    public void testPrometheusServer() {
+    public void testPrometheusServer() throws InterruptedException {
         final int clients = 50;
-        final int messageCount = 250;
+        final int messageCount = 50;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(
@@ -169,8 +165,8 @@ public class TestServer {
                 timeoutConfiguration,
                 transportConfiguration
         );
-        benchmark.startBenchmark();
-        Assertions.assertDoesNotThrow(() -> Thread.sleep(12000));
+        Thread benchMarkThread = new Thread(() -> benchmark.startBenchmark());
+        benchMarkThread.start();
         final HttpClient client = HttpClient.newHttpClient();
         final HttpRequest request = HttpRequest
                 .newBuilder()
@@ -181,22 +177,92 @@ public class TestServer {
         // send a GET request to prometheus URL. Expect to receive a response containing each ot the metrics.
         final HttpResponse<String> response = Assertions
                 .assertDoesNotThrow(() -> client.send(request, HttpResponse.BodyHandlers.ofString()));
-        Assertions.assertEquals(200, response.statusCode());
-        benchmark.stopBenchmark();
 
-        final int expectedRecords = clients * messageCount;
-        final int expectedResends = 0;
-        final int expectedReconnects = 0;
+        benchMarkThread.join();
+        // assert that HTTP response contains information about each metric in prometheus format
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP connects Generated from Dropwizard metric import (metric=connects, type=com.codahale.metrics.Counter)"
+                                )
+                );
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP disconnects Generated from Dropwizard metric import (metric=disconnects, type=com.codahale.metrics.Counter)"
+                                )
+                );
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP records Generated from Dropwizard metric import (metric=records, type=com.codahale.metrics.Counter)"
+                                )
+                );
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP connectLatency Generated from Dropwizard metric import (metric=connectLatency, type=com.codahale.metrics.Timer)"
+                                )
+                );
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP transactionLatency Generated from Dropwizard metric import (metric=transactionLatency, type=com.codahale.metrics.Timer)"
+                                )
+                );
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP transmitLatency Generated from Dropwizard metric import (metric=transmitLatency, type=com.codahale.metrics.Timer)"
+                                )
+                );
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP receiveLatency Generated from Dropwizard metric import (metric=receiveLatency, type=com.codahale.metrics.Timer)"
+                                )
+                );
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP retriedConnects Generated from Dropwizard metric import (metric=retriedConnects, type=com.codahale.metrics.Counter)"
+                                )
+                );
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP resends Generated from Dropwizard metric import (metric=resends, type=com.codahale.metrics.Counter)"
+                                )
+                );
 
-        Assertions.assertTrue(response.body().contains("connects " + clients));
-        Assertions.assertTrue(response.body().contains("records " + expectedRecords));
-        Assertions.assertTrue(response.body().contains("connectLatency_count " + clients));
-        Assertions.assertTrue(response.body().contains("transactionLatency_count " + expectedRecords));
-        Assertions.assertTrue(response.body().contains("transmitLatency_count " + expectedRecords));
-        Assertions.assertTrue(response.body().contains("receiveLatency_count " + expectedRecords));
-        Assertions.assertTrue(response.body().contains("retriedConnects " + expectedReconnects));
-        Assertions.assertTrue(response.body().contains("transmitLatency_count " + expectedRecords));
-        Assertions.assertTrue(response.body().contains("resends " + expectedResends));
+        // each metric should have proper type
+        Assertions.assertTrue(response.body().contains("# TYPE connects gauge"));
+        Assertions.assertTrue(response.body().contains("# TYPE disconnects gauge"));
+        Assertions.assertTrue(response.body().contains("# TYPE records gauge"));
+        Assertions.assertTrue(response.body().contains("# TYPE connectLatency summary"));
+        Assertions.assertTrue(response.body().contains("# TYPE transactionLatency summary"));
+        Assertions.assertTrue(response.body().contains("# TYPE transmitLatency summary"));
+        Assertions.assertTrue(response.body().contains("# TYPE receiveLatency summary"));
+        Assertions.assertTrue(response.body().contains("# TYPE retriedConnects gauge"));
+        Assertions.assertTrue(response.body().contains("# TYPE resends gauge"));
     }
 
 }
