@@ -49,6 +49,7 @@ import com.codahale.metrics.*;
 import com.teragrep.net_01.channel.context.ConnectContextFactory;
 import com.teragrep.net_01.channel.socket.PlainFactory;
 import com.teragrep.net_01.channel.socket.SocketFactory;
+import com.teragrep.net_01.channel.socket.TLSFactory;
 import com.teragrep.net_01.eventloop.EventLoop;
 import com.teragrep.net_01.eventloop.EventLoopFactory;
 import com.teragrep.rlp_03.client.RelpClientFactory;
@@ -57,10 +58,18 @@ import com.teragrep.rlp_10.report.MetricsReport;
 import com.teragrep.rlp_10.report.PrometheusMetricsReport;
 import com.teragrep.rlp_10.report.Slf4JMetricsReport;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.File;
+import java.io.FileInputStream;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 
 public class Benchmark {
 
@@ -69,6 +78,7 @@ public class Benchmark {
     private final MetricsConfiguration metricsConfiguration;
     private final PrometheusConfiguration prometheusConfiguration;
     private final TimeoutConfiguration timeoutConfiguration;
+    private final TransportConfig transportConfiguration;
     private final List<Initiator> initiators;
     private final List<MetricsReport> reports;
 
@@ -77,7 +87,8 @@ public class Benchmark {
                 new InitiatorConfig(),
                 new MetricsConfiguration(),
                 new PrometheusConfiguration(),
-                new TimeoutConfiguration()
+                new TimeoutConfiguration(),
+                new TransportConfig()
         );
     }
 
@@ -85,13 +96,15 @@ public class Benchmark {
             final InitiatorConfig initiatorConfig,
             final MetricsConfiguration metricsConfiguration,
             final PrometheusConfiguration prometheusConfiguration,
-            final TimeoutConfiguration timeoutConfiguration
+            final TimeoutConfiguration timeoutConfiguration,
+            final TransportConfig transportConfiguration
     ) {
         this.executorService = Executors.newVirtualThreadPerTaskExecutor();
         this.initiatorConfig = initiatorConfig;
         this.metricsConfiguration = metricsConfiguration;
         this.prometheusConfiguration = prometheusConfiguration;
         this.timeoutConfiguration = timeoutConfiguration;
+        this.transportConfiguration = transportConfiguration;
         this.initiators = new ArrayList<>(initiatorConfig.count());
         this.reports = new ArrayList<>();
     }
@@ -118,7 +131,35 @@ public class Benchmark {
             final EventLoop eventLoop = eventLoopFactory.create();
             executorService.submit(eventLoop);
 
-            final SocketFactory socketFactory = new PlainFactory();
+            final SocketFactory socketFactory;
+
+            if(transportConfiguration.tls()){
+                SSLContext sslContext = SSLContext.getInstance(transportConfiguration.protocol());
+                KeyStore ks = KeyStore.getInstance("JKS");
+
+                File file = new File(transportConfiguration.keyStorePath().toUri());
+                try (FileInputStream fileInputStream = new FileInputStream(file)) {
+                    ks.load(fileInputStream, transportConfiguration.keyStorePassword().toCharArray());
+                    TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                    tmf.init(ks);
+                    KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                    kmf.init(ks, transportConfiguration.keyStorePassword().toCharArray());
+                    sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+                }
+
+                Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
+                    SSLEngine engine = context.createSSLEngine();
+                    engine.setUseClientMode(true);
+                    engine.setEnabledProtocols(new String[] { "TLSv1.3" });
+                    engine.setEnabledCipherSuites(new String[]{"TLS_AES_128_GCM_SHA256"});
+                    return engine;
+                };
+
+                socketFactory = new TLSFactory(sslContext, sslEngineFunction);
+            }
+            else {
+                socketFactory = new PlainFactory();
+            }
 
             final ConnectContextFactory connectContextFactory = new ConnectContextFactory(
                     executorService,
