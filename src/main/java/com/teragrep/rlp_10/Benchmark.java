@@ -68,6 +68,7 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -171,13 +172,10 @@ public class Benchmark {
                     };
                     socketFactory = new TLSFactory(sslContext, sslEngineFunction);
                 }
-                catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
-                    throw new RuntimeException(e);
-                    //TODO handle error
-                }
-                catch (UnrecoverableKeyException | KeyManagementException e) {
-                    //TODO handle error
-                    throw new RuntimeException(e);
+                catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException |
+                       UnrecoverableKeyException | KeyManagementException e) {
+                    // unrecoverable error
+                    throw new RuntimeException("Error while initializing TLS connection, check your configuration!",e);
                 }
             }
             else {
@@ -236,8 +234,9 @@ public class Benchmark {
             }
             stopBenchmark();
         }
-        catch (final Exception ignored) {
-            // todo handle properly
+        catch (InterruptedException | ExecutionException | IOException e) {
+            // unrecoverable exceptions
+            throw new RuntimeException(e);
         }
 
     }
