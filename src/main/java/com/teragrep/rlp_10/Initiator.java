@@ -54,6 +54,7 @@ import com.teragrep.rlp_10.exception.TransmissionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
@@ -157,9 +158,12 @@ class Initiator implements Runnable {
             metrics.disconnects().inc();
 
         }
-        catch (final Exception e) {
-            // todo log
-            System.err.println(e.getMessage());
+        catch (TimeoutException timeoutException){
+            LOGGER.warn("RelpClient was not initialized within {} seconds, stopping!",openTimeout);
+            run = false;
+        }
+        catch (ExecutionException | InterruptedException e) {
+            LOGGER.error("An unrecoverable error occurred while running Initiator",e);
             run = false;
         }
     }
