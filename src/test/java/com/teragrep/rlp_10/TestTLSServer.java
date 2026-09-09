@@ -97,51 +97,41 @@ public class TestTLSServer {
         eventLoopThread = new Thread(eventLoop);
         eventLoopThread.start();
         executorService = Executors.newSingleThreadExecutor();
+        final TransportConfig transportConfiguration = new TransportConfig(
+                true,
+                Path.of("src/test/resources/tls/keystore-server.jks"),
+                Path.of("src/test/resources/tls/truststore.jks"),
+                "changeit",
+                "changeit",
+                "TLSv1.3"
+        );
 
-        try {
-            final TransportConfig transportConfiguration = new TransportConfig(
-                    true,
-                    Path.of("src/test/resources/tls/keystore-server.jks"),
-                    Path.of("src/test/resources/tls/truststore.jks"),
-                    "changeit",
-                    "changeit",
-                    "TLSv1.3"
-            );
+        SSLContext sslContext = Assertions.assertDoesNotThrow(()->SSLContext.getInstance(transportConfiguration.protocol()));
+        KeyStore ks = Assertions.assertDoesNotThrow(()->KeyStore.getInstance("JKS"));
 
-            SSLContext sslContext = SSLContext.getInstance(transportConfiguration.protocol());
-            KeyStore ks = KeyStore.getInstance("JKS");
+        File file = new File(transportConfiguration.keyStorePath().toUri());
+        FileInputStream fileInputStream = Assertions.assertDoesNotThrow(()->new FileInputStream(file));
+        Assertions.assertDoesNotThrow(()->ks.load(fileInputStream, transportConfiguration.keyStorePassword().toCharArray()));
+        TrustManagerFactory tmf = Assertions.assertDoesNotThrow(()->TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()));
+        Assertions.assertDoesNotThrow(()->tmf.init(ks));
+        KeyManagerFactory kmf = Assertions.assertDoesNotThrow(()->KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm()));
+        Assertions.assertDoesNotThrow(()->kmf.init(ks, transportConfiguration.keyStorePassword().toCharArray()));
+        Assertions.assertDoesNotThrow(()->sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null));
+        Assertions.assertDoesNotThrow(fileInputStream::close);
 
-            File file = new File(transportConfiguration.keyStorePath().toUri());
-            try (FileInputStream fileInputStream = new FileInputStream(file)) {
-                ks.load(fileInputStream, transportConfiguration.keyStorePassword().toCharArray());
-                TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                tmf.init(ks);
-                KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                kmf.init(ks, transportConfiguration.keyStorePassword().toCharArray());
-                sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-            }
+        Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
+            SSLEngine engine = context.createSSLEngine();
+            engine.setUseClientMode(false);
+            return engine;
+        };
 
-            Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
-                SSLEngine engine = context.createSSLEngine();
-                engine.setUseClientMode(false);
-                return engine;
-            };
-
-            final ServerFactory serverFactory = new ServerFactory(
-                    eventLoop,
-                    executorService,
-                    new TLSFactory(sslContext, sslEngineFunction),
-                    new FrameDelegationClockFactory(() -> new DefaultFrameDelegate((frame) -> messageList.add(frame.relpFrame().payload().toBytes())))
-            );
-            Assertions.assertDoesNotThrow(() -> serverFactory.create(socketAddressConfig.port()));
-        }
-        catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException e) {
-            //TODO handle error
-        }
-        catch (UnrecoverableKeyException | KeyManagementException e) {
-            //TODO handle error
-            throw new RuntimeException(e);
-        }
+        final ServerFactory serverFactory = new ServerFactory(
+                eventLoop,
+                executorService,
+                new TLSFactory(sslContext, sslEngineFunction),
+                new FrameDelegationClockFactory(() -> new DefaultFrameDelegate((frame) -> messageList.add(frame.relpFrame().payload().toBytes())))
+        );
+        Assertions.assertDoesNotThrow(() -> serverFactory.create(socketAddressConfig.port()));
     }
 
     @AfterAll
