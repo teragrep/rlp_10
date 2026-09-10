@@ -136,7 +136,7 @@ class Initiator implements Runnable {
                 if (!connect(relpClient, retryConnectCount)) {
                     stop();
                     throw new RuntimeException(
-                            "Failed to connect to server in " + retryConnectCount + " tries, stopping!"
+                            "Failed to connect to server! Stopping..."
                     );
                 }
                 metrics.connects().inc();
@@ -167,6 +167,7 @@ class Initiator implements Runnable {
         int retries = 0;
         boolean connected = connect(relpClient);
         while (!connected && retries < retryCount) {
+            LOGGER.warn("Failed to connect, retrying...");
             retries++;
             metrics.retriedConnects().inc();
             connected = connect(relpClient);
@@ -183,6 +184,8 @@ class Initiator implements Runnable {
             connected = true;
         }
         catch (final TimeoutException timeoutException) {
+            open.cancel(false);
+            LOGGER.warn("Connection attempt timeout after {} seconds!",openTimeout);
             return false;
         }
         return connected;
