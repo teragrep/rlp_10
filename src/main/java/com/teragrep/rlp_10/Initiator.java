@@ -72,7 +72,6 @@ class Initiator implements Runnable {
     private final Metrics metrics;
     private final String hostname;
     private final int port;
-    private final int messageCount;
     private final long openTimeout;
     private final long payloadTimeout;
     private final int retryTransmissionCount;
@@ -85,7 +84,6 @@ class Initiator implements Runnable {
             final RelpClientFactory relpClientFactory,
             final RecordStream recordStream,
             final Metrics metrics,
-            final int messageCount,
             final int openTimeout,
             final long payloadTimeout,
             final int retryTransmissionCount,
@@ -97,7 +95,6 @@ class Initiator implements Runnable {
                 "localhost",
                 1601,
                 metrics,
-                messageCount,
                 openTimeout,
                 payloadTimeout,
                 retryTransmissionCount,
@@ -111,7 +108,6 @@ class Initiator implements Runnable {
             final String hostName,
             final int port,
             final Metrics metrics,
-            final int messageCount,
             final long connectTimeout,
             final long payloadTimeout,
             final int retryTransmissionCount,
@@ -122,7 +118,6 @@ class Initiator implements Runnable {
         this.hostname = hostName;
         this.port = port;
         this.metrics = metrics;
-        this.messageCount = messageCount;
         this.openTimeout = connectTimeout;
         this.payloadTimeout = payloadTimeout;
         this.retryTransmissionCount = retryTransmissionCount;
@@ -148,9 +143,10 @@ class Initiator implements Runnable {
             }
 
             // send syslog messageCount number of times
-            int sentMessages = 0;
-            while (run && (messageCount == 0 || ++sentMessages <= messageCount)) {
-                send(relpClient, retryTransmissionCount);
+            while(run){
+                if(!send(relpClient, retryTransmissionCount)){
+                    stop();
+                }
             }
 
             // send close
@@ -160,11 +156,9 @@ class Initiator implements Runnable {
         }
         catch (TimeoutException timeoutException){
             LOGGER.warn("RelpClient was not initialized within {} seconds, stopping!",openTimeout);
-            run = false;
         }
         catch (ExecutionException | InterruptedException e) {
             LOGGER.error("An unrecoverable error occurred while running Initiator",e);
-            run = false;
         }
     }
 
@@ -212,22 +206,29 @@ class Initiator implements Runnable {
             final Timer.Context transmitTimer = metrics.transmitLatency().time();
             final AtomicReference<Timer.Context> receiveTimer = new AtomicReference<Timer.Context>(); // AtomicReference to deal with variables needing to be final in lambdas
             // stop transmit timer as soon as relpClient.transmit() finishes and start receiveTimer.
-            final CompletableFuture<RelpFrame> syslog = relpClient
-                    .transmit(relpFrameFactory.create("syslog", new String(recordStream.get(), StandardCharsets.UTF_8)))
-                    .handleAsync((relpFrame, exception) -> {
-                        transmitTimer.close();
-                        if (exception != null) {
-                            throw new TransmissionException(exception);
-                        }
-                        receiveTimer.set(metrics.receiveLatency().time());
-                        return relpFrame;
-                    });
-            syslog.get(payloadTimeout, TimeUnit.SECONDS);
-            // stop receiveTimer and transaction timer once the syslog future resolves.
-            receiveTimer.get().close();
-            transactionTimer.close();
-            metrics.records().inc();
-            return true;
+            final String payload = new String(recordStream.get(), StandardCharsets.UTF_8);
+            //todo should be SyslogStub
+            if(payload.isEmpty()){
+                return false;
+            }
+            else {
+                final CompletableFuture<RelpFrame> syslog = relpClient
+                        .transmit(relpFrameFactory.create("syslog", payload))
+                        .handleAsync((relpFrame, exception) -> {
+                            transmitTimer.close();
+                            if (exception != null) {
+                                throw new TransmissionException(exception);
+                            }
+                            receiveTimer.set(metrics.receiveLatency().time());
+                            return relpFrame;
+                        });
+                syslog.get(payloadTimeout, TimeUnit.SECONDS);
+                // stop receiveTimer and transaction timer once the syslog future resolves.
+                receiveTimer.get().close();
+                transactionTimer.close();
+                metrics.records().inc();
+                return true;
+            }
         }
         catch (final TimeoutException timeoutException) {
             // Timeout exceeded, retry transmission.

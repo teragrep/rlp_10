@@ -82,6 +82,7 @@ public class Benchmark {
     private final PrometheusConfiguration prometheusConfiguration;
     private final TimeoutConfiguration timeoutConfiguration;
     private final TransportConfig transportConfiguration;
+    private final RecordStreamConfig recordStreamConfiguration;
     private final List<Initiator> initiators;
     private final List<MetricsReport> reports;
     private final List<Future> executorTasks;
@@ -92,7 +93,8 @@ public class Benchmark {
                 new MetricsConfiguration(),
                 new PrometheusConfiguration(),
                 new TimeoutConfiguration(),
-                new TransportConfig()
+                new TransportConfig(),
+                new RecordStreamConfig()
         );
     }
 
@@ -101,7 +103,8 @@ public class Benchmark {
             final MetricsConfiguration metricsConfiguration,
             final PrometheusConfiguration prometheusConfiguration,
             final TimeoutConfiguration timeoutConfiguration,
-            final TransportConfig transportConfiguration
+            final TransportConfig transportConfiguration,
+            final RecordStreamConfig recordStreamConfig
     ) {
         this.executorService = Executors.newVirtualThreadPerTaskExecutor();
         this.initiatorConfig = initiatorConfig;
@@ -109,6 +112,7 @@ public class Benchmark {
         this.prometheusConfiguration = prometheusConfiguration;
         this.timeoutConfiguration = timeoutConfiguration;
         this.transportConfiguration = transportConfiguration;
+        this.recordStreamConfiguration = recordStreamConfig;
         this.initiators = new ArrayList<>(initiatorConfig.count());
         this.reports = new ArrayList<>();
         this.executorTasks = new ArrayList<>();
@@ -195,7 +199,8 @@ public class Benchmark {
             final RecordStream recordStream = new RecordStreamImpl(
                     "someOrigin",
                     syslogConfig.hostname(),
-                    syslogConfig.appName()
+                    syslogConfig.appName(),
+                    recordStreamConfiguration.records()
             );
 
             final DelayConfig delayConfig = new DelayConfig();
@@ -214,7 +219,6 @@ public class Benchmark {
                         socketAddressConfig.hostname(),
                         socketAddressConfig.port(),
                         metrics,
-                        initiatorConfig.messageCount(),
                         timeoutConfiguration.openTimeout(),
                         timeoutConfiguration.payloadTimeout(),
                         initiatorConfig.retryTransmissionCount(),

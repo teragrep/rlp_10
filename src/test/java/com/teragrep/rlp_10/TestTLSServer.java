@@ -149,13 +149,12 @@ public class TestTLSServer {
 
     @Test
     public void testBenchmark() {
-        final int clients = 1;
-        final int messageCount = 150;
+        final int clients = 50;
+        final int messageCount = 20000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(
                 clients,
-                messageCount,
                 retryTransmissionCount,
                 retryConnectionCount
         );
@@ -170,12 +169,14 @@ public class TestTLSServer {
                 "changeit",
                 "TLSv1.3"
         );
+        final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
         final Benchmark benchmark = new Benchmark(
                 initiatorConfig,
                 metricsConfiguration,
                 prometheusConfiguration,
                 timeoutConfiguration,
-                transportConfiguration
+                transportConfiguration,
+                recordStreamConfig
         );
         benchmark.startBenchmark();
         Assertions.assertTrue(!messageList.isEmpty());

@@ -48,44 +48,56 @@ package com.teragrep.rlp_10;
 import com.teragrep.rlo_14.Facility;
 import com.teragrep.rlo_14.Severity;
 import com.teragrep.rlo_14.SyslogMessage;
+import com.teragrep.rlp_10.config.RecordStreamConfig;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class RecordStreamImpl implements RecordStream {
 
     private final String origin;
     private final String hostname;
     private final String appname;
+    private final long maxSend;
+    private final AtomicInteger sent;
 
-    public RecordStreamImpl(final String origin, final String hostname, final String appname) {
+    public RecordStreamImpl(final String origin, final String hostname, final String appname, final long maxSend) {
         this.origin = origin;
         this.hostname = hostname;
         this.appname = appname;
+        this.maxSend = maxSend;
+        this.sent = new AtomicInteger(0);
     }
 
     @Override
     public byte[] get() {
-        // todo return stub if recordConfig amount is consumed and check stubs in send
-
-        final Instant timestamp = Instant.now();
-        final String timestampString = timestamp.getEpochSecond() + "." + timestamp.getNano();
-        final JsonObject record = Json
-                .createObjectBuilder()
-                .add("origin", origin)
-                .add("timestamp", timestampString)
-                .build();
-        return new SyslogMessage()
-                .withTimestamp(timestamp.toEpochMilli())
-                .withAppName(appname)
-                .withHostname(hostname)
-                .withFacility(Facility.USER)
-                .withSeverity(Severity.INFORMATIONAL)
-                .withMsg(record.toString())
-                .toRfc5424SyslogMessage()
-                .getBytes(StandardCharsets.UTF_8);
+        final byte[] rv;
+        if(sent.get() < maxSend){
+            sent.incrementAndGet();
+            final Instant timestamp = Instant.now();
+            final String timestampString = timestamp.getEpochSecond() + "." + timestamp.getNano();
+            final JsonObject record = Json
+                    .createObjectBuilder()
+                    .add("origin", origin)
+                    .add("timestamp", timestampString)
+                    .build();
+            rv = new SyslogMessage()
+                    .withTimestamp(timestamp.toEpochMilli())
+                    .withAppName(appname)
+                    .withHostname(hostname)
+                    .withFacility(Facility.USER)
+                    .withSeverity(Severity.INFORMATIONAL)
+                    .withMsg(record.toString())
+                    .toRfc5424SyslogMessage()
+                    .getBytes(StandardCharsets.UTF_8);
+        }
+        else {
+            rv = new byte[]{};
+        }
+        return rv;
     }
 
 }

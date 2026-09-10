@@ -48,32 +48,25 @@ package com.teragrep.rlp_10.config;
 public class InitiatorConfig {
 
     private final int initiatorCount;
-    private final int messageCount;
     private final int retryTransmissionCount;
     private final int retryConnectionCount;
 
     public InitiatorConfig() {
-        this(1, 0, 3, 3);
+        this(1, 3, 3);
     }
 
     public InitiatorConfig(
             final int clients,
-            final int messageCount,
             final int retryTransmissionCount,
             final int retryConnectionCount
     ) {
         this.initiatorCount = clients;
-        this.messageCount = messageCount;
         this.retryTransmissionCount = retryTransmissionCount;
         this.retryConnectionCount = retryConnectionCount;
     }
 
     public int count() {
         return initiatorCount;
-    }
-
-    public int messageCount() {
-        return messageCount;
     }
 
     public int retryTransmissionCount() {

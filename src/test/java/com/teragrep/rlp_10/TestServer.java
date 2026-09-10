@@ -117,12 +117,11 @@ public class TestServer {
     @Test
     public void testBenchmark() {
         final int clients = 50;
-        final int messageCount = 250;
+        final long messageCount = 20000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(
                 clients,
-                messageCount,
                 retryTransmissionCount,
                 retryConnectionCount
         );
@@ -130,27 +129,28 @@ public class TestServer {
         final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
         final TimeoutConfiguration timeoutConfiguration = new TimeoutConfiguration();
         final TransportConfig transportConfiguration = new TransportConfig();
+        final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
         final Benchmark benchmark = new Benchmark(
                 initiatorConfig,
                 metricsConfiguration,
                 prometheusConfiguration,
                 timeoutConfiguration,
-                transportConfiguration
+                transportConfiguration,
+                recordStreamConfig
         );
         benchmark.startBenchmark();
         Assertions.assertTrue(!messageList.isEmpty());
-        Assertions.assertTrue(messageList.size() <= clients * messageCount);
+        Assertions.assertEquals(messageList.size(),messageCount);
     }
 
     @Test
     public void testPrometheusServer() throws InterruptedException {
         final int clients = 50;
-        final int messageCount = 50;
+        final int messageCount = 20000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(
                 clients,
-                messageCount,
                 retryTransmissionCount,
                 retryConnectionCount
         );
@@ -158,12 +158,14 @@ public class TestServer {
         final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
         final TimeoutConfiguration timeoutConfiguration = new TimeoutConfiguration();
         final TransportConfig transportConfiguration = new TransportConfig();
+        final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
         final Benchmark benchmark = new Benchmark(
                 initiatorConfig,
                 metricsConfiguration,
                 prometheusConfiguration,
                 timeoutConfiguration,
-                transportConfiguration
+                transportConfiguration,
+                recordStreamConfig
         );
         Thread benchMarkThread = new Thread(() -> benchmark.startBenchmark());
         benchMarkThread.start();
