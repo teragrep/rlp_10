@@ -70,6 +70,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -158,7 +159,8 @@ public class TestTLSServer {
                 retryTransmissionCount,
                 retryConnectionCount
         );
-        final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000, 1);
+        final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000);
+        final ReportConfig reportConfig = new ReportConfig(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
         final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
         final TimeoutConfiguration timeoutConfiguration = new TimeoutConfiguration();
         final TransportConfig transportConfiguration = new TransportConfig(
@@ -176,7 +178,8 @@ public class TestTLSServer {
                 prometheusConfiguration,
                 timeoutConfiguration,
                 transportConfiguration,
-                recordStreamConfig
+                recordStreamConfig,
+                reportConfig
         );
         benchmark.startBenchmark();
         Assertions.assertTrue(!messageList.isEmpty());

@@ -54,7 +54,6 @@ import com.teragrep.rlp_10.config.MetricsConfiguration;
 public class Metrics {
 
     private final MetricRegistry metricRegistry;
-    private final MetricsConfiguration metricsConfiguration;
     private final Counter records;
     private final Counter resends;
     private final Counter connects;
@@ -66,7 +65,7 @@ public class Metrics {
     private final Timer connectLatency;
 
     public Metrics(final MetricsConfiguration metricsConfiguration) {
-        this.metricsConfiguration = metricsConfiguration;
+        // must register each metric before usage, otherwise Prometheus server would fail to report metrics that have not yet received any events
         metricRegistry = new MetricRegistry();
         records = metricRegistry.counter("records");
         resends = metricRegistry.counter("resends");
@@ -85,10 +84,6 @@ public class Metrics {
 
     public MetricRegistry registry() {
         return metricRegistry;
-    }
-
-    public MetricsConfiguration configuration() {
-        return metricsConfiguration;
     }
 
     public Counter connects() {

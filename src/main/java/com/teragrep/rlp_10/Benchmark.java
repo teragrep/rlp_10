@@ -83,6 +83,7 @@ public class Benchmark {
     private final TimeoutConfiguration timeoutConfiguration;
     private final TransportConfig transportConfiguration;
     private final RecordStreamConfig recordStreamConfiguration;
+    private final ReportConfig reportConfiguration;
     private final List<Initiator> initiators;
     private final List<MetricsReport> reports;
     private final List<Future> executorTasks;
@@ -94,7 +95,8 @@ public class Benchmark {
                 new PrometheusConfiguration(),
                 new TimeoutConfiguration(),
                 new TransportConfig(),
-                new RecordStreamConfig()
+                new RecordStreamConfig(),
+                new ReportConfig()
         );
     }
 
@@ -104,7 +106,8 @@ public class Benchmark {
             final PrometheusConfiguration prometheusConfiguration,
             final TimeoutConfiguration timeoutConfiguration,
             final TransportConfig transportConfiguration,
-            final RecordStreamConfig recordStreamConfig
+            final RecordStreamConfig recordStreamConfig,
+            final ReportConfig reportConfiguration
     ) {
         this.executorService = Executors.newVirtualThreadPerTaskExecutor();
         this.initiatorConfig = initiatorConfig;
@@ -113,6 +116,7 @@ public class Benchmark {
         this.timeoutConfiguration = timeoutConfiguration;
         this.transportConfiguration = transportConfiguration;
         this.recordStreamConfiguration = recordStreamConfig;
+        this.reportConfiguration = reportConfiguration;
         this.initiators = new ArrayList<>(initiatorConfig.count());
         this.reports = new ArrayList<>();
         this.executorTasks = new ArrayList<>();
@@ -126,10 +130,10 @@ public class Benchmark {
 
         // reports
         final PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(
-                metrics,
+                metrics.registry(),
                 prometheusConfiguration
         );
-        final Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metrics);
+        final Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metrics.registry(), reportConfiguration);
         reports.add(prometheusMetricsReport);
         reports.add(slf4JMetricsReport);
 

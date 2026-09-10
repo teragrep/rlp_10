@@ -45,8 +45,10 @@
  */
 package com.teragrep.rlp_10.report;
 
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
 import com.teragrep.rlp_10.Metrics;
+import com.teragrep.rlp_10.config.ReportConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,22 +57,22 @@ import java.util.concurrent.TimeUnit;
 public class Slf4JMetricsReport implements MetricsReport {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Slf4JMetricsReport.class);
-    private final Metrics metrics;
+    private final ReportConfig config;
     private final Slf4jReporter slf4jReport;
 
-    public Slf4JMetricsReport(final Metrics metrics) {
-        this.metrics = metrics;
+    public Slf4JMetricsReport(final MetricRegistry registry, final ReportConfig config) {
+        this.config = config;
         this.slf4jReport = Slf4jReporter
-                .forRegistry(metrics.registry())
+                .forRegistry(registry)
                 .outputTo(LOGGER)
-                .convertRatesTo(TimeUnit.SECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .convertRatesTo(config.rateTimeUnit())
+                .convertDurationsTo(config.durationTimeUnit())
                 .build();
     }
 
     @Override
     public void start() {
-        slf4jReport.start(metrics.configuration().interval(), TimeUnit.SECONDS);
+        slf4jReport.start(config.interval(), TimeUnit.MILLISECONDS);
     }
 
     @Override

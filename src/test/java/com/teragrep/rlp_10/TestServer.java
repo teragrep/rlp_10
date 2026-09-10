@@ -65,6 +65,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * These are a copy from rlp_03 test suite
@@ -125,18 +126,20 @@ public class TestServer {
                 retryTransmissionCount,
                 retryConnectionCount
         );
-        final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000, 1);
+        final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000);
         final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
         final TimeoutConfiguration timeoutConfiguration = new TimeoutConfiguration();
         final TransportConfig transportConfiguration = new TransportConfig();
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
+        final ReportConfig reportConfig = new ReportConfig(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
         final Benchmark benchmark = new Benchmark(
                 initiatorConfig,
                 metricsConfiguration,
                 prometheusConfiguration,
                 timeoutConfiguration,
                 transportConfiguration,
-                recordStreamConfig
+                recordStreamConfig,
+                reportConfig
         );
         benchmark.startBenchmark();
         Assertions.assertTrue(!messageList.isEmpty());
@@ -154,18 +157,20 @@ public class TestServer {
                 retryTransmissionCount,
                 retryConnectionCount
         );
-        final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000, 1);
+        final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000);
         final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
         final TimeoutConfiguration timeoutConfiguration = new TimeoutConfiguration();
         final TransportConfig transportConfiguration = new TransportConfig();
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
+        final ReportConfig reportConfig = new ReportConfig(1000,TimeUnit.SECONDS,TimeUnit.MILLISECONDS);
         final Benchmark benchmark = new Benchmark(
                 initiatorConfig,
                 metricsConfiguration,
                 prometheusConfiguration,
                 timeoutConfiguration,
                 transportConfiguration,
-                recordStreamConfig
+                recordStreamConfig,
+                reportConfig
         );
         Thread benchMarkThread = new Thread(() -> benchmark.startBenchmark());
         benchMarkThread.start();

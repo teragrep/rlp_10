@@ -45,12 +45,33 @@
  */
 package com.teragrep.rlp_10.config;
 
+import java.util.concurrent.TimeUnit;
+
 public class ReportConfig {
 
     private final long interval;
+    private final TimeUnit rateTimeUnit;
+    private final TimeUnit durationTimeUnit;
 
-    public ReportConfig(final long interval) {
-        this.interval = interval;
+    public ReportConfig(){
+        this(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
+    }
+    public ReportConfig(final long intervalMs, final TimeUnit rateTimeUnit, final TimeUnit durationTimeUnit) {
+        this.interval = intervalMs;
+        this.rateTimeUnit = rateTimeUnit;
+        this.durationTimeUnit = durationTimeUnit;
+    }
+
+    public long interval(){
+        return interval;
+    }
+
+    public TimeUnit rateTimeUnit(){
+        return rateTimeUnit;
+    }
+
+    public TimeUnit durationTimeUnit(){
+        return durationTimeUnit;
     }
 
 }

@@ -45,46 +45,19 @@
  */
 package com.teragrep.rlp_10.config;
 
-import com.codahale.metrics.*;
-
 public class MetricsConfiguration {
 
     private final int window;
-    private final int interval;
 
     public MetricsConfiguration() {
-        this(10000, 60);
+        this(10000);
     }
 
-    public MetricsConfiguration(final int window, final int interval) {
+    public MetricsConfiguration(final int window) {
         this.window = window;
-        this.interval = interval;
     }
 
     public int window() {
         return window;
-    }
-
-    public int interval() {
-        return interval;
-    }
-
-    /**
-     * Creates a new MetricRegistry with configured options and predefined counters
-     * 
-     * @return a new MetricRegistry instance
-     */
-    public MetricRegistry createRegistry() {
-        final MetricRegistry metricRegistry = new MetricRegistry();
-        metricRegistry.counter("records");
-        metricRegistry.counter("resends");
-        metricRegistry.counter("connects");
-        metricRegistry.counter("disconnects");
-        metricRegistry.counter("retriedConnects");
-        metricRegistry.timer("transactionLatency", () -> new Timer(new SlidingWindowReservoir(window())));
-        metricRegistry.timer("transmitLatency", () -> new Timer(new SlidingWindowReservoir(window())));
-        metricRegistry.timer("receiveLatency", () -> new Timer(new SlidingWindowReservoir(window())));
-        metricRegistry.timer("connectLatency", () -> new Timer(new SlidingWindowReservoir(window())));
-        return metricRegistry;
     }
 }
