@@ -12,14 +12,14 @@ public class MeteredSocket implements Socket {
     private final Socket origin;
     private final Metrics metrics;
 
-    public MeteredSocket(Socket origin, Metrics metrics){
+    public MeteredSocket(final Socket origin, final Metrics metrics){
         this.origin = origin;
         this.metrics = metrics;
     }
 
     @Override
     public long read(final ByteBuffer[] dsts) throws IOException {
-        try(Timer.Context transmitTimer = metrics.transmitLatency().time()){
+        try(final Timer.Context transmitTimer = metrics.transmitLatency().time()){
             return origin.read(dsts);
         }
     }

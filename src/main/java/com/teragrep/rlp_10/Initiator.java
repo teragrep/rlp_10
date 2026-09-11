@@ -149,10 +149,10 @@ class Initiator implements Runnable {
             // send close
             close(relpClient);
         }
-        catch (TimeoutException timeoutException) {
+        catch (final TimeoutException timeoutException) {
             throw new RuntimeException("RelpClient was not initialized within "+openTimeout+" seconds!",timeoutException);
         }
-        catch (ExecutionException | InterruptedException exception) {
+        catch (final ExecutionException | InterruptedException exception) {
             throw new RuntimeException("An unrecoverable error occurred while running Initiator",exception);
         }
     }

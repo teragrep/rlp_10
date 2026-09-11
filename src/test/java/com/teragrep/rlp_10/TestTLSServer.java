@@ -105,27 +105,27 @@ public class TestTLSServer {
                 "TLSv1.3"
         );
 
-        SSLContext sslContext = Assertions
+        final SSLContext sslContext = Assertions
                 .assertDoesNotThrow(() -> SSLContext.getInstance(transportConfiguration.protocol()));
-        KeyStore ks = Assertions.assertDoesNotThrow(() -> KeyStore.getInstance("JKS"));
+        final KeyStore ks = Assertions.assertDoesNotThrow(() -> KeyStore.getInstance("JKS"));
 
-        File file = new File(transportConfiguration.keyStorePath().toUri());
-        FileInputStream fileInputStream = Assertions.assertDoesNotThrow(() -> new FileInputStream(file));
+        final File file = new File(transportConfiguration.keyStorePath().toUri());
+        final FileInputStream fileInputStream = Assertions.assertDoesNotThrow(() -> new FileInputStream(file));
         Assertions
                 .assertDoesNotThrow(
                         () -> ks.load(fileInputStream, transportConfiguration.keyStorePassword().toCharArray())
                 );
-        TrustManagerFactory tmf = Assertions
+        final TrustManagerFactory tmf = Assertions
                 .assertDoesNotThrow(() -> TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()));
         Assertions.assertDoesNotThrow(() -> tmf.init(ks));
-        KeyManagerFactory kmf = Assertions
+        final KeyManagerFactory kmf = Assertions
                 .assertDoesNotThrow(() -> KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm()));
         Assertions.assertDoesNotThrow(() -> kmf.init(ks, transportConfiguration.keyStorePassword().toCharArray()));
         Assertions.assertDoesNotThrow(() -> sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null));
         Assertions.assertDoesNotThrow(fileInputStream::close);
 
-        Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
-            SSLEngine engine = context.createSSLEngine();
+        final Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
+            final SSLEngine engine = context.createSSLEngine();
             engine.setUseClientMode(false);
             return engine;
         };

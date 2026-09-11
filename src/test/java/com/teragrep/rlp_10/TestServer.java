@@ -172,7 +172,7 @@ public class TestServer {
                 recordStreamConfig,
                 reportConfig
         );
-        Thread benchMarkThread = new Thread(() -> benchmark.startBenchmark());
+        final Thread benchMarkThread = new Thread(() -> benchmark.startBenchmark());
         benchMarkThread.start();
         final HttpClient client = HttpClient.newHttpClient();
         final HttpRequest request = HttpRequest

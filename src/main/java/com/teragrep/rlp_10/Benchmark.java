@@ -151,38 +151,38 @@ public class Benchmark {
 
             if (transportConfiguration.tls()) {
                 try {
-                    SSLContext sslContext = SSLContext.getInstance(transportConfiguration.protocol());
-                    KeyStore ks = KeyStore.getInstance("JKS");
-                    KeyStore ts = KeyStore.getInstance("JKS");
+                    final SSLContext sslContext = SSLContext.getInstance(transportConfiguration.protocol());
+                    final KeyStore ks = KeyStore.getInstance("JKS");
+                    final KeyStore ts = KeyStore.getInstance("JKS");
 
-                    File ksFile = new File(transportConfiguration.keyStorePath().toUri());
-                    File tsFile = new File(transportConfiguration.trustStorePath().toUri());
+                    final File ksFile = new File(transportConfiguration.keyStorePath().toUri());
+                    final File tsFile = new File(transportConfiguration.trustStorePath().toUri());
 
-                    try (FileInputStream ksFileIS = new FileInputStream(ksFile)) {
-                        try (FileInputStream tsFileIS = new FileInputStream(tsFile)) {
+                    try (final FileInputStream ksFileIS = new FileInputStream(ksFile)) {
+                        try (final FileInputStream tsFileIS = new FileInputStream(tsFile)) {
                             ts.load(tsFileIS, transportConfiguration.trustStorePassword().toCharArray());
-                            TrustManagerFactory tmf = TrustManagerFactory
+                            final TrustManagerFactory tmf = TrustManagerFactory
                                     .getInstance(TrustManagerFactory.getDefaultAlgorithm());
                             tmf.init(ts);
 
                             ks.load(ksFileIS, transportConfiguration.keyStorePassword().toCharArray());
-                            KeyManagerFactory kmf = KeyManagerFactory
+                            final KeyManagerFactory kmf = KeyManagerFactory
                                     .getInstance(KeyManagerFactory.getDefaultAlgorithm());
                             kmf.init(ks, transportConfiguration.keyStorePassword().toCharArray());
                             sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
                         }
                     }
 
-                    Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
-                        SSLEngine engine = context.createSSLEngine();
+                    final Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
+                        final SSLEngine engine = context.createSSLEngine();
                         engine.setUseClientMode(true);
                         return engine;
                     };
                     socketFactory = new TLSFactory(sslContext, sslEngineFunction);
                 }
                 catch (
-                        KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException
-                        | UnrecoverableKeyException | KeyManagementException e
+                        final KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException
+                              | UnrecoverableKeyException | KeyManagementException e
                 ) {
                     // unrecoverable error
                     throw new RuntimeException("Error while initializing TLS connection, check your configuration!", e);
@@ -235,16 +235,16 @@ public class Benchmark {
             }
 
             // shutdown hook in case JVM is terminated
-            Thread shutdownHook = new Thread(this::stopBenchmark);
+            final Thread shutdownHook = new Thread(this::stopBenchmark);
             Runtime.getRuntime().addShutdownHook(shutdownHook);
 
             // block until each task is complete
-            for (Future task : executorTasks) {
+            for (final Future task : executorTasks) {
                 task.get();
             }
             stopBenchmark();
         }
-        catch (InterruptedException | ExecutionException | IOException e) {
+        catch (final InterruptedException | ExecutionException | IOException e) {
             // unrecoverable exceptions
             throw new RuntimeException(e);
         }
