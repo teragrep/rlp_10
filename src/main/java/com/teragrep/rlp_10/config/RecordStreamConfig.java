@@ -59,7 +59,7 @@ public class RecordStreamConfig {
         this.records = records;
     }
 
-    public long records(){
+    public long records() {
         return records;
     }
 }

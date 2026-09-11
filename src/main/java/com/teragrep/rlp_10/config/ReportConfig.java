@@ -53,24 +53,25 @@ public class ReportConfig {
     private final TimeUnit rateTimeUnit;
     private final TimeUnit durationTimeUnit;
 
-    public ReportConfig(){
+    public ReportConfig() {
         this(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
     }
+
     public ReportConfig(final long intervalMs, final TimeUnit rateTimeUnit, final TimeUnit durationTimeUnit) {
         this.interval = intervalMs;
         this.rateTimeUnit = rateTimeUnit;
         this.durationTimeUnit = durationTimeUnit;
     }
 
-    public long interval(){
+    public long interval() {
         return interval;
     }
 
-    public TimeUnit rateTimeUnit(){
+    public TimeUnit rateTimeUnit() {
         return rateTimeUnit;
     }
 
-    public TimeUnit durationTimeUnit(){
+    public TimeUnit durationTimeUnit() {
         return durationTimeUnit;
     }
 

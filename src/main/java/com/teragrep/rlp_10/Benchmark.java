@@ -180,10 +180,12 @@ public class Benchmark {
                     };
                     socketFactory = new TLSFactory(sslContext, sslEngineFunction);
                 }
-                catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException |
-                       UnrecoverableKeyException | KeyManagementException e) {
+                catch (
+                        KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException
+                        | UnrecoverableKeyException | KeyManagementException e
+                ) {
                     // unrecoverable error
-                    throw new RuntimeException("Error while initializing TLS connection, check your configuration!",e);
+                    throw new RuntimeException("Error while initializing TLS connection, check your configuration!", e);
                 }
             }
             else {
@@ -224,9 +226,11 @@ public class Benchmark {
                         socketAddressConfig.port(),
                         metrics,
                         timeoutConfiguration.openTimeout(),
+                        timeoutConfiguration.closeTimeout(),
                         timeoutConfiguration.payloadTimeout(),
                         initiatorConfig.retryTransmissionCount(),
-                        initiatorConfig.retryConnectionCount()
+                        initiatorConfig.retryConnectionCount(),
+                        initiatorConfig.retryCloseCount()
                 );
                 executorTasks.add(executorService.submit(initiator));
                 initiators.add(initiator);

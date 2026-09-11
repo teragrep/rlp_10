@@ -54,7 +54,6 @@ import com.teragrep.rlp_10.exception.TransmissionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
@@ -73,9 +72,11 @@ class Initiator implements Runnable {
     private final String hostname;
     private final int port;
     private final long openTimeout;
+    private final long closeTimeout;
     private final long payloadTimeout;
     private final int retryTransmissionCount;
     private final int retryConnectCount;
+    private final int retryCloseCount;
 
     private volatile boolean run = true;
 
@@ -85,9 +86,11 @@ class Initiator implements Runnable {
             final RecordStream recordStream,
             final Metrics metrics,
             final int openTimeout,
+            final long closeTimeout,
             final long payloadTimeout,
             final int retryTransmissionCount,
-            final int retryConnectionCount
+            final int retryConnectionCount,
+            final int retryCloseCount
     ) {
         this(
                 relpClientFactory,
@@ -96,9 +99,11 @@ class Initiator implements Runnable {
                 1601,
                 metrics,
                 openTimeout,
+                closeTimeout,
                 payloadTimeout,
                 retryTransmissionCount,
-                retryConnectionCount
+                retryConnectionCount,
+                retryCloseCount
         );
     }
 
@@ -109,9 +114,11 @@ class Initiator implements Runnable {
             final int port,
             final Metrics metrics,
             final long connectTimeout,
+            final long closeTimeout,
             final long payloadTimeout,
             final int retryTransmissionCount,
-            final int retryConnectCount
+            final int retryConnectCount,
+            final int retryCloseCount
     ) {
         this.relpClientFactory = relpClientFactory;
         this.recordStream = recordStream;
@@ -119,9 +126,11 @@ class Initiator implements Runnable {
         this.port = port;
         this.metrics = metrics;
         this.openTimeout = connectTimeout;
+        this.closeTimeout = closeTimeout;
         this.payloadTimeout = payloadTimeout;
         this.retryTransmissionCount = retryTransmissionCount;
         this.retryConnectCount = retryConnectCount;
+        this.retryCloseCount = retryCloseCount;
     }
 
     @Override
@@ -135,30 +144,33 @@ class Initiator implements Runnable {
             try (final Timer.Context timerContext = metrics.connectLatency().time()) {
                 if (!connect(relpClient, retryConnectCount)) {
                     stop();
-                    throw new RuntimeException(
-                            "Failed to connect to server! Stopping..."
-                    );
+                    throw new RuntimeException("Failed to connect to server! Stopping...");
                 }
                 metrics.connects().inc();
             }
 
             // send syslog messageCount number of times
-            while(run){
-                if(!send(relpClient, retryTransmissionCount)){
+            while (run) {
+                if (!send(relpClient, retryTransmissionCount)) {
                     stop();
                 }
             }
 
             // send close
-            close(relpClient);
+            if (!close(relpClient, retryCloseCount)) {
+                LOGGER.error("RelpClient was not closed after {} tries!", retryCloseCount);
+                stop();
+                throw new RuntimeException("Failed to close connection to server! Stopping...");
+            }
+            ;
             metrics.disconnects().inc();
 
         }
-        catch (TimeoutException timeoutException){
-            LOGGER.warn("RelpClient was not initialized within {} seconds, stopping!",openTimeout);
+        catch (TimeoutException timeoutException) {
+            LOGGER.warn("RelpClient was not initialized within {} seconds, stopping!", openTimeout);
         }
         catch (ExecutionException | InterruptedException e) {
-            LOGGER.error("An unrecoverable error occurred while running Initiator",e);
+            LOGGER.error("An unrecoverable error occurred while running Initiator", e);
         }
     }
 
@@ -185,7 +197,7 @@ class Initiator implements Runnable {
         }
         catch (final TimeoutException timeoutException) {
             open.cancel(false);
-            LOGGER.warn("Connection attempt timeout after {} seconds!",openTimeout);
+            LOGGER.warn("Connection attempt timeout after {} seconds!", openTimeout);
             return false;
         }
         return connected;
@@ -211,7 +223,7 @@ class Initiator implements Runnable {
             // stop transmit timer as soon as relpClient.transmit() finishes and start receiveTimer.
             final String payload = new String(recordStream.get(), StandardCharsets.UTF_8);
             //todo should be SyslogStub
-            if(payload.isEmpty()){
+            if (payload.isEmpty()) {
                 return false;
             }
             else {
@@ -243,9 +255,31 @@ class Initiator implements Runnable {
         }
     }
 
-    private void close(final RelpClient relpClient) throws ExecutionException, InterruptedException {
+    private boolean close(final RelpClient relpClient, final int retryCount) {
+        int retries = 0;
+        boolean closed = close(relpClient);
+        while (!closed && retries < retryCount) {
+            retries++;
+            closed = send(relpClient);
+        }
+        return closed;
+    }
+
+    private boolean close(final RelpClient relpClient) {
         final CompletableFuture<RelpFrame> close = relpClient.transmit(relpFrameFactory.create("close", ""));
-        close.get();
+        try {
+            close.get(closeTimeout, TimeUnit.SECONDS);
+            return true;
+        }
+        catch (TimeoutException timeoutException) {
+            LOGGER.warn("RelpClient was not closed within {} seconds!", closeTimeout, timeoutException);
+            return false;
+        }
+        catch (InterruptedException | ExecutionException exception) {
+            // unrecoverable exception
+            LOGGER.error("An unrecoverable error occurred while closing connection to a RelpClient!", exception);
+            throw new RuntimeException(exception);
+        }
     }
 
     public void stop() {

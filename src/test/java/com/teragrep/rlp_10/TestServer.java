@@ -121,10 +121,12 @@ public class TestServer {
         final long messageCount = 20000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
+        final int retryCloseCount = 3;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(
                 clients,
                 retryTransmissionCount,
-                retryConnectionCount
+                retryConnectionCount,
+                retryCloseCount
         );
         final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000);
         final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
@@ -143,7 +145,7 @@ public class TestServer {
         );
         benchmark.startBenchmark();
         Assertions.assertTrue(!messageList.isEmpty());
-        Assertions.assertEquals(messageList.size(),messageCount);
+        Assertions.assertEquals(messageList.size(), messageCount);
     }
 
     @Test
@@ -152,17 +154,19 @@ public class TestServer {
         final int messageCount = 20000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
+        final int retryCloseCount = 3;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(
                 clients,
                 retryTransmissionCount,
-                retryConnectionCount
+                retryConnectionCount,
+                retryCloseCount
         );
         final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000);
         final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
         final TimeoutConfiguration timeoutConfiguration = new TimeoutConfiguration();
         final TransportConfig transportConfiguration = new TransportConfig();
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
-        final ReportConfig reportConfig = new ReportConfig(1000,TimeUnit.SECONDS,TimeUnit.MILLISECONDS);
+        final ReportConfig reportConfig = new ReportConfig(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
         final Benchmark benchmark = new Benchmark(
                 initiatorConfig,
                 metricsConfiguration,

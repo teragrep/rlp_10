@@ -62,10 +62,8 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.security.*;
-import java.security.cert.CertificateException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -107,17 +105,23 @@ public class TestTLSServer {
                 "TLSv1.3"
         );
 
-        SSLContext sslContext = Assertions.assertDoesNotThrow(()->SSLContext.getInstance(transportConfiguration.protocol()));
-        KeyStore ks = Assertions.assertDoesNotThrow(()->KeyStore.getInstance("JKS"));
+        SSLContext sslContext = Assertions
+                .assertDoesNotThrow(() -> SSLContext.getInstance(transportConfiguration.protocol()));
+        KeyStore ks = Assertions.assertDoesNotThrow(() -> KeyStore.getInstance("JKS"));
 
         File file = new File(transportConfiguration.keyStorePath().toUri());
-        FileInputStream fileInputStream = Assertions.assertDoesNotThrow(()->new FileInputStream(file));
-        Assertions.assertDoesNotThrow(()->ks.load(fileInputStream, transportConfiguration.keyStorePassword().toCharArray()));
-        TrustManagerFactory tmf = Assertions.assertDoesNotThrow(()->TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()));
-        Assertions.assertDoesNotThrow(()->tmf.init(ks));
-        KeyManagerFactory kmf = Assertions.assertDoesNotThrow(()->KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm()));
-        Assertions.assertDoesNotThrow(()->kmf.init(ks, transportConfiguration.keyStorePassword().toCharArray()));
-        Assertions.assertDoesNotThrow(()->sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null));
+        FileInputStream fileInputStream = Assertions.assertDoesNotThrow(() -> new FileInputStream(file));
+        Assertions
+                .assertDoesNotThrow(
+                        () -> ks.load(fileInputStream, transportConfiguration.keyStorePassword().toCharArray())
+                );
+        TrustManagerFactory tmf = Assertions
+                .assertDoesNotThrow(() -> TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()));
+        Assertions.assertDoesNotThrow(() -> tmf.init(ks));
+        KeyManagerFactory kmf = Assertions
+                .assertDoesNotThrow(() -> KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm()));
+        Assertions.assertDoesNotThrow(() -> kmf.init(ks, transportConfiguration.keyStorePassword().toCharArray()));
+        Assertions.assertDoesNotThrow(() -> sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null));
         Assertions.assertDoesNotThrow(fileInputStream::close);
 
         Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
@@ -154,10 +158,12 @@ public class TestTLSServer {
         final int messageCount = 20000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
+        final int retryCloseCount = 3;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(
                 clients,
                 retryTransmissionCount,
-                retryConnectionCount
+                retryConnectionCount,
+                retryCloseCount
         );
         final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000);
         final ReportConfig reportConfig = new ReportConfig(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);

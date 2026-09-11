@@ -66,7 +66,10 @@ public class PrometheusMetricsReport implements MetricsReport {
         this(registry, new PrometheusConfiguration());
     }
 
-    public PrometheusMetricsReport(final MetricRegistry registry, final PrometheusConfiguration prometheusConfiguration) {
+    public PrometheusMetricsReport(
+            final MetricRegistry registry,
+            final PrometheusConfiguration prometheusConfiguration
+    ) {
         this.registry = registry;
         this.prometheusMetricsServer = new Server(prometheusConfiguration.port());
     }

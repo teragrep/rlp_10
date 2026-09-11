@@ -69,4 +69,8 @@ public class TimeoutConfiguration {
         return payloadTimeout;
     }
 
+    public long closeTimeout() {
+        return closeTimeout;
+    }
+
 }

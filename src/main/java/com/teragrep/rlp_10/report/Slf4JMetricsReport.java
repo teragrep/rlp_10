@@ -47,7 +47,6 @@ package com.teragrep.rlp_10.report;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
-import com.teragrep.rlp_10.Metrics;
 import com.teragrep.rlp_10.config.ReportConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

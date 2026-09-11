@@ -74,7 +74,7 @@ class RecordStreamImpl implements RecordStream {
     @Override
     public byte[] get() {
         final byte[] rv;
-        if(sent.get() < records){
+        if (sent.get() < records) {
             sent.incrementAndGet();
             final Instant timestamp = Instant.now();
             final String timestampString = timestamp.getEpochSecond() + "." + timestamp.getNano();
@@ -94,7 +94,7 @@ class RecordStreamImpl implements RecordStream {
                     .getBytes(StandardCharsets.UTF_8);
         }
         else {
-            rv = new byte[]{};
+            rv = new byte[] {};
         }
         return rv;
     }
