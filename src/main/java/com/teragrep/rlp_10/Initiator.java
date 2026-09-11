@@ -210,7 +210,8 @@ class Initiator implements Runnable {
             // stop transmit timer as soon as relpClient.transmit() finishes and start receiveTimer.
             final String payload = new String(recordStream.get(), StandardCharsets.UTF_8); // todo recordStream should return a stubable SyslogMessage
             if (payload.isEmpty()) {
-                return false;
+                stop();
+                return true;
             }
             else {
                 final CompletableFuture<RelpFrame> syslog = relpClient
