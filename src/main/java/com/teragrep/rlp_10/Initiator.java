@@ -76,7 +76,6 @@ class Initiator implements Runnable {
     private final long payloadTimeout;
     private final int retryTransmissionCount;
     private final int retryConnectCount;
-    private final int retryCloseCount;
 
     private volatile boolean run = true;
 
@@ -89,8 +88,7 @@ class Initiator implements Runnable {
             final long closeTimeout,
             final long payloadTimeout,
             final int retryTransmissionCount,
-            final int retryConnectionCount,
-            final int retryCloseCount
+            final int retryConnectionCount
     ) {
         this(
                 relpClientFactory,
@@ -102,8 +100,7 @@ class Initiator implements Runnable {
                 closeTimeout,
                 payloadTimeout,
                 retryTransmissionCount,
-                retryConnectionCount,
-                retryCloseCount
+                retryConnectionCount
         );
     }
 
@@ -117,8 +114,7 @@ class Initiator implements Runnable {
             final long closeTimeout,
             final long payloadTimeout,
             final int retryTransmissionCount,
-            final int retryConnectCount,
-            final int retryCloseCount
+            final int retryConnectCount
     ) {
         this.relpClientFactory = relpClientFactory;
         this.recordStream = recordStream;
@@ -130,7 +126,6 @@ class Initiator implements Runnable {
         this.payloadTimeout = payloadTimeout;
         this.retryTransmissionCount = retryTransmissionCount;
         this.retryConnectCount = retryConnectCount;
-        this.retryCloseCount = retryCloseCount;
     }
 
     @Override
@@ -157,13 +152,7 @@ class Initiator implements Runnable {
             }
 
             // send close
-            if (!close(relpClient, retryCloseCount)) {
-                LOGGER.error("RelpClient was not closed after {} tries!", retryCloseCount);
-                stop();
-                throw new RuntimeException("Failed to close connection to server! Stopping...");
-            }
-            ;
-            metrics.disconnects().inc();
+            close(relpClient);
 
         }
         catch (TimeoutException timeoutException) {
@@ -256,25 +245,11 @@ class Initiator implements Runnable {
         }
     }
 
-    private boolean close(final RelpClient relpClient, final int retryCount) {
-        int retries = 0;
-        boolean closed = close(relpClient);
-        while (!closed && retries < retryCount) {
-            retries++;
-            closed = send(relpClient);
-        }
-        return closed;
-    }
-
-    private boolean close(final RelpClient relpClient) {
+    private void close(final RelpClient relpClient) {
         final CompletableFuture<RelpFrame> close = relpClient.transmit(relpFrameFactory.create("close", ""));
         try {
-            close.get(closeTimeout, TimeUnit.SECONDS);
-            return true;
-        }
-        catch (TimeoutException timeoutException) {
-            LOGGER.warn("RelpClient was not closed within {} seconds!", closeTimeout, timeoutException);
-            return false;
+            metrics.disconnects().inc();
+            close.get();
         }
         catch (InterruptedException | ExecutionException exception) {
             // unrecoverable exception

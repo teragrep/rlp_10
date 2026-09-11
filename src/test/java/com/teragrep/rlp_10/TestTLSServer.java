@@ -158,12 +158,10 @@ public class TestTLSServer {
         final int messageCount = 20000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
-        final int retryCloseCount = 3;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(
                 clients,
                 retryTransmissionCount,
-                retryConnectionCount,
-                retryCloseCount
+                retryConnectionCount
         );
         final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000);
         final ReportConfig reportConfig = new ReportConfig(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);

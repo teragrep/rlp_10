@@ -229,8 +229,7 @@ public class Benchmark {
                         timeoutConfiguration.closeTimeout(),
                         timeoutConfiguration.payloadTimeout(),
                         initiatorConfig.retryTransmissionCount(),
-                        initiatorConfig.retryConnectionCount(),
-                        initiatorConfig.retryCloseCount()
+                        initiatorConfig.retryConnectionCount()
                 );
                 executorTasks.add(executorService.submit(initiator));
                 initiators.add(initiator);
