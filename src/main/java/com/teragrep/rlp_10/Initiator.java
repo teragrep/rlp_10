@@ -150,10 +150,13 @@ class Initiator implements Runnable {
             close(relpClient);
         }
         catch (final TimeoutException timeoutException) {
-            throw new RuntimeException("RelpClient was not initialized within "+openTimeout+" seconds!",timeoutException);
+            throw new RuntimeException(
+                    "RelpClient was not initialized within " + openTimeout + " seconds!",
+                    timeoutException
+            );
         }
         catch (final ExecutionException | InterruptedException exception) {
-            throw new RuntimeException("An unrecoverable error occurred while running Initiator",exception);
+            throw new RuntimeException("An unrecoverable error occurred while running Initiator", exception);
         }
     }
 
@@ -185,7 +188,8 @@ class Initiator implements Runnable {
         return connected;
     }
 
-    private boolean send(final RelpClient relpClient, final int retryCount) throws InterruptedException, ExecutionException {
+    private boolean send(final RelpClient relpClient, final int retryCount)
+            throws InterruptedException, ExecutionException {
         int retries = 0;
         boolean sent = send(relpClient);
         while (!sent && retries < retryCount) {
@@ -196,7 +200,7 @@ class Initiator implements Runnable {
         return sent;
     }
 
-    private boolean send(final RelpClient relpClient) throws InterruptedException, ExecutionException{
+    private boolean send(final RelpClient relpClient) throws InterruptedException, ExecutionException {
         try {
             // start transaction and transmit timers
             final Timer.Context transactionTimer = metrics.transactionLatency().time();
