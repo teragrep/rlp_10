@@ -48,7 +48,6 @@ package com.teragrep.rlp_10;
 import com.teragrep.rlo_14.Facility;
 import com.teragrep.rlo_14.Severity;
 import com.teragrep.rlo_14.SyslogMessage;
-import com.teragrep.rlp_10.config.RecordStreamConfig;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 
@@ -61,21 +60,21 @@ class RecordStreamImpl implements RecordStream {
     private final String origin;
     private final String hostname;
     private final String appname;
-    private final long maxSend;
+    private final long records;
     private final AtomicInteger sent;
 
-    public RecordStreamImpl(final String origin, final String hostname, final String appname, final long maxSend) {
+    public RecordStreamImpl(final String origin, final String hostname, final String appname, final long records) {
         this.origin = origin;
         this.hostname = hostname;
         this.appname = appname;
-        this.maxSend = maxSend;
+        this.records = records;
         this.sent = new AtomicInteger(0);
     }
 
     @Override
     public byte[] get() {
         final byte[] rv;
-        if(sent.get() < maxSend){
+        if(sent.get() < records){
             sent.incrementAndGet();
             final Instant timestamp = Instant.now();
             final String timestampString = timestamp.getEpochSecond() + "." + timestamp.getNano();
