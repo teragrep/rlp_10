@@ -138,8 +138,8 @@ class Initiator implements Runnable {
             // try to connect, retrying until connection is established or a configured retry limit is reached
             try (final Timer.Context timerContext = metrics.connectLatency().time()) {
                 if (!connect(relpClient, retryConnectCount)) {
+                    LOGGER.error("Failed to connect to server! Stopping...");
                     stop();
-                    throw new RuntimeException("Failed to connect to server! Stopping...");
                 }
                 metrics.connects().inc();
             }
@@ -147,19 +147,18 @@ class Initiator implements Runnable {
             // send syslog messageCount number of times
             while (run) {
                 if (!send(relpClient, retryTransmissionCount)) {
+                    LOGGER.error("Failed to send syslog message! Stopping...");
                     stop();
                 }
             }
-
             // send close
             close(relpClient);
-
         }
         catch (TimeoutException timeoutException) {
-            LOGGER.warn("RelpClient was not initialized within {} seconds, stopping!", openTimeout);
+            throw new RuntimeException("RelpClient was not initialized within "+openTimeout+" seconds!",timeoutException);
         }
-        catch (ExecutionException | InterruptedException e) {
-            LOGGER.error("An unrecoverable error occurred while running Initiator", e);
+        catch (ExecutionException | InterruptedException exception) {
+            throw new RuntimeException("An unrecoverable error occurred while running Initiator",exception);
         }
     }
 
@@ -168,7 +167,6 @@ class Initiator implements Runnable {
         int retries = 0;
         boolean connected = connect(relpClient);
         while (!connected && retries < retryCount) {
-            LOGGER.warn("Failed to connect, retrying...");
             retries++;
             metrics.retriedConnects().inc();
             connected = connect(relpClient);
@@ -192,7 +190,7 @@ class Initiator implements Runnable {
         return connected;
     }
 
-    private boolean send(final RelpClient relpClient, final int retryCount) {
+    private boolean send(final RelpClient relpClient, final int retryCount) throws InterruptedException, ExecutionException {
         int retries = 0;
         boolean sent = send(relpClient);
         while (!sent && retries < retryCount) {
@@ -203,7 +201,7 @@ class Initiator implements Runnable {
         return sent;
     }
 
-    private boolean send(final RelpClient relpClient) {
+    private boolean send(final RelpClient relpClient) throws InterruptedException, ExecutionException{
         try {
             // start transaction and transmit timers
             final Timer.Context transactionTimer = metrics.transactionLatency().time();
@@ -236,26 +234,15 @@ class Initiator implements Runnable {
             }
         }
         catch (final TimeoutException timeoutException) {
-            // Timeout exceeded, retry transmission.
+            LOGGER.warn("Send syslog attempt timeout after {} seconds!", payloadTimeout);
             return false;
-        }
-        catch (final ExecutionException | InterruptedException | TransmissionException e) {
-            // Unrecoverable error cases
-            throw new RuntimeException(e);
         }
     }
 
-    private void close(final RelpClient relpClient) {
+    private void close(final RelpClient relpClient) throws InterruptedException, ExecutionException {
         final CompletableFuture<RelpFrame> close = relpClient.transmit(relpFrameFactory.create("close", ""));
-        try {
-            metrics.disconnects().inc();
-            close.get();
-        }
-        catch (InterruptedException | ExecutionException exception) {
-            // unrecoverable exception
-            LOGGER.error("An unrecoverable error occurred while closing connection to a RelpClient!", exception);
-            throw new RuntimeException(exception);
-        }
+        metrics.disconnects().inc();
+        close.get();
     }
 
     public void stop() {
