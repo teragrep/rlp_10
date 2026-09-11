@@ -83,7 +83,7 @@ class Initiator implements Runnable {
             final RelpClientFactory relpClientFactory,
             final RecordStream recordStream,
             final Metrics metrics,
-            final int openTimeout,
+            final long openTimeout,
             final long payloadTimeout,
             final int retryTransmissionCount,
             final int retryConnectionCount
