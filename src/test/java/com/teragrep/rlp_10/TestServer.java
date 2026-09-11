@@ -60,7 +60,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.security.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -126,12 +125,15 @@ public class TestServer {
                 retryTransmissionCount,
                 retryConnectionCount
         );
-        final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000);
-        final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
-        final TimeoutConfiguration timeoutConfiguration = new TimeoutConfiguration();
+        final MetricsConfig metricsConfiguration = new MetricsConfig(10000);
+        final PrometheusConfig prometheusConfiguration = new PrometheusConfig(8080);
+        final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
         final TransportConfig transportConfiguration = new TransportConfig();
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
         final ReportConfig reportConfig = new ReportConfig(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
+        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
+        final DelayConfig delayConfig = new DelayConfig();
+        final SyslogConfig syslogConfig = new SyslogConfig();
         final Benchmark benchmark = new Benchmark(
                 initiatorConfig,
                 metricsConfiguration,
@@ -139,7 +141,10 @@ public class TestServer {
                 timeoutConfiguration,
                 transportConfiguration,
                 recordStreamConfig,
-                reportConfig
+                reportConfig,
+                socketAddressConfig,
+                delayConfig,
+                syslogConfig
         );
         benchmark.startBenchmark();
         Assertions.assertTrue(!messageList.isEmpty());
@@ -157,12 +162,15 @@ public class TestServer {
                 retryTransmissionCount,
                 retryConnectionCount
         );
-        final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000);
-        final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
-        final TimeoutConfiguration timeoutConfiguration = new TimeoutConfiguration();
+        final MetricsConfig metricsConfiguration = new MetricsConfig(10000);
+        final PrometheusConfig prometheusConfiguration = new PrometheusConfig(8080);
+        final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
         final TransportConfig transportConfiguration = new TransportConfig();
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
         final ReportConfig reportConfig = new ReportConfig(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
+        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
+        final DelayConfig delayConfig = new DelayConfig();
+        final SyslogConfig syslogConfig = new SyslogConfig();
         final Benchmark benchmark = new Benchmark(
                 initiatorConfig,
                 metricsConfiguration,
@@ -170,7 +178,10 @@ public class TestServer {
                 timeoutConfiguration,
                 transportConfiguration,
                 recordStreamConfig,
-                reportConfig
+                reportConfig,
+                socketAddressConfig,
+                delayConfig,
+                syslogConfig
         );
         final Thread benchMarkThread = new Thread(() -> benchmark.startBenchmark());
         benchMarkThread.start();

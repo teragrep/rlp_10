@@ -163,10 +163,10 @@ public class TestTLSServer {
                 retryTransmissionCount,
                 retryConnectionCount
         );
-        final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(10000);
+        final MetricsConfig metricsConfiguration = new MetricsConfig(10000);
         final ReportConfig reportConfig = new ReportConfig(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
-        final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(8080);
-        final TimeoutConfiguration timeoutConfiguration = new TimeoutConfiguration();
+        final PrometheusConfig prometheusConfiguration = new PrometheusConfig(8080);
+        final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
         final TransportConfig transportConfiguration = new TransportConfig(
                 true,
                 Path.of("src/test/resources/tls/keystore-client.jks"),
@@ -176,6 +176,9 @@ public class TestTLSServer {
                 "TLSv1.3"
         );
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
+        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
+        final DelayConfig delayConfig = new DelayConfig();
+        final SyslogConfig syslogConfig = new SyslogConfig();
         final Benchmark benchmark = new Benchmark(
                 initiatorConfig,
                 metricsConfiguration,
@@ -183,7 +186,10 @@ public class TestTLSServer {
                 timeoutConfiguration,
                 transportConfiguration,
                 recordStreamConfig,
-                reportConfig
+                reportConfig,
+                socketAddressConfig,
+                delayConfig,
+                syslogConfig
         );
         benchmark.startBenchmark();
         Assertions.assertTrue(!messageList.isEmpty());

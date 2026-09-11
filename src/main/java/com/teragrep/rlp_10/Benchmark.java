@@ -78,12 +78,15 @@ public class Benchmark {
 
     private final ExecutorService executorService;
     private final InitiatorConfig initiatorConfig;
-    private final MetricsConfiguration metricsConfiguration;
-    private final PrometheusConfiguration prometheusConfiguration;
-    private final TimeoutConfiguration timeoutConfiguration;
-    private final TransportConfig transportConfiguration;
-    private final RecordStreamConfig recordStreamConfiguration;
-    private final ReportConfig reportConfiguration;
+    private final MetricsConfig metricsConfig;
+    private final PrometheusConfig prometheusConfig;
+    private final TimeoutConfig timeoutConfig;
+    private final TransportConfig transportConfig;
+    private final RecordStreamConfig recordStreamConfig;
+    private final ReportConfig reportConfig;
+    private final SocketAddressConfig socketAddressConfig;
+    private final DelayConfig delayConfig;
+    private final SyslogConfig syslogConfig;
     private final List<Initiator> initiators;
     private final List<MetricsReport> reports;
     private final List<Future> executorTasks;
@@ -91,32 +94,41 @@ public class Benchmark {
     public Benchmark() {
         this(
                 new InitiatorConfig(),
-                new MetricsConfiguration(),
-                new PrometheusConfiguration(),
-                new TimeoutConfiguration(),
+                new MetricsConfig(),
+                new PrometheusConfig(),
+                new TimeoutConfig(),
                 new TransportConfig(),
                 new RecordStreamConfig(),
-                new ReportConfig()
+                new ReportConfig(),
+                new SocketAddressConfig(),
+                new DelayConfig(),
+                new SyslogConfig()
         );
     }
 
     public Benchmark(
             final InitiatorConfig initiatorConfig,
-            final MetricsConfiguration metricsConfiguration,
-            final PrometheusConfiguration prometheusConfiguration,
-            final TimeoutConfiguration timeoutConfiguration,
-            final TransportConfig transportConfiguration,
+            final MetricsConfig metricsConfig,
+            final PrometheusConfig prometheusConfig,
+            final TimeoutConfig timeoutConfig,
+            final TransportConfig transportConfig,
             final RecordStreamConfig recordStreamConfig,
-            final ReportConfig reportConfiguration
+            final ReportConfig reportConfig,
+            final SocketAddressConfig socketAddressConfig,
+            final DelayConfig delayConfig,
+            final SyslogConfig syslogConfig
     ) {
         this.executorService = Executors.newVirtualThreadPerTaskExecutor();
         this.initiatorConfig = initiatorConfig;
-        this.metricsConfiguration = metricsConfiguration;
-        this.prometheusConfiguration = prometheusConfiguration;
-        this.timeoutConfiguration = timeoutConfiguration;
-        this.transportConfiguration = transportConfiguration;
-        this.recordStreamConfiguration = recordStreamConfig;
-        this.reportConfiguration = reportConfiguration;
+        this.metricsConfig = metricsConfig;
+        this.prometheusConfig = prometheusConfig;
+        this.timeoutConfig = timeoutConfig;
+        this.transportConfig = transportConfig;
+        this.recordStreamConfig = recordStreamConfig;
+        this.reportConfig = reportConfig;
+        this.socketAddressConfig = socketAddressConfig;
+        this.delayConfig = delayConfig;
+        this.syslogConfig = syslogConfig;
         this.initiators = new ArrayList<>(initiatorConfig.count());
         this.reports = new ArrayList<>();
         this.executorTasks = new ArrayList<>();
@@ -125,15 +137,14 @@ public class Benchmark {
     public void startBenchmark() {
         // todo configs
 
-        final Metrics metrics = new Metrics(metricsConfiguration);
-        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
+        final Metrics metrics = new Metrics(metricsConfig);
 
         // reports
         final PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(
                 metrics.registry(),
-                prometheusConfiguration
+                prometheusConfig
         );
-        final Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metrics.registry(), reportConfiguration);
+        final Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metrics.registry(), reportConfig);
         reports.add(prometheusMetricsReport);
         reports.add(slf4JMetricsReport);
 
@@ -149,26 +160,26 @@ public class Benchmark {
 
             final SocketFactory socketFactory;
 
-            if (transportConfiguration.tls()) {
+            if (transportConfig.tls()) {
                 try {
-                    final SSLContext sslContext = SSLContext.getInstance(transportConfiguration.protocol());
+                    final SSLContext sslContext = SSLContext.getInstance(transportConfig.protocol());
                     final KeyStore ks = KeyStore.getInstance("JKS");
                     final KeyStore ts = KeyStore.getInstance("JKS");
 
-                    final File ksFile = new File(transportConfiguration.keyStorePath().toUri());
-                    final File tsFile = new File(transportConfiguration.trustStorePath().toUri());
+                    final File ksFile = new File(transportConfig.keyStorePath().toUri());
+                    final File tsFile = new File(transportConfig.trustStorePath().toUri());
 
                     final FileInputStream ksFileIS = new FileInputStream(ksFile);
                     final FileInputStream tsFileIS = new FileInputStream(tsFile);
-                    ts.load(tsFileIS, transportConfiguration.trustStorePassword().toCharArray());
+                    ts.load(tsFileIS, transportConfig.trustStorePassword().toCharArray());
                     final TrustManagerFactory tmf = TrustManagerFactory
                             .getInstance(TrustManagerFactory.getDefaultAlgorithm());
                     tmf.init(ts);
 
-                    ks.load(ksFileIS, transportConfiguration.keyStorePassword().toCharArray());
+                    ks.load(ksFileIS, transportConfig.keyStorePassword().toCharArray());
                     final KeyManagerFactory kmf = KeyManagerFactory
                             .getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                    kmf.init(ks, transportConfiguration.keyStorePassword().toCharArray());
+                    kmf.init(ks, transportConfig.keyStorePassword().toCharArray());
                     sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 
                     tsFileIS.close();
@@ -200,17 +211,14 @@ public class Benchmark {
 
             final RelpClientFactory relpClientFactory = new RelpClientFactory(connectContextFactory, eventLoop);
 
-            final SyslogConfig syslogConfig = new SyslogConfig();
-
             // todo use Hostname class from aer_02 or create new component for it
             final RecordStream recordStream = new RecordStreamImpl(
                     "someOrigin",
                     syslogConfig.hostname(),
                     syslogConfig.appName(),
-                    recordStreamConfiguration.records()
+                    recordStreamConfig.records()
             );
 
-            final DelayConfig delayConfig = new DelayConfig();
             final RecordStream delayedStream;
             if (delayConfig.delay() > 0) {
                 delayedStream = new RecordStreamDelay(delayConfig.delay(), recordStream);
@@ -226,8 +234,8 @@ public class Benchmark {
                         socketAddressConfig.hostname(),
                         socketAddressConfig.port(),
                         metrics,
-                        timeoutConfiguration.openTimeout(),
-                        timeoutConfiguration.payloadTimeout(),
+                        timeoutConfig.openTimeout(),
+                        timeoutConfig.payloadTimeout(),
                         initiatorConfig.retryTransmissionCount(),
                         initiatorConfig.retryConnectionCount()
                 );

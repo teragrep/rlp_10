@@ -47,15 +47,15 @@ package com.teragrep.rlp_10.config;
 
 import com.teragrep.rlp_10.exception.ConfigurationException;
 
-public class PrometheusConfiguration {
+public class PrometheusConfig {
 
     private final int port;
 
-    public PrometheusConfiguration() {
+    public PrometheusConfig() {
         this(8080);
     }
 
-    public PrometheusConfiguration(final int port) {
+    public PrometheusConfig(final int port) {
         this.port = port;
     }
 

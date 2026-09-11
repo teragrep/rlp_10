@@ -45,15 +45,15 @@
  */
 package com.teragrep.rlp_10.config;
 
-public class MetricsConfiguration {
+public class MetricsConfig {
 
     private final int window;
 
-    public MetricsConfiguration() {
+    public MetricsConfig() {
         this(10000);
     }
 
-    public MetricsConfiguration(final int window) {
+    public MetricsConfig(final int window) {
         this.window = window;
     }
 

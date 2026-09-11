@@ -49,7 +49,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SlidingWindowReservoir;
 import com.codahale.metrics.Timer;
-import com.teragrep.rlp_10.config.MetricsConfiguration;
+import com.teragrep.rlp_10.config.MetricsConfig;
 
 public class Metrics {
 
@@ -64,7 +64,7 @@ public class Metrics {
     private final Timer receiveLatency;
     private final Timer connectLatency;
 
-    public Metrics(final MetricsConfiguration metricsConfiguration) {
+    public Metrics(final MetricsConfig metricsConfiguration) {
         // must register each metric before usage, otherwise Prometheus server would fail to report metrics that have not yet received any events
         metricRegistry = new MetricRegistry();
         records = metricRegistry.counter("records");
