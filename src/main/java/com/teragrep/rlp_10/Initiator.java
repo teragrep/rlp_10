@@ -221,8 +221,7 @@ class Initiator implements Runnable {
             final Timer.Context transmitTimer = metrics.transmitLatency().time();
             final AtomicReference<Timer.Context> receiveTimer = new AtomicReference<Timer.Context>(); // AtomicReference to deal with variables needing to be final in lambdas
             // stop transmit timer as soon as relpClient.transmit() finishes and start receiveTimer.
-            final String payload = new String(recordStream.get(), StandardCharsets.UTF_8);
-            //todo should be SyslogStub
+            final String payload = new String(recordStream.get(), StandardCharsets.UTF_8); // todo recordStream should return a stubable SyslogMessage
             if (payload.isEmpty()) {
                 return false;
             }
@@ -232,6 +231,8 @@ class Initiator implements Runnable {
                         .handleAsync((relpFrame, exception) -> {
                             transmitTimer.close();
                             if (exception != null) {
+                                // transmission failed, close transaction timer and throw error.
+                                transactionTimer.close();
                                 throw new TransmissionException(exception);
                             }
                             receiveTimer.set(metrics.receiveLatency().time());
