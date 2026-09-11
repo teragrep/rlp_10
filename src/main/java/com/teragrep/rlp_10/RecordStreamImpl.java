@@ -94,6 +94,7 @@ class RecordStreamImpl implements RecordStream {
                     .getBytes(StandardCharsets.UTF_8);
         }
         else {
+            // todo should probably return a SyslogMessageStub() instead of an empty bytearray, but rlo_14 SysLogMessage doesn't implement Stubable
             rv = new byte[] {};
         }
         return rv;
