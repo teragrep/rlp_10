@@ -158,20 +158,21 @@ public class Benchmark {
                     final File ksFile = new File(transportConfiguration.keyStorePath().toUri());
                     final File tsFile = new File(transportConfiguration.trustStorePath().toUri());
 
-                    try (final FileInputStream ksFileIS = new FileInputStream(ksFile)) {
-                        try (final FileInputStream tsFileIS = new FileInputStream(tsFile)) {
-                            ts.load(tsFileIS, transportConfiguration.trustStorePassword().toCharArray());
-                            final TrustManagerFactory tmf = TrustManagerFactory
-                                    .getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                            tmf.init(ts);
+                    final FileInputStream ksFileIS = new FileInputStream(ksFile);
+                    final FileInputStream tsFileIS = new FileInputStream(tsFile);
+                    ts.load(tsFileIS, transportConfiguration.trustStorePassword().toCharArray());
+                    final TrustManagerFactory tmf = TrustManagerFactory
+                            .getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                    tmf.init(ts);
 
-                            ks.load(ksFileIS, transportConfiguration.keyStorePassword().toCharArray());
-                            final KeyManagerFactory kmf = KeyManagerFactory
-                                    .getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                            kmf.init(ks, transportConfiguration.keyStorePassword().toCharArray());
-                            sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-                        }
-                    }
+                    ks.load(ksFileIS, transportConfiguration.keyStorePassword().toCharArray());
+                    final KeyManagerFactory kmf = KeyManagerFactory
+                            .getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                    kmf.init(ks, transportConfiguration.keyStorePassword().toCharArray());
+                    sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+
+                    tsFileIS.close();
+                    ksFileIS.close();
 
                     final Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
                         final SSLEngine engine = context.createSSLEngine();

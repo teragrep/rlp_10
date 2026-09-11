@@ -346,6 +346,11 @@
               <checkstyleRules>
                 <module name="Checker">
                   <module name="TreeWalker">
+                    <!-- Jetty requires catching generic Exception  -->
+                    <module name="SuppressionCommentFilter">
+                      <property name="offCommentFormat" value="CHECKSTYLE:OFF"></property>
+                      <property name="onCommentFormat" value="CHECKSTYLE:ON"></property>
+                    </module>
                     <module name="ClassMemberImpliedModifier"></module>
                     <module name="CovariantEquals"></module>
                     <module name="DefaultComesLast"></module>

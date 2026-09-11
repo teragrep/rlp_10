@@ -88,9 +88,11 @@ public class PrometheusMetricsReport implements MetricsReport {
         try {
             prometheusMetricsServer.start();
         }
+        //CHECKSTYLE:OFF
         catch (final Exception e) {
             LOGGER.error("Failed to start Prometheus reporting server!");
         }
+        //CHECKSTYLE:ON
     }
 
     @Override
@@ -98,8 +100,10 @@ public class PrometheusMetricsReport implements MetricsReport {
         try {
             prometheusMetricsServer.stop();
         }
+        //CHECKSTYLE:OFF
         catch (final Exception e) {
             LOGGER.error("Failed to stop Prometheus reporting server!");
         }
+        //CHECKSTYLE:ON
     }
 }

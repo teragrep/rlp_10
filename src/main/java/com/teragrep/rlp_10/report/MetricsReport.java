@@ -47,7 +47,7 @@ package com.teragrep.rlp_10.report;
 
 public interface MetricsReport {
 
-    public void start();
+    public abstract void start();
 
-    public void stop();
+    public abstract void stop();
 }
