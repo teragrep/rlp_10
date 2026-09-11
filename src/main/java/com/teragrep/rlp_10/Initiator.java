@@ -72,7 +72,6 @@ class Initiator implements Runnable {
     private final String hostname;
     private final int port;
     private final long openTimeout;
-    private final long closeTimeout;
     private final long payloadTimeout;
     private final int retryTransmissionCount;
     private final int retryConnectCount;
@@ -85,7 +84,6 @@ class Initiator implements Runnable {
             final RecordStream recordStream,
             final Metrics metrics,
             final int openTimeout,
-            final long closeTimeout,
             final long payloadTimeout,
             final int retryTransmissionCount,
             final int retryConnectionCount
@@ -97,7 +95,6 @@ class Initiator implements Runnable {
                 1601,
                 metrics,
                 openTimeout,
-                closeTimeout,
                 payloadTimeout,
                 retryTransmissionCount,
                 retryConnectionCount
@@ -111,7 +108,6 @@ class Initiator implements Runnable {
             final int port,
             final Metrics metrics,
             final long connectTimeout,
-            final long closeTimeout,
             final long payloadTimeout,
             final int retryTransmissionCount,
             final int retryConnectCount
@@ -122,7 +118,6 @@ class Initiator implements Runnable {
         this.port = port;
         this.metrics = metrics;
         this.openTimeout = connectTimeout;
-        this.closeTimeout = closeTimeout;
         this.payloadTimeout = payloadTimeout;
         this.retryTransmissionCount = retryTransmissionCount;
         this.retryConnectCount = retryConnectCount;

@@ -226,7 +226,6 @@ public class Benchmark {
                         socketAddressConfig.port(),
                         metrics,
                         timeoutConfiguration.openTimeout(),
-                        timeoutConfiguration.closeTimeout(),
                         timeoutConfiguration.payloadTimeout(),
                         initiatorConfig.retryTransmissionCount(),
                         initiatorConfig.retryConnectionCount()
