@@ -131,13 +131,11 @@ class Initiator implements Runnable {
                 final RelpClient relpClient = relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.SECONDS);
         ) {
             // try to connect, retrying until connection is established or a configured retry limit is reached
-            try (final Timer.Context timerContext = metrics.connectLatency().time()) {
-                if (!connect(relpClient, retryConnectCount)) {
-                    LOGGER.error("Failed to connect to server! Stopping...");
-                    stop();
-                }
-                metrics.connects().inc();
+            if (!connect(relpClient, retryConnectCount)) {
+                LOGGER.error("Failed to connect to server! Stopping...");
+                stop();
             }
+            metrics.connects().inc();
 
             // send syslog messageCount number of times
             while (run) {
@@ -162,6 +160,8 @@ class Initiator implements Runnable {
 
     private boolean connect(final RelpClient relpClient, final int retryCount)
             throws InterruptedException, ExecutionException {
+
+        final Timer.Context connectTimer = metrics.connectLatency().time();
         int retries = 0;
         boolean connected = connect(relpClient);
         while (!connected && retries < retryCount) {
@@ -169,6 +169,7 @@ class Initiator implements Runnable {
             metrics.retriedConnects().inc();
             connected = connect(relpClient);
         }
+        connectTimer.close();
         return connected;
     }
 
@@ -215,10 +216,12 @@ class Initiator implements Runnable {
             else {
                 final CompletableFuture<RelpFrame> syslog = relpClient
                         .transmit(relpFrameFactory.create("syslog", payload));
+
                 // Transmission is complete as soon as relpClient.transmit() finishes.
                 transmitTimer.close();
                 receiveTimer = metrics.receiveLatency().time();
                 syslog.get(payloadTimeout, TimeUnit.SECONDS);
+
                 // Whole transaction is complete as soon as Future received by transmit() is completed (or times out).
                 receiveTimer.close();
                 transactionTimer.close();
