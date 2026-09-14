@@ -60,7 +60,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 
 class Initiator implements Runnable {
 
@@ -126,16 +125,18 @@ class Initiator implements Runnable {
     @Override
     public void run() {
         // producer threads
-        try{
+        try {
             //TODO: clean this mess up, for testing purposes
             RelpClient connectedRelpClient = null;
             final Timer.Context connectTimer = metrics.connectLatency().time();
             boolean connected = false;
 
             for (int i = 0; i < retryConnectCount; i++) {
-                final RelpClient relpClient = relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.SECONDS);
+                final RelpClient relpClient = relpClientFactory
+                        .open(new InetSocketAddress(hostname, port))
+                        .get(openTimeout, TimeUnit.SECONDS);
                 connected = connect(relpClient);
-                if(!connected){
+                if (!connected) {
                     metrics.retriedConnects().inc();
                     relpClient.close();
                 }
@@ -180,16 +181,16 @@ class Initiator implements Runnable {
             metrics.retriedConnects().inc();
             connected = connect(relpClient);
         }
-        if(!connected){
-            throw new TransmissionException("Failed to connect to server in "+retryCount+" attempts!");
+        if (!connected) {
+            throw new TransmissionException("Failed to connect to server in " + retryCount + " attempts!");
         }
         connectTimer.close();
     }
 
     private boolean connect(final RelpClient relpClient) throws InterruptedException, ExecutionException {
         final boolean connected;
-        final CompletableFuture<RelpFrame> open = relpClient
-                .transmit(relpFrameFactory.create("open", "a hallo yo client"));
+        final RelpFrame openFrame = relpFrameFactory.create("open", "a hallo yo client");
+        final CompletableFuture<RelpFrame> open = relpClient.transmit(openFrame);
         try {
             open.get(openTimeout, TimeUnit.SECONDS);
             connected = true;
@@ -210,8 +211,8 @@ class Initiator implements Runnable {
             metrics.resends().inc();
             sent = send(relpClient);
         }
-        if(!sent){
-            throw new TransmissionException("Failed to connect to server in "+retryCount+" attempts!");
+        if (!sent) {
+            throw new TransmissionException("Failed to connect to server in " + retryCount + " attempts!");
         }
     }
 

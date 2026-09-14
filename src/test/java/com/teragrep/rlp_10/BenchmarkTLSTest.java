@@ -80,70 +80,67 @@ public class BenchmarkTLSTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkTLSTest.class);
 
     private EventLoop eventLoop;
-    private Thread eventLoopThread;
 
     private ExecutorService executorService;
 
     private final List<byte[]> messageList = new LinkedList<>();
 
-    //@BeforeAll
-    //public void init() {
-    //    final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
-//
-    //    final EventLoopFactory eventLoopFactory = new EventLoopFactory();
-    //    Assertions.assertDoesNotThrow(() -> eventLoop = eventLoopFactory.create());
-//
-    //    eventLoopThread = new Thread(eventLoop);
-    //    eventLoopThread.start();
-    //    executorService = Executors.newSingleThreadExecutor();
-    //    final TransportConfig transportConfiguration = new TransportConfig(
-    //            true,
-    //            Path.of("src/test/resources/tls/keystore-server.jks"),
-    //            Path.of("src/test/resources/tls/truststore.jks"),
-    //            "changeit",
-    //            "changeit",
-    //            "TLSv1.3"
-    //    );
-//
-    //    final SSLContext sslContext = Assertions
-    //            .assertDoesNotThrow(() -> SSLContext.getInstance(transportConfiguration.protocol()));
-    //    final KeyStore ks = Assertions.assertDoesNotThrow(() -> KeyStore.getInstance("JKS"));
-//
-    //    final File file = new File(transportConfiguration.keyStorePath().toUri());
-    //    final FileInputStream fileInputStream = Assertions.assertDoesNotThrow(() -> new FileInputStream(file));
-    //    Assertions
-    //            .assertDoesNotThrow(
-    //                    () -> ks.load(fileInputStream, transportConfiguration.keyStorePassword().toCharArray())
-    //            );
-    //    final TrustManagerFactory tmf = Assertions
-    //            .assertDoesNotThrow(() -> TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()));
-    //    Assertions.assertDoesNotThrow(() -> tmf.init(ks));
-    //    final KeyManagerFactory kmf = Assertions
-    //            .assertDoesNotThrow(() -> KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm()));
-    //    Assertions.assertDoesNotThrow(() -> kmf.init(ks, transportConfiguration.keyStorePassword().toCharArray()));
-    //    Assertions.assertDoesNotThrow(() -> sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null));
-    //    Assertions.assertDoesNotThrow(fileInputStream::close);
-//
-    //    final Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
-    //        final SSLEngine engine = context.createSSLEngine();
-    //        engine.setUseClientMode(false);
-    //        return engine;
-    //    };
-//
-    //    final ServerFactory serverFactory = new ServerFactory(
-    //            eventLoop,
-    //            executorService,
-    //            new TLSFactory(sslContext, sslEngineFunction),
-    //            new FrameDelegationClockFactory(() -> new DefaultFrameDelegate((frame) -> messageList.add(frame.relpFrame().payload().toBytes())))
-    //    );
-    //    Assertions.assertDoesNotThrow(() -> serverFactory.create(socketAddressConfig.port()));
-    //}
+    @BeforeAll
+    public void init() {
+        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
+
+        final EventLoopFactory eventLoopFactory = new EventLoopFactory();
+        Assertions.assertDoesNotThrow(() -> eventLoop = eventLoopFactory.create());
+        executorService = Executors.newVirtualThreadPerTaskExecutor();
+        executorService.submit(eventLoop);
+
+        final TransportConfig transportConfiguration = new TransportConfig(
+                true,
+                Path.of("src/test/resources/tls/keystore-server.jks"),
+                Path.of("src/test/resources/tls/truststore.jks"),
+                "changeit",
+                "changeit",
+                "TLSv1.3"
+        );
+
+        final SSLContext sslContext = Assertions
+                .assertDoesNotThrow(() -> SSLContext.getInstance(transportConfiguration.protocol()));
+        final KeyStore ks = Assertions.assertDoesNotThrow(() -> KeyStore.getInstance("JKS"));
+
+        final File file = new File(transportConfiguration.keyStorePath().toUri());
+        final FileInputStream fileInputStream = Assertions.assertDoesNotThrow(() -> new FileInputStream(file));
+        Assertions
+                .assertDoesNotThrow(
+                        () -> ks.load(fileInputStream, transportConfiguration.keyStorePassword().toCharArray())
+                );
+        final TrustManagerFactory tmf = Assertions
+                .assertDoesNotThrow(() -> TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()));
+        Assertions.assertDoesNotThrow(() -> tmf.init(ks));
+        final KeyManagerFactory kmf = Assertions
+                .assertDoesNotThrow(() -> KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm()));
+        Assertions.assertDoesNotThrow(() -> kmf.init(ks, transportConfiguration.keyStorePassword().toCharArray()));
+        Assertions.assertDoesNotThrow(() -> sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null));
+        Assertions.assertDoesNotThrow(fileInputStream::close);
+
+        final Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
+            final SSLEngine engine = context.createSSLEngine();
+            engine.setUseClientMode(false);
+            return engine;
+        };
+
+        final ServerFactory serverFactory = new ServerFactory(
+                eventLoop,
+                executorService,
+                new TLSFactory(sslContext, sslEngineFunction),
+                new FrameDelegationClockFactory(() -> new DefaultFrameDelegate((frame) -> messageList.add(frame.relpFrame().payload().toBytes())))
+        );
+        Assertions.assertDoesNotThrow(() -> serverFactory.create(socketAddressConfig.port()));
+    }
 
     @AfterAll
     public void cleanup() {
         eventLoop.stop();
         executorService.shutdown();
-        Assertions.assertDoesNotThrow(() -> eventLoopThread.join());
     }
 
     @AfterEach
@@ -176,7 +173,7 @@ public class BenchmarkTLSTest {
                 "TLSv1.3"
         );
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
-        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig("localhost",4433);
+        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
         final DelayConfig delayConfig = new DelayConfig();
         final SyslogConfig syslogConfig = new SyslogConfig();
         final Benchmark benchmark = new Benchmark(
