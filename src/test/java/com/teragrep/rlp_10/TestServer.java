@@ -115,9 +115,9 @@ public class TestServer {
     }
 
     @Test
-    public void testBenchmark() {
-        final int clients = 50;
-        final long messageCount = 20000;
+    public void testMessageCount() {
+        final int clients = 5000;
+        final long messageCount = 300000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(

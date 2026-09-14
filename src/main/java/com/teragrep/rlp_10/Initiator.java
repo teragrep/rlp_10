@@ -131,35 +131,30 @@ class Initiator implements Runnable {
                 final RelpClient relpClient = relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.SECONDS);
         ) {
             // try to connect, retrying until connection is established or a configured retry limit is reached
-            if (!connect(relpClient, retryConnectCount)) {
-                LOGGER.error("Failed to connect to server! Stopping...");
-                stop();
-            }
+            connect(relpClient, retryConnectCount);
             metrics.connects().inc();
 
             // send syslog messageCount number of times
             while (run) {
-                if (!send(relpClient, retryTransmissionCount)) {
-                    LOGGER.error("Failed to send syslog message! Stopping...");
-                    stop();
-                }
+                send(relpClient, retryTransmissionCount);
             }
             // send close
             close(relpClient);
         }
         catch (final TimeoutException timeoutException) {
-            throw new RuntimeException(
-                    "RelpClient was not initialized within " + openTimeout + " seconds!",
-                    timeoutException
-            );
+            LOGGER.error("Initiator failed to start a RelpClient within {} seconds!", openTimeout);
+        }
+        catch (final TransmissionException transmissionException) {
+            stop();
+            LOGGER.error("Initiator failed to transmit data to server!", transmissionException);
         }
         catch (final ExecutionException | InterruptedException exception) {
-            throw new RuntimeException("An unrecoverable error occurred while running Initiator", exception);
+            throw new RuntimeException("Initiator encountered an unrecoverable error: ", exception);
         }
     }
 
-    private boolean connect(final RelpClient relpClient, final int retryCount)
-            throws InterruptedException, ExecutionException {
+    private void connect(final RelpClient relpClient, final int retryCount)
+            throws InterruptedException, ExecutionException, TransmissionException {
 
         final Timer.Context connectTimer = metrics.connectLatency().time();
         int retries = 0;
@@ -169,8 +164,10 @@ class Initiator implements Runnable {
             metrics.retriedConnects().inc();
             connected = connect(relpClient);
         }
+        if(!connected){
+            throw new TransmissionException("Failed to connect to server in "+retryCount+" attempts!");
+        }
         connectTimer.close();
-        return connected;
     }
 
     private boolean connect(final RelpClient relpClient) throws InterruptedException, ExecutionException {
@@ -183,14 +180,13 @@ class Initiator implements Runnable {
         }
         catch (final TimeoutException timeoutException) {
             open.cancel(false);
-            LOGGER.warn("Connection attempt timeout after {} seconds!", openTimeout);
             return false;
         }
         return connected;
     }
 
-    private boolean send(final RelpClient relpClient, final int retryCount)
-            throws InterruptedException, ExecutionException {
+    private void send(final RelpClient relpClient, final int retryCount)
+            throws InterruptedException, ExecutionException, TransmissionException {
         int retries = 0;
         boolean sent = send(relpClient);
         while (!sent && retries < retryCount) {
@@ -198,7 +194,9 @@ class Initiator implements Runnable {
             metrics.resends().inc();
             sent = send(relpClient);
         }
-        return sent;
+        if(!sent){
+            throw new TransmissionException("Failed to connect to server in "+retryCount+" attempts!");
+        }
     }
 
     private boolean send(final RelpClient relpClient) throws InterruptedException, ExecutionException {
@@ -237,8 +235,8 @@ class Initiator implements Runnable {
 
     private void close(final RelpClient relpClient) throws InterruptedException, ExecutionException {
         final CompletableFuture<RelpFrame> close = relpClient.transmit(relpFrameFactory.create("close", ""));
-        metrics.disconnects().inc();
         close.get();
+        metrics.disconnects().inc();
     }
 
     public void stop() {
