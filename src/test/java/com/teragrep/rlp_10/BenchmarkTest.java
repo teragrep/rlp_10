@@ -70,9 +70,9 @@ import java.util.concurrent.TimeUnit;
  * These are a copy from rlp_03 test suite
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestServer {
+public class BenchmarkTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestServer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkTest.class);
 
     private EventLoop eventLoop;
     private Thread eventLoopThread;

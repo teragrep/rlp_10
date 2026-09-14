@@ -75,9 +75,9 @@ import java.util.function.Function;
  * These are a copy from rlp_03 test suite
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestTLSServer {
+public class BenchmarkTLSTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestTLSServer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkTLSTest.class);
 
     private EventLoop eventLoop;
     private Thread eventLoopThread;
