@@ -127,20 +127,32 @@ class Initiator implements Runnable {
     public void run() {
         // producer threads
         try{
-            try (
-                    final RelpClient relpClient = relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.SECONDS);
-            ) {
-                // try to connect, retrying until connection is established or a configured retry limit is reached
-                connect(relpClient, retryConnectCount);
-                metrics.connects().inc();
+            //TODO: clean this mess up, for testing purposes
+            RelpClient connectedRelpClient = null;
+            final Timer.Context connectTimer = metrics.connectLatency().time();
+            boolean connected = false;
 
-                // send syslog messageCount number of times
-                while (run) {
-                    send(relpClient, retryTransmissionCount);
+            for (int i = 0; i < retryConnectCount; i++) {
+                final RelpClient relpClient = relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.SECONDS);
+                connected = connect(relpClient);
+                if(!connected){
+                    metrics.retriedConnects().inc();
+                    relpClient.close();
                 }
-                // send close
-                close(relpClient);
+                else {
+                    connectedRelpClient = relpClient;
+                    break;
+                }
             }
+            connectTimer.close();
+            metrics.connects().inc();
+
+            // send syslog messageCount number of times
+            while (run) {
+                send(connectedRelpClient, retryTransmissionCount);
+            }
+            // send close
+            close(connectedRelpClient);
         }
         catch (final TimeoutException timeoutException) {
             LOGGER.error("Initiator failed to start a RelpClient within {} seconds!", openTimeout);
