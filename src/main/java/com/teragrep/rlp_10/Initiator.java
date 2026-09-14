@@ -205,7 +205,7 @@ class Initiator implements Runnable {
             // start transaction and transmit timers
             final Timer.Context transactionTimer = metrics.transactionLatency().time();
             final Timer.Context transmitTimer = metrics.transmitLatency().time();
-            final AtomicReference<Timer.Context> receiveTimer = new AtomicReference<Timer.Context>(); // AtomicReference to deal with variables needing to be final in lambdas
+            final Timer.Context receiveTimer;
             // stop transmit timer as soon as relpClient.transmit() finishes and start receiveTimer.
             final String payload = new String(recordStream.get(), StandardCharsets.UTF_8); // todo recordStream should return a stubable SyslogMessage
             if (payload.isEmpty()) {
@@ -214,20 +214,13 @@ class Initiator implements Runnable {
             }
             else {
                 final CompletableFuture<RelpFrame> syslog = relpClient
-                        .transmit(relpFrameFactory.create("syslog", payload))
-                        .handleAsync((relpFrame, exception) -> {
-                            transmitTimer.close();
-                            if (exception != null) {
-                                // transmission failed, close transaction timer and throw error.
-                                transactionTimer.close();
-                                throw new TransmissionException(exception);
-                            }
-                            receiveTimer.set(metrics.receiveLatency().time());
-                            return relpFrame;
-                        });
+                        .transmit(relpFrameFactory.create("syslog", payload));
+                // Transmission is complete as soon as relpClient.transmit() finishes.
+                transmitTimer.close();
+                receiveTimer = metrics.receiveLatency().time();
                 syslog.get(payloadTimeout, TimeUnit.SECONDS);
-                // stop receiveTimer and transaction timer once the syslog future resolves.
-                receiveTimer.get().close();
+                // Whole transaction is complete as soon as Future received by transmit() is completed (or times out).
+                receiveTimer.close();
                 transactionTimer.close();
                 metrics.records().inc();
                 return true;
