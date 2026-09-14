@@ -126,20 +126,21 @@ class Initiator implements Runnable {
     @Override
     public void run() {
         // producer threads
+        try{
+            try (
+                    final RelpClient relpClient = relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.SECONDS);
+            ) {
+                // try to connect, retrying until connection is established or a configured retry limit is reached
+                connect(relpClient, retryConnectCount);
+                metrics.connects().inc();
 
-        try (
-                final RelpClient relpClient = relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.SECONDS);
-        ) {
-            // try to connect, retrying until connection is established or a configured retry limit is reached
-            connect(relpClient, retryConnectCount);
-            metrics.connects().inc();
-
-            // send syslog messageCount number of times
-            while (run) {
-                send(relpClient, retryTransmissionCount);
+                // send syslog messageCount number of times
+                while (run) {
+                    send(relpClient, retryTransmissionCount);
+                }
+                // send close
+                close(relpClient);
             }
-            // send close
-            close(relpClient);
         }
         catch (final TimeoutException timeoutException) {
             LOGGER.error("Initiator failed to start a RelpClient within {} seconds!", openTimeout);
@@ -149,7 +150,10 @@ class Initiator implements Runnable {
             LOGGER.error("Initiator failed to transmit data to server!", transmissionException);
         }
         catch (final ExecutionException | InterruptedException exception) {
-            throw new RuntimeException("Initiator encountered an unrecoverable error: ", exception);
+            LOGGER.error("Initiator encountered an unrecoverable error: ", exception);
+        }
+        finally {
+            return;
         }
     }
 
