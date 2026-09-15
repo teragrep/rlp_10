@@ -170,7 +170,7 @@ class Initiator implements Runnable {
         return rv;
     }
 
-    private RelpClient connect() throws InterruptedException, ExecutionException, TimeoutException{
+    private RelpClient connect() throws InterruptedException, ExecutionException, TimeoutException {
         final RelpClient relpClient = relpClientFactory
                 .open(new InetSocketAddress(hostname, port))
                 .get(openTimeout, TimeUnit.SECONDS);
@@ -202,12 +202,8 @@ class Initiator implements Runnable {
             final Timer.Context transmitTimer = metrics.transmitLatency().time();
             final Timer.Context receiveTimer;
             // stop transmit timer as soon as relpClient.transmit() finishes and start receiveTimer.
-            final String payload = new String(recordStream.get(), StandardCharsets.UTF_8); // todo recordStream should return a stubable SyslogMessage
-            if (payload.isEmpty()) {
-                stop();
-                return true;
-            }
-            else {
+            final String payload = new String(recordStream.get(), StandardCharsets.UTF_8); // todo recordStream should return a stubable SyslogMessage, currently stubness is represented by empty bytearray
+            if (!payload.isEmpty()) {
                 final CompletableFuture<RelpFrame> syslog = relpClient
                         .transmit(relpFrameFactory.create("syslog", payload));
 
@@ -220,6 +216,10 @@ class Initiator implements Runnable {
                 receiveTimer.close();
                 transactionTimer.close();
                 metrics.records().inc();
+                return true;
+            }
+            else {
+                stop();
                 return true;
             }
         }
