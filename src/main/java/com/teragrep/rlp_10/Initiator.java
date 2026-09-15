@@ -152,10 +152,10 @@ class Initiator implements Runnable {
 
     }
 
-    private RelpClient connect(int retryConnectCount) throws InterruptedException, ExecutionException {
+    private RelpClient connect(int retryCount) throws InterruptedException, ExecutionException {
         final Timer.Context connectTimer = metrics.connectLatency().time();
         RelpClient rv = new RelpClientStub();
-        for (int i = 0; i < retryConnectCount; i++) {
+        for (int i = 0; i < retryCount; i++) {
             try {
                 rv = connect();
                 metrics.connects().inc();
