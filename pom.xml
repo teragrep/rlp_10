@@ -211,6 +211,8 @@
             <exclude>rpm/**</exclude>
             <!-- assembly file -->
             <exclude>src/main/assembly/jar-with-dependencies.xml</exclude>
+            <!-- TLS certs -->
+            <exclude>src/test/resources/tls/**</exclude>
           </excludes>
         </configuration>
         <executions>
