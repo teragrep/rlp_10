@@ -127,16 +127,17 @@ class Initiator implements Runnable {
     public void run() {
         // producer threads
         try (RelpClient relpClient = connect()) {
-            if (relpClient.isStub()) {
+            if (!relpClient.isStub()) {
+                // send syslog messageCount number of times
+                while (run) {
+                    send(relpClient, retryTransmissionCount);
+                }
+                // send close
+                close(relpClient);
+            }
+            else {
                 LOGGER.warn("RelpClient connection timeout! Stopping...");
-                return;
             }
-            // send syslog messageCount number of times
-            while (run) {
-                send(relpClient, retryTransmissionCount);
-            }
-            // send close
-            close(relpClient);
         }
         catch (final TransmissionException transmissionException) {
             stop();
