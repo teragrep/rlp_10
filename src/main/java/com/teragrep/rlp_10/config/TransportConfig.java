@@ -45,6 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -58,14 +59,7 @@ public class TransportConfig {
     private final String protocol;
 
     public TransportConfig() {
-        this(
-                false,
-                Paths.get("/opt/teragrep/rlp_10/etc/keystore.jks"),
-                Paths.get("/opt/teragrep/rlp_10/etc/truststore.jks"),
-                "password",
-                "password",
-                "TLSv1.3"
-        );
+        this(false, Paths.get("tls/keystore.jks"), Paths.get("tls/truststore.jks"), "password", "password", "TLSv1.3");
     }
 
     public TransportConfig(
@@ -88,12 +82,12 @@ public class TransportConfig {
         return tls;
     }
 
-    public Path keyStorePath() {
-        return keystorePath;
+    public File keyStoreFile() {
+        return keystorePath.toFile();
     }
 
-    public Path trustStorePath() {
-        return truststorePath;
+    public File trustStoreFile() {
+        return truststorePath.toFile();
     }
 
     public String keyStorePassword() {

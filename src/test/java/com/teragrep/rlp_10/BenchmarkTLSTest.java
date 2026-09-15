@@ -107,7 +107,7 @@ public class BenchmarkTLSTest {
                 .assertDoesNotThrow(() -> SSLContext.getInstance(transportConfiguration.protocol()));
         final KeyStore ks = Assertions.assertDoesNotThrow(() -> KeyStore.getInstance("JKS"));
 
-        final File file = new File(transportConfiguration.keyStorePath().toUri());
+        final File file = transportConfiguration.keyStoreFile();
         final FileInputStream fileInputStream = Assertions.assertDoesNotThrow(() -> new FileInputStream(file));
         Assertions
                 .assertDoesNotThrow(

@@ -235,8 +235,8 @@ public class Benchmark {
                 final KeyStore ks = KeyStore.getInstance("JKS");
                 final KeyStore ts = KeyStore.getInstance("JKS");
 
-                final File ksFile = new File(transportConfig.keyStorePath().toUri());
-                final File tsFile = new File(transportConfig.trustStorePath().toUri());
+                final File ksFile = transportConfig.keyStoreFile();
+                final File tsFile = transportConfig.trustStoreFile();
 
                 final FileInputStream ksFileIS = new FileInputStream(ksFile);
                 final FileInputStream tsFileIS = new FileInputStream(tsFile);
