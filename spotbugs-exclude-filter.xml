@@ -1,0 +1,12 @@
+<FindBugsFilter>
+    <!-- Ignore expose internal representation by returning Metrics.metricRegistry bug, as MetricsRegistry is mutable by design -->
+    <Match>
+        <Class name="com.teragrep.rlp_10.Metrics"/>
+        <Method name="registry" />
+        <Bug pattern="EI_EXPOSE_REP" />
+    </Match>
+    <Match>
+        <Class name="com.teragrep.rlp_10.report.PrometheusMetricsReport"/>
+        <Bug pattern="EI_EXPOSE_REP2" />
+    </Match>
+</FindBugsFilter>

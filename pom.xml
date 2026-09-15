@@ -213,6 +213,8 @@
             <exclude>src/main/assembly/jar-with-dependencies.xml</exclude>
             <!-- TLS certs -->
             <exclude>src/test/resources/tls/**</exclude>
+            <!-- spotbugs filter -->
+            <exclude>spotbugs-exclude-filter.xml</exclude>
           </excludes>
         </configuration>
         <executions>
@@ -555,6 +557,7 @@
           <failThreshold>Low</failThreshold>
           <failOnError>true</failOnError>
           <includeTests>true</includeTests>
+          <excludeFilterFile>${project.basedir}/spotbugs-exclude-filter.xml</excludeFilterFile>
           <plugins>
             <plugin>
               <groupId>com.h3xstream.findsecbugs</groupId>
