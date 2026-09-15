@@ -158,52 +158,7 @@ public class Benchmark {
             final EventLoop eventLoop = eventLoopFactory.create();
             executorService.submit(eventLoop);
 
-            final SocketFactory socketFactory;
-
-            if (transportConfig.tls()) {
-                try {
-                    final SSLContext sslContext = SSLContext.getInstance(transportConfig.protocol());
-                    final KeyStore ks = KeyStore.getInstance("JKS");
-                    final KeyStore ts = KeyStore.getInstance("JKS");
-
-                    final File ksFile = new File(transportConfig.keyStorePath().toUri());
-                    final File tsFile = new File(transportConfig.trustStorePath().toUri());
-
-                    final FileInputStream ksFileIS = new FileInputStream(ksFile);
-                    final FileInputStream tsFileIS = new FileInputStream(tsFile);
-                    ts.load(tsFileIS, transportConfig.trustStorePassword().toCharArray());
-                    final TrustManagerFactory tmf = TrustManagerFactory
-                            .getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                    tmf.init(ts);
-
-                    ks.load(ksFileIS, transportConfig.keyStorePassword().toCharArray());
-                    final KeyManagerFactory kmf = KeyManagerFactory
-                            .getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                    kmf.init(ks, transportConfig.keyStorePassword().toCharArray());
-                    sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-
-                    tsFileIS.close();
-                    ksFileIS.close();
-
-                    final Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
-                        final SSLEngine engine = context.createSSLEngine();
-                        engine.setUseClientMode(true);
-                        return engine;
-                    };
-                    socketFactory = new TLSFactory(sslContext, sslEngineFunction);
-                }
-                catch (
-                    final KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException
-                            | UnrecoverableKeyException | KeyManagementException e
-                ) {
-                    // unrecoverable error
-                    throw new RuntimeException("Error while initializing TLS connection, check your configuration!", e);
-                }
-            }
-            else {
-                socketFactory = new PlainFactory();
-            }
-
+            final SocketFactory socketFactory = createSocketFactory();
             final ConnectContextFactory connectContextFactory = new ConnectContextFactory(
                     executorService,
                     socketFactory
@@ -267,5 +222,52 @@ public class Benchmark {
         for (final MetricsReport report : reports) {
             report.stop();
         }
+    }
+
+    private SocketFactory createSocketFactory() {
+        final SocketFactory rv;
+        if (!transportConfig.tls()) {
+            rv = new PlainFactory();
+        }
+        else {
+            try {
+                final SSLContext sslContext = SSLContext.getInstance(transportConfig.protocol());
+                final KeyStore ks = KeyStore.getInstance("JKS");
+                final KeyStore ts = KeyStore.getInstance("JKS");
+
+                final File ksFile = new File(transportConfig.keyStorePath().toUri());
+                final File tsFile = new File(transportConfig.trustStorePath().toUri());
+
+                final FileInputStream ksFileIS = new FileInputStream(ksFile);
+                final FileInputStream tsFileIS = new FileInputStream(tsFile);
+                ts.load(tsFileIS, transportConfig.trustStorePassword().toCharArray());
+                final TrustManagerFactory tmf = TrustManagerFactory
+                        .getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                tmf.init(ts);
+
+                ks.load(ksFileIS, transportConfig.keyStorePassword().toCharArray());
+                final KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                kmf.init(ks, transportConfig.keyStorePassword().toCharArray());
+                sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+
+                tsFileIS.close();
+                ksFileIS.close();
+
+                final Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
+                    final SSLEngine engine = context.createSSLEngine();
+                    engine.setUseClientMode(true);
+                    return engine;
+                };
+                rv = new TLSFactory(sslContext, sslEngineFunction);
+            }
+            catch (
+                final KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException
+                        | UnrecoverableKeyException | KeyManagementException e
+            ) {
+                // unrecoverable error
+                throw new RuntimeException("Error while initializing TLS connection, check your configuration!", e);
+            }
+        }
+        return rv;
     }
 }
