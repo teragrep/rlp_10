@@ -126,7 +126,7 @@ class Initiator implements Runnable {
     @Override
     public void run() {
         // producer threads
-        try (RelpClient relpClient = connect()) {
+        try (final RelpClient relpClient = connect()) {
             if (!relpClient.isStub()) {
                 // send syslog messageCount number of times
                 while (run) {
@@ -153,7 +153,7 @@ class Initiator implements Runnable {
     }
 
     private RelpClient connect() throws InterruptedException, ExecutionException {
-        Timer.Context connectTimer = metrics.connectLatency().time();
+        final Timer.Context connectTimer = metrics.connectLatency().time();
         RelpClient rv = new RelpClientStub();
         for (int i = 0; i < retryConnectCount; i++) {
             try {
@@ -168,7 +168,7 @@ class Initiator implements Runnable {
                 metrics.connects().inc();
                 break;
             }
-            catch (TimeoutException timeoutException) {
+            catch (final TimeoutException timeoutException) {
                 metrics.retriedConnects().inc();
                 LOGGER.warn("Timeout reached while trying to establish RelpClient!");
             }
