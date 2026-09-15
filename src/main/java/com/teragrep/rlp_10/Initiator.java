@@ -126,7 +126,7 @@ class Initiator implements Runnable {
     @Override
     public void run() {
         // producer threads
-        try (final RelpClient relpClient = connect()) {
+        try (final RelpClient relpClient = connect(retryConnectCount)) {
             if (!relpClient.isStub()) {
                 // send syslog messageCount number of times
                 while (run) {
@@ -152,19 +152,12 @@ class Initiator implements Runnable {
 
     }
 
-    private RelpClient connect() throws InterruptedException, ExecutionException {
+    private RelpClient connect(int retryConnectCount) throws InterruptedException, ExecutionException {
         final Timer.Context connectTimer = metrics.connectLatency().time();
         RelpClient rv = new RelpClientStub();
         for (int i = 0; i < retryConnectCount; i++) {
             try {
-                final RelpClient relpClient = relpClientFactory
-                        .open(new InetSocketAddress(hostname, port))
-                        .get(openTimeout, TimeUnit.SECONDS);
-
-                final RelpFrame openFrame = relpFrameFactory.create("open", "a hallo yo client");
-                final CompletableFuture<RelpFrame> open = relpClient.transmit(openFrame);
-                open.get(openTimeout, TimeUnit.SECONDS);
-                rv = relpClient;
+                rv = connect();
                 metrics.connects().inc();
                 break;
             }
@@ -175,6 +168,17 @@ class Initiator implements Runnable {
         }
         connectTimer.close();
         return rv;
+    }
+
+    private RelpClient connect() throws InterruptedException, ExecutionException, TimeoutException{
+        final RelpClient relpClient = relpClientFactory
+                .open(new InetSocketAddress(hostname, port))
+                .get(openTimeout, TimeUnit.SECONDS);
+
+        final RelpFrame openFrame = relpFrameFactory.create("open", "a hallo yo client");
+        final CompletableFuture<RelpFrame> open = relpClient.transmit(openFrame);
+        open.get(openTimeout, TimeUnit.SECONDS);
+        return relpClient;
     }
 
     private void send(final RelpClient relpClient, final int retryCount)
