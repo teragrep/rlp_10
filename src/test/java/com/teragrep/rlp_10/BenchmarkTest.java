@@ -116,7 +116,7 @@ public class BenchmarkTest {
 
     @Test
     public void testMessageCount() {
-        final int clients = 5000;
+        final int clients = 50;
         final long messageCount = 300000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;

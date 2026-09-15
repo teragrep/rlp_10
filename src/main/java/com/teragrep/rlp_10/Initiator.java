@@ -48,6 +48,7 @@ package com.teragrep.rlp_10;
 import com.codahale.metrics.Timer;
 import com.teragrep.rlp_03.client.RelpClient;
 import com.teragrep.rlp_03.client.RelpClientFactory;
+import com.teragrep.rlp_03.client.RelpClientStub;
 import com.teragrep.rlp_03.frame.RelpFrame;
 import com.teragrep.rlp_03.frame.RelpFrameFactory;
 import com.teragrep.rlp_10.exception.TransmissionException;
@@ -125,38 +126,17 @@ class Initiator implements Runnable {
     @Override
     public void run() {
         // producer threads
-        try {
-            //TODO: clean this mess up, for testing purposes
-            RelpClient connectedRelpClient = null;
-            final Timer.Context connectTimer = metrics.connectLatency().time();
-            boolean connected = false;
-
-            for (int i = 0; i < retryConnectCount; i++) {
-                final RelpClient relpClient = relpClientFactory
-                        .open(new InetSocketAddress(hostname, port))
-                        .get(openTimeout, TimeUnit.SECONDS);
-                connected = connect(relpClient);
-                if (!connected) {
-                    metrics.retriedConnects().inc();
-                    relpClient.close();
-                }
-                else {
-                    connectedRelpClient = relpClient;
-                    break;
-                }
+        try (RelpClient relpClient = connect()) {
+            if (relpClient.isStub()) {
+                LOGGER.warn("RelpClient connection timeout! Stopping...");
+                return;
             }
-            connectTimer.close();
-            metrics.connects().inc();
-
             // send syslog messageCount number of times
             while (run) {
-                send(connectedRelpClient, retryTransmissionCount);
+                send(relpClient, retryTransmissionCount);
             }
             // send close
-            close(connectedRelpClient);
-        }
-        catch (final TimeoutException timeoutException) {
-            LOGGER.error("Initiator failed to start a RelpClient within {} seconds!", openTimeout);
+            close(relpClient);
         }
         catch (final TransmissionException transmissionException) {
             stop();
@@ -168,38 +148,32 @@ class Initiator implements Runnable {
         finally {
             return;
         }
+
     }
 
-    private void connect(final RelpClient relpClient, final int retryCount)
-            throws InterruptedException, ExecutionException, TransmissionException {
+    private RelpClient connect() throws InterruptedException, ExecutionException {
+        Timer.Context connectTimer = metrics.connectLatency().time();
+        RelpClient rv = new RelpClientStub();
+        for (int i = 0; i < retryConnectCount; i++) {
+            try {
+                final RelpClient relpClient = relpClientFactory
+                        .open(new InetSocketAddress(hostname, port))
+                        .get(openTimeout, TimeUnit.SECONDS);
 
-        final Timer.Context connectTimer = metrics.connectLatency().time();
-        int retries = 0;
-        boolean connected = connect(relpClient);
-        while (!connected && retries < retryCount) {
-            retries++;
-            metrics.retriedConnects().inc();
-            connected = connect(relpClient);
-        }
-        if (!connected) {
-            throw new TransmissionException("Failed to connect to server in " + retryCount + " attempts!");
+                final RelpFrame openFrame = relpFrameFactory.create("open", "a hallo yo client");
+                final CompletableFuture<RelpFrame> open = relpClient.transmit(openFrame);
+                open.get(openTimeout, TimeUnit.SECONDS);
+                rv = relpClient;
+                metrics.connects().inc();
+                break;
+            }
+            catch (TimeoutException timeoutException) {
+                metrics.retriedConnects().inc();
+                LOGGER.warn("Timeout reached while trying to establish RelpClient!");
+            }
         }
         connectTimer.close();
-    }
-
-    private boolean connect(final RelpClient relpClient) throws InterruptedException, ExecutionException {
-        final boolean connected;
-        final RelpFrame openFrame = relpFrameFactory.create("open", "a hallo yo client");
-        final CompletableFuture<RelpFrame> open = relpClient.transmit(openFrame);
-        try {
-            open.get(openTimeout, TimeUnit.SECONDS);
-            connected = true;
-        }
-        catch (final TimeoutException timeoutException) {
-            open.cancel(false);
-            return false;
-        }
-        return connected;
+        return rv;
     }
 
     private void send(final RelpClient relpClient, final int retryCount)
