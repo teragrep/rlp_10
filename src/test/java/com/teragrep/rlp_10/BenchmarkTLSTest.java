@@ -201,7 +201,7 @@ public class BenchmarkTLSTest {
         );
         benchmark.startBenchmark();
         Assertions.assertFalse(messageList.isEmpty());
-        Assertions.assertEquals(messageCount,messageList.size());
+        Assertions.assertEquals(messageCount, messageList.size());
     }
 
     /**
