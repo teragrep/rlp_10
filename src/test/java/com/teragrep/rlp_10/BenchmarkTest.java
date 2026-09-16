@@ -76,7 +76,6 @@ public class BenchmarkTest {
 
     private EventLoop eventLoop;
     private Thread eventLoopThread;
-
     private ExecutorService executorService;
 
     private final List<byte[]> messageList = new LinkedList<>();
@@ -186,9 +185,10 @@ public class BenchmarkTest {
         final Thread benchMarkThread = new Thread(() -> benchmark.startBenchmark());
         benchMarkThread.start();
         final HttpClient client = HttpClient.newHttpClient();
+        final int prometheusPort = Assertions.assertDoesNotThrow(()->prometheusConfiguration.port());
         final HttpRequest request = HttpRequest
                 .newBuilder()
-                .uri(URI.create("http://localhost:" + prometheusConfiguration.port() + "/metrics"))
+                .uri(URI.create("http://localhost:" + prometheusPort + "/metrics"))
                 .GET()
                 .build();
 
