@@ -64,7 +64,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * These are a copy from rlp_03 test suite
@@ -77,6 +76,18 @@ public class BenchmarkTest {
     private EventLoop eventLoop;
     private Thread eventLoopThread;
     private ExecutorService executorService;
+
+    // default configs to reduce clutter
+    private final InitiatorConfig initiatorConfig = new InitiatorConfig();
+    private final MetricsConfig metricsConfiguration = new MetricsConfig();
+    private final PrometheusConfig prometheusConfiguration = new PrometheusConfig();
+    private final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
+    private final TransportConfig transportConfiguration = new TransportConfig();
+    private final RecordStreamConfig recordStreamConfig = new RecordStreamConfig();
+    private final ReportConfig reportConfig = new ReportConfig();
+    private final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
+    private final DelayConfig delayConfig = new DelayConfig();
+    private final SyslogConfig syslogConfig = new SyslogConfig();
 
     private final List<byte[]> messageList = new LinkedList<>();
 
@@ -129,15 +140,7 @@ public class BenchmarkTest {
                 retryConnectionCount,
                 eventLoopCount
         );
-        final MetricsConfig metricsConfiguration = new MetricsConfig(10000);
-        final PrometheusConfig prometheusConfiguration = new PrometheusConfig(8080);
-        final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
-        final TransportConfig transportConfiguration = new TransportConfig();
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
-        final ReportConfig reportConfig = new ReportConfig(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
-        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
-        final DelayConfig delayConfig = new DelayConfig();
-        final SyslogConfig syslogConfig = new SyslogConfig();
         final Benchmark benchmark = new Benchmark(
                 initiatorConfig,
                 metricsConfiguration,
@@ -171,15 +174,7 @@ public class BenchmarkTest {
                 retryConnectionCount,
                 eventLoopCount
         );
-        final MetricsConfig metricsConfiguration = new MetricsConfig(10000);
-        final PrometheusConfig prometheusConfiguration = new PrometheusConfig(8080);
-        final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
-        final TransportConfig transportConfiguration = new TransportConfig();
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
-        final ReportConfig reportConfig = new ReportConfig(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
-        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
-        final DelayConfig delayConfig = new DelayConfig();
-        final SyslogConfig syslogConfig = new SyslogConfig();
         final Benchmark benchmark = new Benchmark(
                 initiatorConfig,
                 metricsConfiguration,
@@ -213,15 +208,7 @@ public class BenchmarkTest {
                 retryConnectionCount,
                 eventLoopCount
         );
-        final MetricsConfig metricsConfiguration = new MetricsConfig(10000);
-        final PrometheusConfig prometheusConfiguration = new PrometheusConfig(8080);
-        final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
-        final TransportConfig transportConfiguration = new TransportConfig();
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
-        final ReportConfig reportConfig = new ReportConfig(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
-        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
-        final DelayConfig delayConfig = new DelayConfig();
-        final SyslogConfig syslogConfig = new SyslogConfig();
         final Benchmark benchmark = new Benchmark(
                 initiatorConfig,
                 metricsConfiguration,
@@ -251,15 +238,7 @@ public class BenchmarkTest {
                 retryConnectionCount,
                 eventLoopCount
         );
-        final MetricsConfig metricsConfiguration = new MetricsConfig(10000);
-        final PrometheusConfig prometheusConfiguration = new PrometheusConfig(8080);
-        final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
-        final TransportConfig transportConfiguration = new TransportConfig();
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
-        final ReportConfig reportConfig = new ReportConfig(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
-        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
-        final DelayConfig delayConfig = new DelayConfig();
-        final SyslogConfig syslogConfig = new SyslogConfig();
         final Benchmark benchmark = new Benchmark(
                 initiatorConfig,
                 metricsConfiguration,
