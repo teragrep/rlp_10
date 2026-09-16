@@ -57,12 +57,9 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
-class Initiator implements Runnable {
+class Initiator implements Callable<Long> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Initiator.class);
     private static final RelpFrameFactory relpFrameFactory = new RelpFrameFactory();
@@ -75,7 +72,6 @@ class Initiator implements Runnable {
     private final long payloadTimeout;
     private final int retryTransmissionCount;
     private final int retryConnectCount;
-
     private volatile boolean run = true;
 
     public Initiator(
@@ -123,13 +119,15 @@ class Initiator implements Runnable {
     }
 
     @Override
-    public void run() {
+    public Long call() {
+        long recordsSent = 0;
         // producer threads
         try (final RelpClient relpClient = connect(retryConnectCount)) {
             if (!relpClient.isStub()) {
                 // send syslog messageCount number of times
                 while (run) {
                     send(relpClient, retryTransmissionCount);
+                    recordsSent++;
                 }
                 // send close
                 disconnect(relpClient);
@@ -146,7 +144,7 @@ class Initiator implements Runnable {
             LOGGER.error("Initiator encountered an unrecoverable error: ", exception);
         }
         finally {
-            return;
+            return recordsSent;
         }
 
     }

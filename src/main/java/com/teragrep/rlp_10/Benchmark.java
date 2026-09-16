@@ -94,7 +94,7 @@ public class Benchmark {
     private final SyslogConfig syslogConfig;
     private final Map<EventLoop, List<Initiator>> eventLoops;
     private final List<MetricsReport> reports;
-    private final List<Future> executorTasks;
+    private final List<Future<Long>> executorTasks;
 
     public Benchmark() {
         this(
@@ -217,7 +217,7 @@ public class Benchmark {
             Runtime.getRuntime().addShutdownHook(shutdownHook);
 
             // block until each task is complete
-            for (final Future task : executorTasks) {
+            for (final Future<Long> task : executorTasks) {
                 task.get();
             }
             stopBenchmark();
@@ -238,7 +238,7 @@ public class Benchmark {
                 initiator.stop();
             }
             // block until every initiator has finished executing
-            for (final Future task : executorTasks) {
+            for (final Future<Long> task : executorTasks) {
                 try {
                     task.get();
                 }
@@ -297,7 +297,7 @@ public class Benchmark {
                 final KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException
                         | UnrecoverableKeyException | KeyManagementException e
             ) {
-                // unrecoverable error
+                // unrecoverable errorx
                 throw new RuntimeException("Error while initializing TLS connection, check your configuration!", e);
             }
         }
