@@ -226,7 +226,7 @@ public class BenchmarkTest {
     }
 
     @Test
-    public void testPrometheusServer() throws InterruptedException { //todo remove throws
+    public void testPrometheusServer() {
         final int clients = 50;
         final int messageCount = 10000;
         final int retryTransmissionCount = 3;
@@ -265,7 +265,7 @@ public class BenchmarkTest {
         final HttpResponse<String> response = Assertions
                 .assertDoesNotThrow(() -> client.send(request, HttpResponse.BodyHandlers.ofString()));
 
-        benchMarkThread.join();
+        Assertions.assertDoesNotThrow(() -> benchMarkThread.join());
         client.close();
         // assert that HTTP response contains information about each metric in prometheus format
         Assertions
