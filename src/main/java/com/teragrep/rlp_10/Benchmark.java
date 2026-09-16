@@ -56,6 +56,8 @@ import com.teragrep.rlp_10.config.*;
 import com.teragrep.rlp_10.report.MetricsReport;
 import com.teragrep.rlp_10.report.PrometheusMetricsReport;
 import com.teragrep.rlp_10.report.Slf4JMetricsReport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -67,7 +69,9 @@ import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -76,6 +80,7 @@ import java.util.function.Function;
 
 public class Benchmark {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Benchmark.class);
     private final ExecutorService executorService;
     private final InitiatorConfig initiatorConfig;
     private final MetricsConfig metricsConfig;
@@ -87,7 +92,7 @@ public class Benchmark {
     private final SocketAddressConfig socketAddressConfig;
     private final DelayConfig delayConfig;
     private final SyslogConfig syslogConfig;
-    private final List<Initiator> initiators;
+    private final Map<EventLoop, List<Initiator>> eventLoops;
     private final List<MetricsReport> reports;
     private final List<Future> executorTasks;
 
@@ -129,7 +134,7 @@ public class Benchmark {
         this.socketAddressConfig = socketAddressConfig;
         this.delayConfig = delayConfig;
         this.syslogConfig = syslogConfig;
-        this.initiators = new ArrayList<>(initiatorConfig.initiatorCount());
+        this.eventLoops = new HashMap<>(initiatorConfig.eventLoopCount());
         this.reports = new ArrayList<>();
         this.executorTasks = new ArrayList<>();
     }
@@ -174,6 +179,7 @@ public class Benchmark {
         final SocketFactory socketFactory = createSocketFactory();
         final int baseInitiators = initiatorConfig.initiatorCount() / initiatorConfig.eventLoopCount();
         final int remainder = initiatorConfig.initiatorCount() % initiatorConfig.eventLoopCount();
+        final List<Initiator> initiators = new ArrayList<>();
         try {
             // create and start a thread for configured number of EventLoops and distribute configured number of Initiators among them equally
             for (int eventLoopCount = 0; eventLoopCount < initiatorConfig.eventLoopCount(); eventLoopCount++) {
@@ -203,6 +209,7 @@ public class Benchmark {
                     executorTasks.add(executorService.submit(initiator));
                     initiators.add(initiator);
                 }
+                eventLoops.put(eventLoop, initiators);
             }
 
             // shutdown hook in case JVM is terminated
@@ -223,9 +230,27 @@ public class Benchmark {
     }
 
     public void stopBenchmark() {
-        for (final Initiator initiator : initiators) {
-            initiator.stop();
+        for (final Map.Entry<EventLoop, List<Initiator>> entry : eventLoops.entrySet()) {
+            final List<Initiator> initiators = entry.getValue();
+            final EventLoop eventLoop = entry.getKey();
+            // tell each initiator to stop as soon as they can
+            for (final Initiator initiator : initiators) {
+                initiator.stop();
+            }
+            // block until every initiator has finished executing
+            for (final Future task : executorTasks) {
+                try {
+                    task.get();
+                }
+                catch (final InterruptedException | ExecutionException exception) {
+                    // unrecoverable exception, log but continue closing other tasks
+                    LOGGER.error("Failed to close Initiator task!", exception);
+                }
+            }
+            // close eventloop once everything is done.
+            eventLoop.close();
         }
+
         for (final MetricsReport report : reports) {
             report.stop();
         }
