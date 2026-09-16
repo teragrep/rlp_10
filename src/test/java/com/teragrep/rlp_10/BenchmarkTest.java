@@ -266,6 +266,7 @@ public class BenchmarkTest {
                 .assertDoesNotThrow(() -> client.send(request, HttpResponse.BodyHandlers.ofString()));
 
         benchMarkThread.join();
+        client.close();
         // assert that HTTP response contains information about each metric in prometheus format
         Assertions
                 .assertTrue(
