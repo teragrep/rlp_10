@@ -200,8 +200,8 @@ public class BenchmarkTLSTest {
                 syslogConfig
         );
         benchmark.startBenchmark();
-        Assertions.assertTrue(!messageList.isEmpty());
-        Assertions.assertEquals(messageList.size(), messageCount);
+        Assertions.assertFalse(messageList.isEmpty());
+        Assertions.assertEquals(messageCount,messageList.size());
     }
 
     /**
@@ -234,8 +234,8 @@ public class BenchmarkTLSTest {
                 syslogConfig
         );
         benchmark.startBenchmark();
-        Assertions.assertTrue(!messageList.isEmpty());
-        Assertions.assertEquals(messageList.size(), messageCount);
+        Assertions.assertFalse(messageList.isEmpty());
+        Assertions.assertEquals(messageCount, messageList.size());
     }
 
     /**
