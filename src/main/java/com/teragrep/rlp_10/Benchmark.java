@@ -222,6 +222,7 @@ public class Benchmark {
         for (final MetricsReport report : reports) {
             report.stop();
         }
+        executorService.shutdown();
     }
 
     private SocketFactory createSocketFactory() {
