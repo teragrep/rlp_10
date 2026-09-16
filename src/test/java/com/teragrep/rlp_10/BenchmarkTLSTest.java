@@ -234,7 +234,6 @@ public class BenchmarkTLSTest {
                 syslogConfig
         );
         benchmark.startBenchmark();
-        Assertions.assertDoesNotThrow(() -> Thread.sleep(100));
         Assertions.assertTrue(!messageList.isEmpty());
         Assertions.assertEquals(messageList.size(), messageCount);
     }
