@@ -297,7 +297,7 @@ public class Benchmark {
                 final KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException
                         | UnrecoverableKeyException | KeyManagementException e
             ) {
-                // unrecoverable errorx
+                // unrecoverable error
                 throw new RuntimeException("Error while initializing TLS connection, check your configuration!", e);
             }
         }

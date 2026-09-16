@@ -134,6 +134,7 @@ class Initiator implements Callable<Long> {
             }
             else {
                 LOGGER.warn("RelpClient connection timeout! Stopping...");
+                disconnect(relpClient);
             }
         }
         catch (final TransmissionException transmissionException) {
@@ -142,6 +143,7 @@ class Initiator implements Callable<Long> {
         }
         catch (final ExecutionException | InterruptedException exception) {
             LOGGER.error("Initiator encountered an unrecoverable error: ", exception);
+            stop();
         }
         finally {
             return recordsSent;
