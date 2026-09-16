@@ -171,16 +171,15 @@ public class Benchmark {
         }
 
         final EventLoopFactory eventLoopFactory = new EventLoopFactory();
+        final SocketFactory socketFactory = createSocketFactory();
         final int baseInitiators = initiatorConfig.initiatorCount() / initiatorConfig.eventLoopCount();
         final int remainder = initiatorConfig.initiatorCount() % initiatorConfig.eventLoopCount();
-
         try {
             // create and start a thread for configured number of EventLoops and distribute configured number of Initiators among them equally
             for (int eventLoopCount = 0; eventLoopCount < initiatorConfig.eventLoopCount(); eventLoopCount++) {
                 final EventLoop eventLoop = eventLoopFactory.create();
                 executorService.submit(eventLoop);
 
-                final SocketFactory socketFactory = createSocketFactory();
                 final ConnectContextFactory connectContextFactory = new ConnectContextFactory(
                         executorService,
                         socketFactory
