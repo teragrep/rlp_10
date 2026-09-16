@@ -113,16 +113,21 @@ public class BenchmarkTest {
         messageList.clear();
     }
 
+    /**
+     * Should receive configured number of messages regardless of number of clients or EventLoops configured
+     */
     @Test
     public void testMessageCount() {
-        final int clients = 50;
-        final long messageCount = 300000;
+        final int clients = 123;
+        final long messageCount = 100000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
+        final int eventLoopCount = 19;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(
                 clients,
                 retryTransmissionCount,
-                retryConnectionCount
+                retryConnectionCount,
+                eventLoopCount
         );
         final MetricsConfig metricsConfiguration = new MetricsConfig(10000);
         final PrometheusConfig prometheusConfiguration = new PrometheusConfig(8080);
@@ -150,16 +155,101 @@ public class BenchmarkTest {
         Assertions.assertEquals(messageList.size(), messageCount);
     }
 
+    /**
+     * Should be able to have fewer clients than EventLoops
+     */
     @Test
-    public void testPrometheusServer() throws InterruptedException {
-        final int clients = 50;
-        final int messageCount = 20000;
+    public void testFewerClientsThanEventLoops() {
+        final int clients = 5;
+        final long messageCount = 5000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
+        final int eventLoopCount = 19;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(
                 clients,
                 retryTransmissionCount,
-                retryConnectionCount
+                retryConnectionCount,
+                eventLoopCount
+        );
+        final MetricsConfig metricsConfiguration = new MetricsConfig(10000);
+        final PrometheusConfig prometheusConfiguration = new PrometheusConfig(8080);
+        final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
+        final TransportConfig transportConfiguration = new TransportConfig();
+        final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
+        final ReportConfig reportConfig = new ReportConfig(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
+        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
+        final DelayConfig delayConfig = new DelayConfig();
+        final SyslogConfig syslogConfig = new SyslogConfig();
+        final Benchmark benchmark = new Benchmark(
+                initiatorConfig,
+                metricsConfiguration,
+                prometheusConfiguration,
+                timeoutConfiguration,
+                transportConfiguration,
+                recordStreamConfig,
+                reportConfig,
+                socketAddressConfig,
+                delayConfig,
+                syslogConfig
+        );
+        benchmark.startBenchmark();
+        Assertions.assertTrue(!messageList.isEmpty());
+        Assertions.assertEquals(messageList.size(), messageCount);
+    }
+
+    /**
+     * Should be able to configure no clients
+     */
+    @Test
+    public void testNoClients() {
+        final int clients = 0;
+        final long messageCount = 5000;
+        final int retryTransmissionCount = 3;
+        final int retryConnectionCount = 3;
+        final int eventLoopCount = 19;
+        final InitiatorConfig initiatorConfig = new InitiatorConfig(
+                clients,
+                retryTransmissionCount,
+                retryConnectionCount,
+                eventLoopCount
+        );
+        final MetricsConfig metricsConfiguration = new MetricsConfig(10000);
+        final PrometheusConfig prometheusConfiguration = new PrometheusConfig(8080);
+        final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
+        final TransportConfig transportConfiguration = new TransportConfig();
+        final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
+        final ReportConfig reportConfig = new ReportConfig(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
+        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
+        final DelayConfig delayConfig = new DelayConfig();
+        final SyslogConfig syslogConfig = new SyslogConfig();
+        final Benchmark benchmark = new Benchmark(
+                initiatorConfig,
+                metricsConfiguration,
+                prometheusConfiguration,
+                timeoutConfiguration,
+                transportConfiguration,
+                recordStreamConfig,
+                reportConfig,
+                socketAddressConfig,
+                delayConfig,
+                syslogConfig
+        );
+        benchmark.startBenchmark();
+        Assertions.assertTrue(messageList.isEmpty());
+    }
+
+    @Test
+    public void testPrometheusServer() throws InterruptedException { //todo remove throws
+        final int clients = 50;
+        final int messageCount = 10000;
+        final int retryTransmissionCount = 3;
+        final int retryConnectionCount = 3;
+        final int eventLoopCount = 2;
+        final InitiatorConfig initiatorConfig = new InitiatorConfig(
+                clients,
+                retryTransmissionCount,
+                retryConnectionCount,
+                eventLoopCount
         );
         final MetricsConfig metricsConfiguration = new MetricsConfig(10000);
         final PrometheusConfig prometheusConfiguration = new PrometheusConfig(8080);

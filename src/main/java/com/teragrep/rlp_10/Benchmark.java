@@ -129,7 +129,7 @@ public class Benchmark {
         this.socketAddressConfig = socketAddressConfig;
         this.delayConfig = delayConfig;
         this.syslogConfig = syslogConfig;
-        this.initiators = new ArrayList<>(initiatorConfig.count());
+        this.initiators = new ArrayList<>(initiatorConfig.initiatorCount());
         this.reports = new ArrayList<>();
         this.executorTasks = new ArrayList<>();
     }
@@ -152,50 +152,58 @@ public class Benchmark {
             report.start();
         }
 
-        // eventloop threads
+        // recordStream is shared across all Initiators. Initiators ask for records until the recordstream is exhausted
+        // todo use Hostname class from aer_02 or create new component for it
+        final RecordStream recordStream = new RecordStreamImpl(
+                "someOrigin",
+                syslogConfig.hostname(),
+                syslogConfig.appName(),
+                recordStreamConfig.records()
+        );
+
+        // apply delay to recordStream if configured
+        final RecordStream delayedStream;
+        if (delayConfig.delay() > 0) {
+            delayedStream = new RecordStreamDelay(delayConfig.delay(), recordStream);
+        }
+        else {
+            delayedStream = recordStream;
+        }
+
         final EventLoopFactory eventLoopFactory = new EventLoopFactory();
+        final int baseInitiators = initiatorConfig.initiatorCount() / initiatorConfig.eventLoopCount();
+        final int remainder = initiatorConfig.initiatorCount() % initiatorConfig.eventLoopCount();
+
         try {
-            final EventLoop eventLoop = eventLoopFactory.create();
-            executorService.submit(eventLoop);
+            // create and start a thread for configured number of EventLoops and distribute configured number of Initiators among them equally
+            for (int eventLoopCount = 0; eventLoopCount < initiatorConfig.eventLoopCount(); eventLoopCount++) {
+                final EventLoop eventLoop = eventLoopFactory.create();
+                executorService.submit(eventLoop);
 
-            final SocketFactory socketFactory = createSocketFactory();
-            final ConnectContextFactory connectContextFactory = new ConnectContextFactory(
-                    executorService,
-                    socketFactory
-            );
-
-            final RelpClientFactory relpClientFactory = new RelpClientFactory(connectContextFactory, eventLoop);
-
-            // todo use Hostname class from aer_02 or create new component for it
-            final RecordStream recordStream = new RecordStreamImpl(
-                    "someOrigin",
-                    syslogConfig.hostname(),
-                    syslogConfig.appName(),
-                    recordStreamConfig.records()
-            );
-
-            final RecordStream delayedStream;
-            if (delayConfig.delay() > 0) {
-                delayedStream = new RecordStreamDelay(delayConfig.delay(), recordStream);
-            }
-            else {
-                delayedStream = recordStream;
-            }
-
-            for (int initiatorCount = 0; initiatorCount < initiatorConfig.count(); initiatorCount++) {
-                final Initiator initiator = new Initiator(
-                        relpClientFactory,
-                        delayedStream,
-                        socketAddressConfig.hostname(),
-                        socketAddressConfig.port(),
-                        metrics,
-                        timeoutConfig.openTimeout(),
-                        timeoutConfig.payloadTimeout(),
-                        initiatorConfig.retryTransmissionCount(),
-                        initiatorConfig.retryConnectionCount()
+                final SocketFactory socketFactory = createSocketFactory();
+                final ConnectContextFactory connectContextFactory = new ConnectContextFactory(
+                        executorService,
+                        socketFactory
                 );
-                executorTasks.add(executorService.submit(initiator));
-                initiators.add(initiator);
+
+                // use remainder to determine if this EventLoop should get an additional Initiator or not in order to fit all Initiators within configured number of EventLoops
+                final int initiatorsForEventLoop = baseInitiators + (eventLoopCount < remainder ? 1 : 0);
+                for (int initiatorCount = 0; initiatorCount < initiatorsForEventLoop; initiatorCount++) {
+                    final RelpClientFactory relpClientFactory = new RelpClientFactory(connectContextFactory, eventLoop);
+                    final Initiator initiator = new Initiator(
+                            relpClientFactory,
+                            delayedStream,
+                            socketAddressConfig.hostname(),
+                            socketAddressConfig.port(),
+                            metrics,
+                            timeoutConfig.openTimeout(),
+                            timeoutConfig.payloadTimeout(),
+                            initiatorConfig.retryTransmissionCount(),
+                            initiatorConfig.retryConnectionCount()
+                    );
+                    executorTasks.add(executorService.submit(initiator));
+                    initiators.add(initiator);
+                }
             }
 
             // shutdown hook in case JVM is terminated

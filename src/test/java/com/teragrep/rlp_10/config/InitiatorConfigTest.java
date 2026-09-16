@@ -46,50 +46,46 @@
 package com.teragrep.rlp_10.config;
 
 import com.teragrep.rlp_10.exception.ConfigurationException;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class InitiatorConfig {
+import static org.junit.jupiter.api.Assertions.*;
 
-    private final int initiatorCount;
-    private final int retryTransmissionCount;
-    private final int retryConnectionCount;
-    private final int eventLoopCount;
+class InitiatorConfigTest {
 
-    public InitiatorConfig() {
-        this(1, 3, 3, 1);
+    @Test
+    void testValidConfiguration() {
+        final int expectedInitiatorCount = 50;
+        final int expectedRetryTransmissionCount = 2;
+        final int expectedRetryConnectionCount = 2;
+        final int expectedEventLoopCount = 4;
+        final InitiatorConfig initiatorConfig = new InitiatorConfig(
+                expectedInitiatorCount,
+                expectedRetryTransmissionCount,
+                expectedRetryConnectionCount,
+                expectedEventLoopCount
+        );
+        Assertions.assertEquals(expectedInitiatorCount, initiatorConfig.initiatorCount());
+        Assertions.assertEquals(expectedRetryTransmissionCount, initiatorConfig.retryTransmissionCount());
+        Assertions.assertEquals(expectedRetryConnectionCount, initiatorConfig.retryConnectionCount());
+        Assertions.assertEquals(expectedEventLoopCount, initiatorConfig.eventLoopCount());
     }
 
-    public InitiatorConfig(
-            final int initiatorCount,
-            final int retryTransmissionCount,
-            final int retryConnectionCount,
-            final int eventLoopCount
-    ) {
-        this.initiatorCount = initiatorCount;
-        this.retryTransmissionCount = retryTransmissionCount;
-        this.retryConnectionCount = retryConnectionCount;
-        this.eventLoopCount = eventLoopCount;
+    @Test
+    void testInvalidConfiguration() {
+        final int invalidInitiatorCount = -25;
+        final int invalidEventLoopCount = 0;
+        final int retryTransmissionCount = 2;
+        final int retryConnectionCount = 2;
+        final InitiatorConfig initiatorConfig = new InitiatorConfig(
+                invalidInitiatorCount,
+                retryTransmissionCount,
+                retryConnectionCount,
+                invalidEventLoopCount
+        );
+        Assertions.assertEquals(retryTransmissionCount, initiatorConfig.retryTransmissionCount());
+        Assertions.assertEquals(retryConnectionCount, initiatorConfig.retryConnectionCount());
+        Assertions.assertThrows(ConfigurationException.class, () -> initiatorConfig.initiatorCount());
+        Assertions.assertThrows(ConfigurationException.class, () -> initiatorConfig.eventLoopCount());
     }
-
-    public int initiatorCount() {
-        if (initiatorCount < 0) {
-            throw new ConfigurationException("InitiatorCount must be positive!");
-        }
-        return initiatorCount;
-    }
-
-    public int eventLoopCount() {
-        if (eventLoopCount < 1) {
-            throw new ConfigurationException("Must have at least one EventLoop!");
-        }
-        return eventLoopCount;
-    }
-
-    public int retryTransmissionCount() {
-        return retryTransmissionCount;
-    }
-
-    public int retryConnectionCount() {
-        return retryConnectionCount;
-    }
-
 }

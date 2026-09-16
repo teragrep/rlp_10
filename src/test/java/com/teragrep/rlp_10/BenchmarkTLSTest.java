@@ -155,10 +155,12 @@ public class BenchmarkTLSTest {
         final int messageCount = 20000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
+        final int eventLoopCount = 1;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(
                 clients,
                 retryTransmissionCount,
-                retryConnectionCount
+                retryConnectionCount,
+                eventLoopCount
         );
         final MetricsConfig metricsConfiguration = new MetricsConfig(10000);
         final ReportConfig reportConfig = new ReportConfig(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);

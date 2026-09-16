@@ -78,7 +78,6 @@ class Initiator implements Runnable {
 
     private volatile boolean run = true;
 
-    //TODO: All initiators are currently in one eventLoop, allow for multiples.
     public Initiator(
             final RelpClientFactory relpClientFactory,
             final RecordStream recordStream,
