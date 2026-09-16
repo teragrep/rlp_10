@@ -187,8 +187,8 @@ public class Benchmark {
 
                 // use remainder to determine if this EventLoop should get an additional Initiator or not in order to fit all Initiators within configured number of EventLoops
                 final int initiatorsForEventLoop = baseInitiators + (eventLoopCount < remainder ? 1 : 0);
+                final RelpClientFactory relpClientFactory = new RelpClientFactory(connectContextFactory, eventLoop);
                 for (int initiatorCount = 0; initiatorCount < initiatorsForEventLoop; initiatorCount++) {
-                    final RelpClientFactory relpClientFactory = new RelpClientFactory(connectContextFactory, eventLoop);
                     final Initiator initiator = new Initiator(
                             relpClientFactory,
                             delayedStream,
