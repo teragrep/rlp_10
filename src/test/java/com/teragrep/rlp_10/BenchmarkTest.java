@@ -185,7 +185,7 @@ public class BenchmarkTest {
         final Thread benchMarkThread = new Thread(() -> benchmark.startBenchmark());
         benchMarkThread.start();
         final HttpClient client = HttpClient.newHttpClient();
-        final int prometheusPort = Assertions.assertDoesNotThrow(()->prometheusConfiguration.port());
+        final int prometheusPort = Assertions.assertDoesNotThrow(() -> prometheusConfiguration.port());
         final HttpRequest request = HttpRequest
                 .newBuilder()
                 .uri(URI.create("http://localhost:" + prometheusPort + "/metrics"))

@@ -51,10 +51,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
-
 
 class MetricsTest {
 
@@ -77,7 +75,7 @@ class MetricsTest {
                 metrics.records().inc();
             }));
         }
-        Assertions.assertEquals(numThreads,tasks.size());
+        Assertions.assertEquals(numThreads, tasks.size());
 
         // wait until each task is compelete
         for (final Future<?> task : tasks) {
@@ -106,7 +104,7 @@ class MetricsTest {
                 transactionTimer.close();
             }));
         }
-        Assertions.assertEquals(numThreads,tasks.size());
+        Assertions.assertEquals(numThreads, tasks.size());
         // wait until each task is complete
         for (final Future<?> task : tasks) {
             Assertions.assertDoesNotThrow(() -> task.get(50, TimeUnit.MILLISECONDS));
