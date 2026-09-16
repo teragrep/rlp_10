@@ -132,7 +132,7 @@ class Initiator implements Runnable {
                     send(relpClient, retryTransmissionCount);
                 }
                 // send close
-                close(relpClient);
+                disconnect(relpClient);
             }
             else {
                 LOGGER.warn("RelpClient connection timeout! Stopping...");
@@ -228,7 +228,7 @@ class Initiator implements Runnable {
         }
     }
 
-    private void close(final RelpClient relpClient) throws InterruptedException, ExecutionException {
+    private void disconnect(final RelpClient relpClient) throws InterruptedException, ExecutionException {
         final CompletableFuture<RelpFrame> close = relpClient.transmit(relpFrameFactory.create("close", ""));
         close.get();
         metrics.disconnects().inc();
