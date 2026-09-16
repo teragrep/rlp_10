@@ -139,8 +139,8 @@ class Initiator implements Runnable {
             }
         }
         catch (final TransmissionException transmissionException) {
-            stop();
             LOGGER.error("Initiator failed to transmit data to server!", transmissionException);
+            stop();
         }
         catch (final ExecutionException | InterruptedException exception) {
             LOGGER.error("Initiator encountered an unrecoverable error: ", exception);
