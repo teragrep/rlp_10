@@ -48,9 +48,9 @@ package com.teragrep.rlp_10;
 import com.teragrep.net_01.channel.socket.TLSFactory;
 import com.teragrep.net_01.eventloop.EventLoop;
 import com.teragrep.net_01.eventloop.EventLoopFactory;
-import com.teragrep.net_01.server.ServerFactory;
 import com.teragrep.rlp_03.frame.FrameDelegationClockFactory;
 import com.teragrep.rlp_03.frame.delegate.DefaultFrameDelegate;
+import com.teragrep.net_01.server.ServerFactory;
 import com.teragrep.rlp_10.config.*;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
@@ -62,13 +62,16 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Path;
-import java.security.*;
+import java.security.KeyStore;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -80,8 +83,26 @@ public class BenchmarkTLSTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkTLSTest.class);
 
     private EventLoop eventLoop;
-
     private ExecutorService executorService;
+
+    // default configs to reduce clutter
+    private final InitiatorConfig initiatorConfig = new InitiatorConfig();
+    private final MetricsConfig metricsConfiguration = new MetricsConfig();
+    private final PrometheusConfig prometheusConfiguration = new PrometheusConfig();
+    private final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
+    private final TransportConfig transportConfiguration = new TransportConfig(
+            true,
+            Path.of("src/test/resources/tls/keystore-client.jks"),
+            Path.of("src/test/resources/tls/truststore.jks"),
+            "changeit",
+            "changeit",
+            "TLSv1.3"
+    );
+    private final RecordStreamConfig recordStreamConfig = new RecordStreamConfig();
+    private final ReportConfig reportConfig = new ReportConfig();
+    private final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
+    private final DelayConfig delayConfig = new DelayConfig();
+    private final SyslogConfig syslogConfig = new SyslogConfig();
 
     private final List<byte[]> messageList = new LinkedList<>();
 
@@ -149,35 +170,23 @@ public class BenchmarkTLSTest {
         messageList.clear();
     }
 
+    /**
+     * Should receive configured number of messages regardless of number of clients or EventLoops configured
+     */
     @Test
-    public void testBenchmark() {
-        final int clients = 50;
-        final int messageCount = 20000;
+    public void testMessageCount() {
+        final int clients = 123;
+        final long messageCount = 100000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
-        final int eventLoopCount = 1;
+        final int eventLoopCount = 19;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(
                 clients,
                 retryTransmissionCount,
                 retryConnectionCount,
                 eventLoopCount
         );
-        final MetricsConfig metricsConfiguration = new MetricsConfig(10000);
-        final ReportConfig reportConfig = new ReportConfig(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
-        final PrometheusConfig prometheusConfiguration = new PrometheusConfig(8080);
-        final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
-        final TransportConfig transportConfiguration = new TransportConfig(
-                true,
-                Path.of("src/test/resources/tls/keystore-client.jks"),
-                Path.of("src/test/resources/tls/truststore.jks"),
-                "changeit",
-                "changeit",
-                "TLSv1.3"
-        );
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
-        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
-        final DelayConfig delayConfig = new DelayConfig();
-        final SyslogConfig syslogConfig = new SyslogConfig();
         final Benchmark benchmark = new Benchmark(
                 initiatorConfig,
                 metricsConfiguration,
@@ -192,6 +201,203 @@ public class BenchmarkTLSTest {
         );
         benchmark.startBenchmark();
         Assertions.assertTrue(!messageList.isEmpty());
-        Assertions.assertTrue(messageList.size() <= clients * messageCount);
+        Assertions.assertEquals(messageList.size(), messageCount);
     }
+
+    /**
+     * Should be able to have fewer clients than EventLoops
+     */
+    @Test
+    public void testFewerClientsThanEventLoops() {
+        final int clients = 5;
+        final long messageCount = 5000;
+        final int retryTransmissionCount = 3;
+        final int retryConnectionCount = 3;
+        final int eventLoopCount = 19;
+        final InitiatorConfig initiatorConfig = new InitiatorConfig(
+                clients,
+                retryTransmissionCount,
+                retryConnectionCount,
+                eventLoopCount
+        );
+        final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
+        final Benchmark benchmark = new Benchmark(
+                initiatorConfig,
+                metricsConfiguration,
+                prometheusConfiguration,
+                timeoutConfiguration,
+                transportConfiguration,
+                recordStreamConfig,
+                reportConfig,
+                socketAddressConfig,
+                delayConfig,
+                syslogConfig
+        );
+        benchmark.startBenchmark();
+        Assertions.assertDoesNotThrow(() -> Thread.sleep(100));
+        Assertions.assertTrue(!messageList.isEmpty());
+        Assertions.assertEquals(messageList.size(), messageCount);
+    }
+
+    /**
+     * Should be able to configure no clients
+     */
+    @Test
+    public void testNoClients() {
+        final int clients = 0;
+        final long messageCount = 5000;
+        final int retryTransmissionCount = 3;
+        final int retryConnectionCount = 3;
+        final int eventLoopCount = 19;
+        final InitiatorConfig initiatorConfig = new InitiatorConfig(
+                clients,
+                retryTransmissionCount,
+                retryConnectionCount,
+                eventLoopCount
+        );
+        final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
+        final Benchmark benchmark = new Benchmark(
+                initiatorConfig,
+                metricsConfiguration,
+                prometheusConfiguration,
+                timeoutConfiguration,
+                transportConfiguration,
+                recordStreamConfig,
+                reportConfig,
+                socketAddressConfig,
+                delayConfig,
+                syslogConfig
+        );
+        benchmark.startBenchmark();
+        Assertions.assertTrue(messageList.isEmpty());
+    }
+
+    @Test
+    public void testPrometheusServer() {
+        final int clients = 50;
+        final int messageCount = 10000;
+        final int retryTransmissionCount = 3;
+        final int retryConnectionCount = 3;
+        final int eventLoopCount = 2;
+        final InitiatorConfig initiatorConfig = new InitiatorConfig(
+                clients,
+                retryTransmissionCount,
+                retryConnectionCount,
+                eventLoopCount
+        );
+        final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
+        final Benchmark benchmark = new Benchmark(
+                initiatorConfig,
+                metricsConfiguration,
+                prometheusConfiguration,
+                timeoutConfiguration,
+                transportConfiguration,
+                recordStreamConfig,
+                reportConfig,
+                socketAddressConfig,
+                delayConfig,
+                syslogConfig
+        );
+        final Thread benchMarkThread = new Thread(() -> benchmark.startBenchmark());
+        benchMarkThread.start();
+        final HttpClient client = HttpClient.newHttpClient();
+        final int prometheusPort = Assertions.assertDoesNotThrow(() -> prometheusConfiguration.port());
+        final HttpRequest request = HttpRequest
+                .newBuilder()
+                .uri(URI.create("http://localhost:" + prometheusPort + "/metrics"))
+                .GET()
+                .build();
+
+        // send a GET request to prometheus URL. Expect to receive a response containing each ot the metrics.
+        final HttpResponse<String> response = Assertions
+                .assertDoesNotThrow(() -> client.send(request, HttpResponse.BodyHandlers.ofString()));
+
+        Assertions.assertDoesNotThrow(() -> benchMarkThread.join());
+        client.close();
+        // assert that HTTP response contains information about each metric in prometheus format
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP connects Generated from Dropwizard metric import (metric=connects, type=com.codahale.metrics.Counter)"
+                                )
+                );
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP disconnects Generated from Dropwizard metric import (metric=disconnects, type=com.codahale.metrics.Counter)"
+                                )
+                );
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP records Generated from Dropwizard metric import (metric=records, type=com.codahale.metrics.Counter)"
+                                )
+                );
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP connectLatency Generated from Dropwizard metric import (metric=connectLatency, type=com.codahale.metrics.Timer)"
+                                )
+                );
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP transactionLatency Generated from Dropwizard metric import (metric=transactionLatency, type=com.codahale.metrics.Timer)"
+                                )
+                );
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP transmitLatency Generated from Dropwizard metric import (metric=transmitLatency, type=com.codahale.metrics.Timer)"
+                                )
+                );
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP receiveLatency Generated from Dropwizard metric import (metric=receiveLatency, type=com.codahale.metrics.Timer)"
+                                )
+                );
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP retriedConnects Generated from Dropwizard metric import (metric=retriedConnects, type=com.codahale.metrics.Counter)"
+                                )
+                );
+        Assertions
+                .assertTrue(
+                        response
+                                .body()
+                                .contains(
+                                        "# HELP resends Generated from Dropwizard metric import (metric=resends, type=com.codahale.metrics.Counter)"
+                                )
+                );
+
+        // each metric should have proper type
+        Assertions.assertTrue(response.body().contains("# TYPE connects gauge"));
+        Assertions.assertTrue(response.body().contains("# TYPE disconnects gauge"));
+        Assertions.assertTrue(response.body().contains("# TYPE records gauge"));
+        Assertions.assertTrue(response.body().contains("# TYPE connectLatency summary"));
+        Assertions.assertTrue(response.body().contains("# TYPE transactionLatency summary"));
+        Assertions.assertTrue(response.body().contains("# TYPE transmitLatency summary"));
+        Assertions.assertTrue(response.body().contains("# TYPE receiveLatency summary"));
+        Assertions.assertTrue(response.body().contains("# TYPE retriedConnects gauge"));
+        Assertions.assertTrue(response.body().contains("# TYPE resends gauge"));
+    }
+
 }
