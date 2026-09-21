@@ -295,8 +295,8 @@ public class BenchmarkTLSTest {
                 delayConfig,
                 syslogConfig
         );
-        final Thread benchMarkThread = new Thread(() -> benchmark.call());
-        benchMarkThread.start();
+        final ExecutorService forkJoinPool = ForkJoinPool.commonPool();
+        Future<Long> clientRecords = forkJoinPool.submit(benchmark);
         final HttpClient client = HttpClient.newHttpClient();
         final int prometheusPort = Assertions.assertDoesNotThrow(() -> prometheusConfiguration.port());
         final HttpRequest request = HttpRequest
@@ -309,7 +309,14 @@ public class BenchmarkTLSTest {
         final HttpResponse<String> response = Assertions
                 .assertDoesNotThrow(() -> client.send(request, HttpResponse.BodyHandlers.ofString()));
 
-        Assertions.assertDoesNotThrow(() -> benchMarkThread.join());
+        AtomicLong recordsSent = new AtomicLong();
+        Assertions.assertDoesNotThrow(() -> {
+            Long records = clientRecords.get();
+            recordsSent.set(records);
+        });
+        Assertions.assertEquals(messageCount, recordsSent.get());
+
+        forkJoinPool.close();
         client.close();
         // assert that HTTP response contains information about each metric in prometheus format
         Assertions
