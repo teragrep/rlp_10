@@ -214,9 +214,9 @@ public class ConfigFactory {
 
     public TransportConfig transportConfig() {
         final String configuredTls = configValues.getOrDefault("transport.tls", "false");
-        final String configuredKeystorePath = configValues.getOrDefault("transport.keystorepath", "tls/keystore.jks");
+        final String configuredKeystorePath = configValues.getOrDefault("transport.keystorepath", "keystore.jks");
         final String configuredTruststorePath = configValues
-                .getOrDefault("transport.truststorepath", "tls/truststore.jks");
+                .getOrDefault("transport.truststorepath", "truststore.jks");
         final Path keystorePath = baseTlsDirectory.resolve(configuredKeystorePath).normalize();
         final Path truststorePath = baseTlsDirectory.resolve(configuredTruststorePath).normalize();
         final String configuredKeystorePassword = configValues.getOrDefault("transport.keystorepassword", "changeit");
