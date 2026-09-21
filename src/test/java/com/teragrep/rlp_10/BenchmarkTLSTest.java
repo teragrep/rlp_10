@@ -197,7 +197,7 @@ public class BenchmarkTLSTest {
                 delayConfig,
                 syslogConfig
         );
-        benchmark.startBenchmark();
+        Assertions.assertEquals(messageCount, benchmark.call());
         Assertions.assertFalse(messageDeque.isEmpty());
         Assertions.assertEquals(messageCount, messageDeque.size());
     }
@@ -231,7 +231,7 @@ public class BenchmarkTLSTest {
                 delayConfig,
                 syslogConfig
         );
-        benchmark.startBenchmark();
+        Assertions.assertEquals(messageCount, benchmark.call());
         Assertions.assertFalse(messageDeque.isEmpty());
         Assertions.assertEquals(messageCount, messageDeque.size());
     }
@@ -265,7 +265,7 @@ public class BenchmarkTLSTest {
                 delayConfig,
                 syslogConfig
         );
-        benchmark.startBenchmark();
+        Assertions.assertEquals(clients, benchmark.call());
         Assertions.assertTrue(messageDeque.isEmpty());
     }
 
@@ -295,7 +295,7 @@ public class BenchmarkTLSTest {
                 delayConfig,
                 syslogConfig
         );
-        final Thread benchMarkThread = new Thread(() -> benchmark.startBenchmark());
+        final Thread benchMarkThread = new Thread(() -> benchmark.call());
         benchMarkThread.start();
         final HttpClient client = HttpClient.newHttpClient();
         final int prometheusPort = Assertions.assertDoesNotThrow(() -> prometheusConfiguration.port());

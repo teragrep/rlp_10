@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 class Initiator implements Callable<Long> {
 
@@ -72,7 +73,9 @@ class Initiator implements Callable<Long> {
     private final long payloadTimeout;
     private final int retryTransmissionCount;
     private final int retryConnectCount;
+
     private volatile boolean run = true;
+    private final AtomicLong recordsSent;
 
     public Initiator(
             final RelpClientFactory relpClientFactory,
@@ -116,25 +119,23 @@ class Initiator implements Callable<Long> {
         this.payloadTimeout = payloadTimeout;
         this.retryTransmissionCount = retryTransmissionCount;
         this.retryConnectCount = retryConnectCount;
+        this.recordsSent = new AtomicLong(); // todo move
     }
 
     @Override
     public Long call() {
-        long recordsSent = 0;
         // producer threads
         try (final RelpClient relpClient = connect(retryConnectCount)) {
             if (!relpClient.isStub()) {
                 // send syslog messageCount number of times
                 while (run) {
                     send(relpClient, retryTransmissionCount);
-                    recordsSent++;
                 }
                 // send close
-                disconnect(relpClient);
+                close(relpClient);
             }
             else {
                 LOGGER.warn("RelpClient connection timeout! Stopping...");
-                disconnect(relpClient);
             }
         }
         catch (final TransmissionException transmissionException) {
@@ -143,12 +144,8 @@ class Initiator implements Callable<Long> {
         }
         catch (final ExecutionException | InterruptedException exception) {
             LOGGER.error("Initiator encountered an unrecoverable error: ", exception);
-            stop();
         }
-        finally {
-            return recordsSent;
-        }
-
+        return recordsSent.get();
     }
 
     private RelpClient connect(final int retryCount) throws InterruptedException, ExecutionException {
@@ -210,7 +207,7 @@ class Initiator implements Callable<Long> {
                 transmitTimer.close();
                 receiveTimer = metrics.receiveLatency().time();
                 syslog.get(payloadTimeout, TimeUnit.SECONDS);
-
+                recordsSent.incrementAndGet();
                 // Whole transaction is complete as soon as Future received by transmit() is completed (or times out).
                 receiveTimer.close();
                 transactionTimer.close();
@@ -228,7 +225,7 @@ class Initiator implements Callable<Long> {
         }
     }
 
-    private void disconnect(final RelpClient relpClient) throws InterruptedException, ExecutionException {
+    private void close(final RelpClient relpClient) throws InterruptedException, ExecutionException {
         final CompletableFuture<RelpFrame> close = relpClient.transmit(relpFrameFactory.create("close", ""));
         close.get();
         metrics.disconnects().inc();
