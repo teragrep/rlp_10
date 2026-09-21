@@ -59,18 +59,18 @@ public class ConfigFactory {
     private final Map<String, String> configValues;
     private final Path baseDirectory;
 
-    public ConfigFactory(Path baseDirectory, final Map<String, String> configValues) {
+    public ConfigFactory(final Path baseDirectory, final Map<String, String> configValues) {
         this.baseDirectory = baseDirectory.toAbsolutePath().normalize();
         this.configValues = Collections.unmodifiableMap(configValues);
     }
 
     public DelayConfig delayConfig() {
-        String configuredDuration = configValues.getOrDefault("delay.duration", "PT0S");
+        final String configuredDuration = configValues.getOrDefault("delay.duration", "PT0S");
         try {
-            Duration delayDuration = Duration.parse(configuredDuration);
+            final Duration delayDuration = Duration.parse(configuredDuration);
             return new DelayConfig(delayDuration);
         }
-        catch (DateTimeParseException dateTimeParseException) {
+        catch (final DateTimeParseException dateTimeParseException) {
             throw new ConfigurationException(
                     "DelayConfig contains invalid configuration value!",
                     dateTimeParseException
@@ -79,18 +79,18 @@ public class ConfigFactory {
     }
 
     public InitiatorConfig initiatorConfig() {
-        String configuredInitiatorCount = configValues.getOrDefault("initiator.count", "1");
-        String configuredEventloopCount = configValues.getOrDefault("initiator.eventloopcount", "1");
-        String configuredRetryTransmissionCount = configValues.getOrDefault("initiator.retrytransmissioncount", "3");
-        String configuredRetryConnectionCount = configValues.getOrDefault("initiator.retryconnectioncount", "3");
+        final String configuredInitiatorCount = configValues.getOrDefault("initiator.count", "1");
+        final String configuredEventloopCount = configValues.getOrDefault("initiator.eventloopcount", "1");
+        final String configuredRetryTransmissionCount = configValues.getOrDefault("initiator.retrytransmissioncount", "3");
+        final String configuredRetryConnectionCount = configValues.getOrDefault("initiator.retryconnectioncount", "3");
         try {
-            int initiatorCount = Integer.parseInt(configuredInitiatorCount);
-            int eventloopCount = Integer.parseInt(configuredEventloopCount);
-            int retryTransmissionCount = Integer.parseInt(configuredRetryTransmissionCount);
-            int retryConnectionCount = Integer.parseInt(configuredRetryConnectionCount);
+            final int initiatorCount = Integer.parseInt(configuredInitiatorCount);
+            final int eventloopCount = Integer.parseInt(configuredEventloopCount);
+            final int retryTransmissionCount = Integer.parseInt(configuredRetryTransmissionCount);
+            final int retryConnectionCount = Integer.parseInt(configuredRetryConnectionCount);
             return new InitiatorConfig(initiatorCount, retryTransmissionCount, retryConnectionCount, eventloopCount);
         }
-        catch (NumberFormatException numberFormatException) {
+        catch (final NumberFormatException numberFormatException) {
             throw new ConfigurationException(
                     "InititatorConfig contains invalid configuration value!",
                     numberFormatException
@@ -100,11 +100,11 @@ public class ConfigFactory {
 
     public MetricsConfig metricsConfig() {
         try {
-            String configuredWindow = configValues.getOrDefault("metrics.window", "10000");
-            int window = Integer.parseInt(configuredWindow);
+            final String configuredWindow = configValues.getOrDefault("metrics.window", "10000");
+            final int window = Integer.parseInt(configuredWindow);
             return new MetricsConfig(window);
         }
-        catch (NumberFormatException numberFormatException) {
+        catch (final NumberFormatException numberFormatException) {
             throw new ConfigurationException(
                     "MetricsConfig contains invalid configuration value!",
                     numberFormatException
@@ -113,12 +113,12 @@ public class ConfigFactory {
     }
 
     public PayloadConfig payloadConfig() { // todo: remove is no usages
-        String configuredpayloadLength = configValues.getOrDefault("payload.length", "0");
+        final String configuredpayloadLength = configValues.getOrDefault("payload.length", "0");
         try {
-            int payloadLength = Integer.parseInt(configuredpayloadLength);
+            final int payloadLength = Integer.parseInt(configuredpayloadLength);
             return new PayloadConfig(payloadLength);
         }
-        catch (NumberFormatException numberFormatException) {
+        catch (final NumberFormatException numberFormatException) {
             throw new ConfigurationException(
                     "PayloadConfig contains invalid configuration value!",
                     numberFormatException
@@ -127,12 +127,12 @@ public class ConfigFactory {
     }
 
     public PrometheusConfig prometheusConfig() {
-        String configuredPort = configValues.getOrDefault("prometheus.port", "8080");
+        final String configuredPort = configValues.getOrDefault("prometheus.port", "8080");
         try {
-            int port = Integer.parseInt(configuredPort);
+            final int port = Integer.parseInt(configuredPort);
             return new PrometheusConfig(port);
         }
-        catch (NumberFormatException numberFormatException) {
+        catch (final NumberFormatException numberFormatException) {
             throw new ConfigurationException(
                     "PrometheusConfig contains invalid configuration value!",
                     numberFormatException
@@ -141,12 +141,12 @@ public class ConfigFactory {
     }
 
     public RecordStreamConfig recordStreamConfig() {
-        String configuredRecords = configValues.getOrDefault("recordstream.records", String.valueOf(Long.MAX_VALUE));
+        final String configuredRecords = configValues.getOrDefault("recordstream.records", String.valueOf(Long.MAX_VALUE));
         try {
-            long records = Long.parseLong(configuredRecords);
+            final long records = Long.parseLong(configuredRecords);
             return new RecordStreamConfig(records);
         }
-        catch (NumberFormatException numberFormatException) {
+        catch (final NumberFormatException numberFormatException) {
             throw new ConfigurationException(
                     "RecordStreamConfig contains invalid configuration value!",
                     numberFormatException
@@ -155,16 +155,16 @@ public class ConfigFactory {
     }
 
     public ReportConfig reportConfig() {
-        String configuredInterval = configValues.getOrDefault("report.interval", "1000");
-        String configuredRateTimeUnit = configValues.getOrDefault("report.ratetimeunit", "SECONDS");
-        String configuredDurationTimeUnit = configValues.getOrDefault("report.durationtimeunit", "MILLISECONDS");
+        final String configuredInterval = configValues.getOrDefault("report.interval", "1000");
+        final String configuredRateTimeUnit = configValues.getOrDefault("report.ratetimeunit", "SECONDS");
+        final String configuredDurationTimeUnit = configValues.getOrDefault("report.durationtimeunit", "MILLISECONDS");
         try {
-            long interval = Long.parseLong(configuredInterval);
-            TimeUnit rateTimeUnit = TimeUnit.valueOf(configuredRateTimeUnit);
-            TimeUnit durationTimeUnit = TimeUnit.valueOf(configuredDurationTimeUnit);
+            final long interval = Long.parseLong(configuredInterval);
+            final TimeUnit rateTimeUnit = TimeUnit.valueOf(configuredRateTimeUnit);
+            final TimeUnit durationTimeUnit = TimeUnit.valueOf(configuredDurationTimeUnit);
             return new ReportConfig(interval, rateTimeUnit, durationTimeUnit);
         }
-        catch (IllegalArgumentException illegalArgumentException) {
+        catch (final IllegalArgumentException illegalArgumentException) {
             throw new ConfigurationException(
                     "ReportConfig contains invalid configuration value!",
                     illegalArgumentException
@@ -173,13 +173,13 @@ public class ConfigFactory {
     }
 
     public SocketAddressConfig socketAddressConfig() {
-        String configuredHostname = configValues.getOrDefault("socket.hostname", "localhost");
-        String configuredPort = configValues.getOrDefault("socket.port", "8080");
+        final String configuredHostname = configValues.getOrDefault("socket.hostname", "localhost");
+        final String configuredPort = configValues.getOrDefault("socket.port", "8080");
         try {
-            int port = Integer.parseInt(configuredPort);
+            final int port = Integer.parseInt(configuredPort);
             return new SocketAddressConfig(configuredHostname, port);
         }
-        catch (NumberFormatException numberFormatException) {
+        catch (final NumberFormatException numberFormatException) {
             throw new ConfigurationException(
                     "SocketAddressConfig contains invalid configuration value!",
                     numberFormatException
@@ -189,20 +189,20 @@ public class ConfigFactory {
     }
 
     public SyslogConfig syslogConfig() {
-        String configuredHostname = configValues.getOrDefault("syslog.hostname", "localhost");
-        String configuredAppName = configValues.getOrDefault("syslog.appname", "appName");
+        final String configuredHostname = configValues.getOrDefault("syslog.hostname", "localhost");
+        final String configuredAppName = configValues.getOrDefault("syslog.appname", "appName");
         return new SyslogConfig(configuredHostname, configuredAppName);
     }
 
     public TimeoutConfig timeoutConfig() {
-        String configuredOpenTimeout = configValues.getOrDefault("timeout.open", "10");
-        String configuredPayloadTimeout = configValues.getOrDefault("timeout.payload", "5");
+        final String configuredOpenTimeout = configValues.getOrDefault("timeout.open", "10");
+        final String configuredPayloadTimeout = configValues.getOrDefault("timeout.payload", "5");
         try {
-            long openTimeout = Long.parseLong(configuredOpenTimeout);
-            long payloadTimeout = Long.parseLong(configuredPayloadTimeout);
+            final long openTimeout = Long.parseLong(configuredOpenTimeout);
+            final long payloadTimeout = Long.parseLong(configuredPayloadTimeout);
             return new TimeoutConfig(openTimeout, payloadTimeout);
         }
-        catch (NumberFormatException numberFormatException) {
+        catch (final NumberFormatException numberFormatException) {
             throw new ConfigurationException(
                     "TimeoutConfig contains invalid configuration value!",
                     numberFormatException
@@ -211,14 +211,14 @@ public class ConfigFactory {
     }
 
     public TransportConfig transportConfig() {
-        String configuredTls = configValues.getOrDefault("transport.tls", "false");
-        String configuredKeystorePath = configValues.getOrDefault("transport.keystorepath", "tls/keystore.jks");
-        String configuredTruststorePath = configValues.getOrDefault("transport.truststorepath", "tls/truststore.jks");
-        Path keystorePath = baseDirectory.resolve(configuredKeystorePath).normalize();
-        Path truststorePath = baseDirectory.resolve(configuredTruststorePath).normalize();
-        String configuredKeystorePassword = configValues.getOrDefault("transport.keystorepassword", "changeit");
-        String configuredTruststorePassword = configValues.getOrDefault("transport.truststorepassword", "changeit");
-        String protocol = configValues.getOrDefault("transport.protocol", "TLSv1.3");
+        final String configuredTls = configValues.getOrDefault("transport.tls", "false");
+        final String configuredKeystorePath = configValues.getOrDefault("transport.keystorepath", "tls/keystore.jks");
+        final String configuredTruststorePath = configValues.getOrDefault("transport.truststorepath", "tls/truststore.jks");
+        final Path keystorePath = baseDirectory.resolve(configuredKeystorePath).normalize();
+        final Path truststorePath = baseDirectory.resolve(configuredTruststorePath).normalize();
+        final String configuredKeystorePassword = configValues.getOrDefault("transport.keystorepassword", "changeit");
+        final String configuredTruststorePassword = configValues.getOrDefault("transport.truststorepassword", "changeit");
+        final String protocol = configValues.getOrDefault("transport.protocol", "TLSv1.3");
         // Detect path traversal
         if (!keystorePath.startsWith(baseDirectory)) {
             throw new ConfigurationException("Invalid keystore path!");
@@ -226,7 +226,7 @@ public class ConfigFactory {
         if (!truststorePath.startsWith(baseDirectory)) {
             throw new ConfigurationException("Invalid truststore path!");
         }
-        boolean tls = Boolean.getBoolean(configuredTls);
+        final boolean tls = Boolean.getBoolean(configuredTls);
         return new TransportConfig(
                 tls,
                 keystorePath,

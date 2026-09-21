@@ -219,7 +219,7 @@ public class Benchmark implements Callable<Long> {
             // block until each task is complete
             long totalRecords = 0;
             for (final Future<Long> task : executorTasks) {
-                long taskRecords = task.get();
+                final long taskRecords = task.get();
                 totalRecords += taskRecords;
             }
             stopBenchmark();

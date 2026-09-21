@@ -250,7 +250,7 @@ public class BenchmarkTest {
                 syslogConfig
         );
         final ExecutorService forkJoinPool = ForkJoinPool.commonPool();
-        Future<Long> clientRecords = forkJoinPool.submit(benchmark);
+        final Future<Long> clientRecords = forkJoinPool.submit(benchmark);
         final HttpClient client = HttpClient.newHttpClient();
         final int prometheusPort = Assertions.assertDoesNotThrow(() -> prometheusConfiguration.port());
         final HttpRequest request = HttpRequest
@@ -263,9 +263,9 @@ public class BenchmarkTest {
         final HttpResponse<String> response = Assertions
                 .assertDoesNotThrow(() -> client.send(request, HttpResponse.BodyHandlers.ofString()));
 
-        AtomicLong recordsSent = new AtomicLong();
+        final AtomicLong recordsSent = new AtomicLong();
         Assertions.assertDoesNotThrow(() -> {
-            Long records = clientRecords.get();
+            final Long records = clientRecords.get();
             recordsSent.set(records);
         });
         Assertions.assertEquals(messageCount, recordsSent.get());
