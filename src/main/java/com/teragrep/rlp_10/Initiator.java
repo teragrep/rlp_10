@@ -187,7 +187,7 @@ class Initiator implements Callable<Long> {
             sent = send(relpClient);
         }
         if (!sent) {
-            throw new TransmissionException("Failed to connect to server in " + retryCount + " attempts!");
+            throw new TransmissionException("Failed to transmit data to server in " + retryCount + " attempts!");
         }
     }
 
