@@ -132,7 +132,7 @@ class ConfigFactoryTest {
         final TimeoutConfig timeoutConfig = Assertions.assertDoesNotThrow(() -> configFactory.timeoutConfig());
         final TransportConfig transportConfig = Assertions.assertDoesNotThrow(() -> configFactory.transportConfig());
 
-        // every configuration object should contain valid values (eg. PrometheusConfig should not have a 'port' value that is out of range when using default configs, which would throw an Exception)
+        // metrics with assigned values should have corresponding values in configuration objects. omitted values should remain as default
         Assertions.assertEquals(10, initiatorConfig.initiatorCount());
         Assertions.assertEquals(1, initiatorConfig.eventLoopCount());
         Assertions.assertEquals(3, initiatorConfig.retryConnectionCount());
