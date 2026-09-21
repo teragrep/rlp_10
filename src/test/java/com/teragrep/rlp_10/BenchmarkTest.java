@@ -60,10 +60,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * These are a copy from rlp_03 test suite
@@ -89,7 +87,7 @@ public class BenchmarkTest {
     private final DelayConfig delayConfig = new DelayConfig();
     private final SyslogConfig syslogConfig = new SyslogConfig();
 
-    private final List<byte[]> messageList = new LinkedList<>();
+    private final ConcurrentLinkedDeque<byte[]> messageDeque = new ConcurrentLinkedDeque<>();
 
     @BeforeAll
     public void init() {
@@ -106,7 +104,7 @@ public class BenchmarkTest {
                 eventLoop,
                 executorService,
                 new PlainFactory(),
-                new FrameDelegationClockFactory(() -> new DefaultFrameDelegate((frame) -> messageList.add(frame.relpFrame().payload().toBytes())))
+                new FrameDelegationClockFactory(() -> new DefaultFrameDelegate((frame) -> messageDeque.add(frame.relpFrame().payload().toBytes())))
         );
         Assertions.assertDoesNotThrow(() -> serverFactory.create(socketAddressConfig.port()));
     }
@@ -121,7 +119,7 @@ public class BenchmarkTest {
     @AfterEach
     public void clearMessageList() {
         // clear received list
-        messageList.clear();
+        messageDeque.clear();
     }
 
     /**
@@ -154,8 +152,8 @@ public class BenchmarkTest {
                 syslogConfig
         );
         benchmark.startBenchmark();
-        Assertions.assertFalse(messageList.isEmpty());
-        Assertions.assertEquals(messageCount, messageList.size());
+        Assertions.assertFalse(messageDeque.isEmpty());
+        Assertions.assertEquals(messageCount, messageDeque.size());
     }
 
     /**
@@ -188,8 +186,8 @@ public class BenchmarkTest {
                 syslogConfig
         );
         benchmark.startBenchmark();
-        Assertions.assertFalse(messageList.isEmpty());
-        Assertions.assertEquals(messageCount, messageList.size());
+        Assertions.assertFalse(messageDeque.isEmpty());
+        Assertions.assertEquals(messageCount, messageDeque.size());
     }
 
     /**
@@ -222,7 +220,7 @@ public class BenchmarkTest {
                 syslogConfig
         );
         benchmark.startBenchmark();
-        Assertions.assertTrue(messageList.isEmpty());
+        Assertions.assertTrue(messageDeque.isEmpty());
     }
 
     @Test

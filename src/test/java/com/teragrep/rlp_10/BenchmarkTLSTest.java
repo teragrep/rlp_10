@@ -68,10 +68,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.security.KeyStore;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 /**
@@ -104,7 +102,7 @@ public class BenchmarkTLSTest {
     private final DelayConfig delayConfig = new DelayConfig();
     private final SyslogConfig syslogConfig = new SyslogConfig();
 
-    private final List<byte[]> messageList = new LinkedList<>();
+    private final ConcurrentLinkedDeque<byte[]> messageDeque = new ConcurrentLinkedDeque<>();
 
     @BeforeAll
     public void init() {
@@ -153,7 +151,7 @@ public class BenchmarkTLSTest {
                 eventLoop,
                 executorService,
                 new TLSFactory(sslContext, sslEngineFunction),
-                new FrameDelegationClockFactory(() -> new DefaultFrameDelegate((frame) -> messageList.add(frame.relpFrame().payload().toBytes())))
+                new FrameDelegationClockFactory(() -> new DefaultFrameDelegate((frame) -> messageDeque.add(frame.relpFrame().payload().toBytes())))
         );
         Assertions.assertDoesNotThrow(() -> serverFactory.create(socketAddressConfig.port()));
     }
@@ -167,7 +165,7 @@ public class BenchmarkTLSTest {
     @AfterEach
     public void clearMessageList() {
         // clear received list
-        messageList.clear();
+        messageDeque.clear();
     }
 
     /**
@@ -200,8 +198,8 @@ public class BenchmarkTLSTest {
                 syslogConfig
         );
         benchmark.startBenchmark();
-        Assertions.assertFalse(messageList.isEmpty());
-        Assertions.assertEquals(messageCount, messageList.size());
+        Assertions.assertFalse(messageDeque.isEmpty());
+        Assertions.assertEquals(messageCount, messageDeque.size());
     }
 
     /**
@@ -234,8 +232,8 @@ public class BenchmarkTLSTest {
                 syslogConfig
         );
         benchmark.startBenchmark();
-        Assertions.assertFalse(messageList.isEmpty());
-        Assertions.assertEquals(messageCount, messageList.size());
+        Assertions.assertFalse(messageDeque.isEmpty());
+        Assertions.assertEquals(messageCount, messageDeque.size());
     }
 
     /**
@@ -268,7 +266,7 @@ public class BenchmarkTLSTest {
                 syslogConfig
         );
         benchmark.startBenchmark();
-        Assertions.assertTrue(messageList.isEmpty());
+        Assertions.assertTrue(messageDeque.isEmpty());
     }
 
     @Test
