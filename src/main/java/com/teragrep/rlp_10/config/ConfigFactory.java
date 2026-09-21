@@ -113,20 +113,6 @@ public class ConfigFactory {
         }
     }
 
-    public PayloadConfig payloadConfig() { // todo: remove is no usages
-        final String configuredpayloadLength = configValues.getOrDefault("payload.length", "0");
-        try {
-            final int payloadLength = Integer.parseInt(configuredpayloadLength);
-            return new PayloadConfig(payloadLength);
-        }
-        catch (final NumberFormatException numberFormatException) {
-            throw new ConfigurationException(
-                    "PayloadConfig contains invalid configuration value!",
-                    numberFormatException
-            );
-        }
-    }
-
     public PrometheusConfig prometheusConfig() {
         final String configuredPort = configValues.getOrDefault("prometheus.port", "8080");
         try {
