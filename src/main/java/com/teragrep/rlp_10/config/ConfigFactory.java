@@ -57,10 +57,10 @@ import java.util.concurrent.TimeUnit;
 public class ConfigFactory {
 
     private final Map<String, String> configValues;
-    private final Path baseDirectory;
+    private final Path baseTlsDirectory;
 
-    public ConfigFactory(final Path baseDirectory, final Map<String, String> configValues) {
-        this.baseDirectory = baseDirectory.toAbsolutePath().normalize();
+    public ConfigFactory(final Path baseTlsDirectory, final Map<String, String> configValues) {
+        this.baseTlsDirectory = baseTlsDirectory.toAbsolutePath().normalize();
         this.configValues = Collections.unmodifiableMap(configValues);
     }
 
@@ -217,20 +217,23 @@ public class ConfigFactory {
         final String configuredKeystorePath = configValues.getOrDefault("transport.keystorepath", "tls/keystore.jks");
         final String configuredTruststorePath = configValues
                 .getOrDefault("transport.truststorepath", "tls/truststore.jks");
-        final Path keystorePath = baseDirectory.resolve(configuredKeystorePath).normalize();
-        final Path truststorePath = baseDirectory.resolve(configuredTruststorePath).normalize();
+        final Path keystorePath = baseTlsDirectory.resolve(configuredKeystorePath).normalize();
+        final Path truststorePath = baseTlsDirectory.resolve(configuredTruststorePath).normalize();
         final String configuredKeystorePassword = configValues.getOrDefault("transport.keystorepassword", "changeit");
         final String configuredTruststorePassword = configValues
                 .getOrDefault("transport.truststorepassword", "changeit");
         final String protocol = configValues.getOrDefault("transport.protocol", "TLSv1.3");
         // Detect path traversal
-        if (!keystorePath.startsWith(baseDirectory)) {
-            throw new ConfigurationException("Invalid keystore path!");
+        if (!keystorePath.startsWith(baseTlsDirectory)) {
+            throw new ConfigurationException("TransportConfig contains invalid keystore path!");
         }
-        if (!truststorePath.startsWith(baseDirectory)) {
-            throw new ConfigurationException("Invalid truststore path!");
+        if (!truststorePath.startsWith(baseTlsDirectory)) {
+            throw new ConfigurationException("TransportConfig contains invalid truststore path!");
         }
-        final boolean tls = Boolean.getBoolean(configuredTls);
+        if(!configuredTls.equals("true") && !configuredTls.equals("false")){
+            throw new ConfigurationException("TransportConfig contains invalid TLS boolean!");
+        }
+        final boolean tls = Boolean.parseBoolean(configuredTls);
         return new TransportConfig(
                 tls,
                 keystorePath,
