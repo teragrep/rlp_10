@@ -180,25 +180,26 @@ class Initiator implements Callable<Long> {
     private void send(final RelpClient relpClient, final int retryCount)
             throws InterruptedException, ExecutionException, TransmissionException {
         int retries = 0;
-        boolean sent = send(relpClient);
+        final String payload = new String(recordStream.get(), StandardCharsets.UTF_8); // todo recordStream should return a stubable SyslogMessage, currently stubness is represented by empty bytearray
+        boolean sent = send(relpClient, payload);
         while (!sent && retries < retryCount) {
             retries++;
             metrics.resends().inc();
-            sent = send(relpClient);
+            sent = send(relpClient, payload);
         }
         if (!sent) {
             throw new TransmissionException("Failed to transmit data to server in " + retryCount + " attempts!");
         }
     }
 
-    private boolean send(final RelpClient relpClient) throws InterruptedException, ExecutionException {
+    private boolean send(final RelpClient relpClient, final String payload)
+            throws InterruptedException, ExecutionException {
         try {
             // start transaction and transmit timers
             final Timer.Context transactionTimer = metrics.transactionLatency().time();
             final Timer.Context transmitTimer = metrics.transmitLatency().time();
             final Timer.Context receiveTimer;
             // stop transmit timer as soon as relpClient.transmit() finishes and start receiveTimer.
-            final String payload = new String(recordStream.get(), StandardCharsets.UTF_8); // todo recordStream should return a stubable SyslogMessage, currently stubness is represented by empty bytearray
             if (!payload.isEmpty()) {
                 final CompletableFuture<RelpFrame> syslog = relpClient
                         .transmit(relpFrameFactory.create("syslog", payload));
