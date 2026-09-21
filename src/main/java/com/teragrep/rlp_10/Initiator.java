@@ -51,7 +51,6 @@ import com.teragrep.rlp_03.client.RelpClientFactory;
 import com.teragrep.rlp_03.client.RelpClientStub;
 import com.teragrep.rlp_03.frame.RelpFrame;
 import com.teragrep.rlp_03.frame.RelpFrameFactory;
-import com.teragrep.rlp_10.exception.TransmissionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,7 +128,11 @@ class Initiator implements Callable<Long> {
             if (!relpClient.isStub()) {
                 // send syslog messageCount number of times
                 while (run) {
-                    send(relpClient, retryTransmissionCount);
+                    final boolean sent = send(relpClient, retryTransmissionCount);
+                    if (!sent) {
+                        LOGGER.error("Failed to transmit data to server! Stopping...");
+                        break;
+                    }
                 }
                 // send close
                 close(relpClient);
@@ -137,10 +140,6 @@ class Initiator implements Callable<Long> {
             else {
                 LOGGER.warn("RelpClient connection timeout! Stopping...");
             }
-        }
-        catch (final TransmissionException transmissionException) {
-            LOGGER.error("Initiator failed to transmit data to server!", transmissionException);
-            stop();
         }
         catch (final ExecutionException | InterruptedException exception) {
             LOGGER.error("Initiator encountered an unrecoverable error: ", exception);
@@ -177,8 +176,8 @@ class Initiator implements Callable<Long> {
         return relpClient;
     }
 
-    private void send(final RelpClient relpClient, final int retryCount)
-            throws InterruptedException, ExecutionException, TransmissionException {
+    private boolean send(final RelpClient relpClient, final int retryCount)
+            throws InterruptedException, ExecutionException {
         int retries = 0;
         final String payload = new String(recordStream.get(), StandardCharsets.UTF_8); // todo recordStream should return a stubable SyslogMessage, currently stubness is represented by empty bytearray
         boolean sent = send(relpClient, payload);
@@ -187,9 +186,7 @@ class Initiator implements Callable<Long> {
             metrics.resends().inc();
             sent = send(relpClient, payload);
         }
-        if (!sent) {
-            throw new TransmissionException("Failed to transmit data to server in " + retryCount + " attempts!");
-        }
+        return sent;
     }
 
     private boolean send(final RelpClient relpClient, final String payload)
