@@ -57,7 +57,7 @@ public class Main {
     static final Path baseDirectory = Path.of("/etc/rlp_10");
     static final Path configPath = Path.of("config/rlp_10.properties");
 
-    public static void main(String[] args) throws ConfigurationException {
+    public static void main(final String[] args) throws ConfigurationException {
         final PathConfiguration pathConfiguration = new PathConfiguration(baseDirectory.resolve(configPath).toFile());
         final Map<String, String> configurationValues = pathConfiguration.asMap();
         final ConfigFactory configFactory = new ConfigFactory(baseDirectory, configurationValues);

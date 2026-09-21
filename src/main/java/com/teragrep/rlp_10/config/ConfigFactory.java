@@ -215,8 +215,7 @@ public class ConfigFactory {
     public TransportConfig transportConfig() {
         final String configuredTls = configValues.getOrDefault("transport.tls", "false");
         final String configuredKeystorePath = configValues.getOrDefault("transport.keystorepath", "keystore.jks");
-        final String configuredTruststorePath = configValues
-                .getOrDefault("transport.truststorepath", "truststore.jks");
+        final String configuredTruststorePath = configValues.getOrDefault("transport.truststorepath", "truststore.jks");
         final Path keystorePath = baseTlsDirectory.resolve(configuredKeystorePath).normalize();
         final Path truststorePath = baseTlsDirectory.resolve(configuredTruststorePath).normalize();
         final String configuredKeystorePassword = configValues.getOrDefault("transport.keystorepassword", "changeit");
@@ -230,7 +229,7 @@ public class ConfigFactory {
         if (!truststorePath.startsWith(baseTlsDirectory)) {
             throw new ConfigurationException("TransportConfig contains invalid truststore path!");
         }
-        if(!configuredTls.equals("true") && !configuredTls.equals("false")){
+        if (!"true".equals(configuredTls) && !"false".equals(configuredTls)) {
             throw new ConfigurationException("TransportConfig contains invalid TLS boolean!");
         }
         final boolean tls = Boolean.parseBoolean(configuredTls);
