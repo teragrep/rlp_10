@@ -96,21 +96,6 @@ public class Benchmark implements Callable<Long> {
     private final List<MetricsReport> reports;
     private final List<Future<Long>> executorTasks;
 
-    public Benchmark() {
-        this(
-                new InitiatorConfig(),
-                new MetricsConfig(),
-                new PrometheusConfig(),
-                new TimeoutConfig(),
-                new TransportConfig(),
-                new RecordStreamConfig(),
-                new ReportConfig(),
-                new SocketAddressConfig(),
-                new DelayConfig(),
-                new SyslogConfig()
-        );
-    }
-
     public Benchmark(
             final InitiatorConfig initiatorConfig,
             final MetricsConfig metricsConfig,
@@ -140,8 +125,6 @@ public class Benchmark implements Callable<Long> {
     }
 
     public Long call() {
-        // todo configs
-
         final Metrics metrics = new Metrics(metricsConfig);
 
         // reports

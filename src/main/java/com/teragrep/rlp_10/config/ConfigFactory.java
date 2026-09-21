@@ -81,7 +81,8 @@ public class ConfigFactory {
     public InitiatorConfig initiatorConfig() {
         final String configuredInitiatorCount = configValues.getOrDefault("initiator.count", "1");
         final String configuredEventloopCount = configValues.getOrDefault("initiator.eventloopcount", "1");
-        final String configuredRetryTransmissionCount = configValues.getOrDefault("initiator.retrytransmissioncount", "3");
+        final String configuredRetryTransmissionCount = configValues
+                .getOrDefault("initiator.retrytransmissioncount", "3");
         final String configuredRetryConnectionCount = configValues.getOrDefault("initiator.retryconnectioncount", "3");
         try {
             final int initiatorCount = Integer.parseInt(configuredInitiatorCount);
@@ -141,7 +142,8 @@ public class ConfigFactory {
     }
 
     public RecordStreamConfig recordStreamConfig() {
-        final String configuredRecords = configValues.getOrDefault("recordstream.records", String.valueOf(Long.MAX_VALUE));
+        final String configuredRecords = configValues
+                .getOrDefault("recordstream.records", String.valueOf(Long.MAX_VALUE));
         try {
             final long records = Long.parseLong(configuredRecords);
             return new RecordStreamConfig(records);
@@ -174,7 +176,7 @@ public class ConfigFactory {
 
     public SocketAddressConfig socketAddressConfig() {
         final String configuredHostname = configValues.getOrDefault("socket.hostname", "localhost");
-        final String configuredPort = configValues.getOrDefault("socket.port", "8080");
+        final String configuredPort = configValues.getOrDefault("socket.port", "1601");
         try {
             final int port = Integer.parseInt(configuredPort);
             return new SocketAddressConfig(configuredHostname, port);
@@ -213,11 +215,13 @@ public class ConfigFactory {
     public TransportConfig transportConfig() {
         final String configuredTls = configValues.getOrDefault("transport.tls", "false");
         final String configuredKeystorePath = configValues.getOrDefault("transport.keystorepath", "tls/keystore.jks");
-        final String configuredTruststorePath = configValues.getOrDefault("transport.truststorepath", "tls/truststore.jks");
+        final String configuredTruststorePath = configValues
+                .getOrDefault("transport.truststorepath", "tls/truststore.jks");
         final Path keystorePath = baseDirectory.resolve(configuredKeystorePath).normalize();
         final Path truststorePath = baseDirectory.resolve(configuredTruststorePath).normalize();
         final String configuredKeystorePassword = configValues.getOrDefault("transport.keystorepassword", "changeit");
-        final String configuredTruststorePassword = configValues.getOrDefault("transport.truststorepassword", "changeit");
+        final String configuredTruststorePassword = configValues
+                .getOrDefault("transport.truststorepassword", "changeit");
         final String protocol = configValues.getOrDefault("transport.protocol", "TLSv1.3");
         // Detect path traversal
         if (!keystorePath.startsWith(baseDirectory)) {
