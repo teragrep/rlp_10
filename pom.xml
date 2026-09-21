@@ -43,6 +43,12 @@
       <artifactId>parsson</artifactId>
       <version>${eclipse.parsson.version}</version>
     </dependency>
+    <!-- Configuration -->
+    <dependency>
+      <groupId>com.teragrep</groupId>
+      <artifactId>cnf_01</artifactId>
+      <version>1.0.0</version>
+    </dependency>
     <!-- dropwizard metrics -->
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
@@ -205,6 +211,8 @@
             <!-- readme -->
             <exclude>README.adoc</exclude>
             <exclude>README.md</exclude>
+            <!-- config file -->
+            <exclude>src/main/resources/rlp_10.properties</exclude>
             <!-- Doxyfile -->
             <exclude>Doxyfile</exclude>
             <!-- rpm -->

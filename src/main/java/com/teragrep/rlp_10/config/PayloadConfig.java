@@ -45,7 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
-public class PayloadConfig {
+public class PayloadConfig { //todo: remove if not used
 
     private final long payloadLength;
 
