@@ -54,8 +54,6 @@ import com.teragrep.net_01.server.ServerFactory;
 import com.teragrep.rlp_10.config.*;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.*;
 
@@ -65,19 +63,15 @@ import java.util.concurrent.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public final class BenchmarkTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkTest.class);
-
     private EventLoop eventLoop;
     private Thread eventLoopThread;
     private ExecutorService executorService;
 
     // default configs to reduce clutter
-    private final InitiatorConfig initiatorConfig = new InitiatorConfig();
     private final MetricsConfig metricsConfiguration = new MetricsConfig();
     private final PrometheusConfig prometheusConfiguration = new PrometheusConfig();
     private final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
     private final TransportConfig transportConfiguration = new TransportConfig();
-    private final RecordStreamConfig recordStreamConfig = new RecordStreamConfig();
     private final ReportConfig reportConfig = new ReportConfig();
     private final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
     private final DelayConfig delayConfig = new DelayConfig();

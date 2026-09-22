@@ -48,8 +48,6 @@ package com.teragrep.rlp_10.config;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 public final class MetricsConfigTest {
 
     @Test

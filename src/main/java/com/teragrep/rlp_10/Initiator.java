@@ -80,28 +80,6 @@ public final class Initiator implements Callable<Long> {
     public Initiator(
             final RelpClientFactory relpClientFactory,
             final RecordStream recordStream,
-            final Metrics metrics,
-            final long openTimeout,
-            final long payloadTimeout,
-            final int retryTransmissionCount,
-            final int retryConnectionCount
-    ) {
-        this(
-                relpClientFactory,
-                recordStream,
-                "localhost",
-                1601,
-                metrics,
-                openTimeout,
-                payloadTimeout,
-                retryTransmissionCount,
-                retryConnectionCount
-        );
-    }
-
-    public Initiator(
-            final RelpClientFactory relpClientFactory,
-            final RecordStream recordStream,
             final String hostName,
             final int port,
             final Metrics metrics,

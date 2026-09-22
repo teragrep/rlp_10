@@ -54,8 +54,6 @@ import com.teragrep.net_01.server.ServerFactory;
 import com.teragrep.rlp_10.config.*;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -74,13 +72,10 @@ import java.util.function.Function;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public final class BenchmarkTLSTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkTLSTest.class);
-
     private EventLoop eventLoop;
     private ExecutorService executorService;
 
     // default configs to reduce clutter
-    private final InitiatorConfig initiatorConfig = new InitiatorConfig();
     private final MetricsConfig metricsConfiguration = new MetricsConfig();
     private final PrometheusConfig prometheusConfiguration = new PrometheusConfig();
     private final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
@@ -92,7 +87,6 @@ public final class BenchmarkTLSTest {
             "changeit",
             "TLSv1.3"
     );
-    private final RecordStreamConfig recordStreamConfig = new RecordStreamConfig();
     private final ReportConfig reportConfig = new ReportConfig();
     private final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
     private final DelayConfig delayConfig = new DelayConfig();
