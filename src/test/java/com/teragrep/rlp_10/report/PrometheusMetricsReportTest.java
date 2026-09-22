@@ -246,8 +246,8 @@ public final class PrometheusMetricsReportTest {
 
     @Test
     public void testContract() {
-        Server redServer = new Server(8080);
-        Server blueServer = new Server(8081);
+        final Server redServer = new Server(8080);
+        final Server blueServer = new Server(8081);
         EqualsVerifier
                 .forClass(PrometheusMetricsReport.class)
                 .withPrefabValues(Server.class, redServer, blueServer)

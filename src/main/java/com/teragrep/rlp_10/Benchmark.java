@@ -134,7 +134,7 @@ public final class Benchmark implements Callable<Long> {
             );
             reports.add(prometheusMetricsReport);
         }
-        catch (ConfigurationException configurationException) {
+        catch (final ConfigurationException configurationException) {
             LOGGER.error("Failed to start PrometheusServer!", configurationException);
         }
         final Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metrics.registry(), reportConfig);

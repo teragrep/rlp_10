@@ -86,7 +86,7 @@ public final class Main {
             );
             benchmark.call();
         }
-        catch (ConfigurationException configurationException) {
+        catch (final ConfigurationException configurationException) {
             LOGGER.error("Invalid configuration!", configurationException);
         }
     }
