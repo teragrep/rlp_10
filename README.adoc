@@ -3,15 +3,14 @@
 == Features
 
 - Simple to use
-- Scales to as many threads as wanted
-- Supports infinite flooding and sending specific amount of events
+- Reports event throughput and latency metrics
+- Supports sending specific amount of events spread over multiple RelpClients and EventLoops running in a virtual ThreadPool
+- Supports TLS
 
 == Limitations
 
 - Minimal failure tolerance, mostly meant for testing
 - Limited usability outside specific testing situations
-- Supports only one record per RELP batch
-- No TLS support yet
 
 == How to compile
 
@@ -23,26 +22,109 @@ mvn clean package
 
 [source,bash]
 ----
-java -jar rlp_10.jar
+java [-DconfigurationPath=<path>] -jar rlp_10.jar
 ----
 == Configurations
 
-[cols="3"]
-|===
-|System property|Default value|Usage
+Configurable via `rlp_10.properties` file. Supply path to configuration file with `configurationPath` system property, defaults to `./config/rlp_10.properties`
+Example file with default configurations is available at `src/main/resources/config/rlp_10.properties`
 
-|hostname|localhost|Sets hostname for the record
-|appname|rlp_10|Sets used appname for the record
-|target|127.0.0.1|RELP target server
-|port|1601|RELP target port
-|threads|4|RELP Flooder thread count
-|useTls|false|Is TLS used for connections (Note: Not implemented)
-|payloadSize|10|Record message extra padding
-|reportInterval|10|How often report should be printed
-|maxRecordsSent|-1|How many records should be sent (-1 for infinity). By default, this is per-thread but with usePerThreadIterator=false it is the total amount.
-|usePerThreadIterator|true|Should each thread act as an independent iterator (will send maxRecordsSent * threads amount of records)
+[options="header", cols="m,m,a"]
 |===
+| Property | Default value | Usage
 
+| metrics.window
+| 10000
+| DropWizard metrics sliding window size (How many data points to consider when calculating latency metrics)
+
+| report.interval
+| 1000
+| Reporting interval in milliseconds (How often metric information is outputted by a MetricsReport. Currently only applies to SLF4J report)
+
+| report.ratetimeunit
+| SECONDS
+| TimeUnit to use for reporting rate metrics. (Refer to Java TimeUnit enum constants https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html#enum.constant.summary[Javadoc])
+
+| report.durationtimeunit
+| MILLISECONDS
+| TimeUnit to use for reporting duration metrics. (Refer to Java TimeUnit enum constants https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html#enum.constant.summary[Javadoc])
+
+| recordstream.records
+| 9223372036854775807
+| Number of records to send in total
+
+| delay.duration
+| PT0S
+| Delay between sending records, in ISO-8601 duration (also referred to as "period") format
+
+| initiator.count
+| 1
+| Number of clients to use
+
+| initiator.eventloopcount
+| 1
+| Number of EventLoops to distribute the clients between
+
+| initiator.retryconnectioncount
+| 3
+| Maximum number of times clients should retry to connect
+
+| initiator.retrytransmissioncount
+| 3
+| Maximum number of times clients should retry to send a record
+
+| prometheus.port
+| 8080
+| Prometheus endpoint port
+
+| syslog.appname
+| appName
+| Appname used in RELP record
+
+| syslog.hostname
+| localhost
+| Hostname used in RELP record
+
+| socket.hostname
+| localhost
+| RELP Server target address
+
+| socket.port
+| 1601
+| Relp Server target port
+
+| timeout.open
+| 1000
+| RELP Server reconnect interval, in milliseconds
+
+| timeout.payload
+| 1000
+| RELP Server resend interval, in milliseconds
+
+| transport.tls
+| false
+| Boolean flag to enable or disable TLS
+
+| transport.keystorepath
+| /opt/teragrep/rlp_10/tls/keystore.jks
+| Absolute path to keystore for use with TLS. Must be placed within /opt/teragrep/rlp_10
+
+| transport.keystorepassword
+| changeit
+| TLS keystore password
+
+| transport.truststorepath
+| /opt/teragrep/rlp_10/tls/truststore.jks
+| Absolute path to truststore for use with TLS. Must be placed within /opt/teragrep/rlp_10
+
+| transport.truststorepassword
+| changeit
+| TLS truststore password
+
+| transport.protocol
+| TLSv1.3
+| TLS protocol to be used
+|===
 == Contributing
 
 You can involve yourself with our project by https://github.com/teragrep/rlp_10/issues/new/choose[opening an issue] or submitting a pull request.
