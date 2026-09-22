@@ -49,7 +49,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class TransportConfig {
+public final class TransportConfig {
 
     private final boolean tls;
     private final Path keystorePath;

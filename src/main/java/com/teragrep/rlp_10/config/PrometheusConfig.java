@@ -47,7 +47,7 @@ package com.teragrep.rlp_10.config;
 
 import com.teragrep.rlp_10.exception.ConfigurationException;
 
-public class PrometheusConfig {
+public final class PrometheusConfig {
 
     private final int port;
 

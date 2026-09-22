@@ -45,7 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
-public class MetricsConfig {
+public final class MetricsConfig {
 
     private final int window;
 

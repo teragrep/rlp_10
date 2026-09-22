@@ -67,7 +67,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * These are a copy from rlp_03 test suite
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class BenchmarkTest {
+public final class BenchmarkTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkTest.class);
 

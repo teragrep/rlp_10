@@ -45,7 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
-public class RecordStreamConfig {
+public final class RecordStreamConfig {
 
     private static final long maxRecords = Long.MAX_VALUE;
 

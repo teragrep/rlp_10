@@ -76,7 +76,7 @@ import java.util.function.Function;
  * These are a copy from rlp_03 test suite
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class BenchmarkTLSTest {
+public final class BenchmarkTLSTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkTLSTest.class);
 

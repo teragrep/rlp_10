@@ -78,7 +78,7 @@ import java.util.function.Function;
 /**
  * Benchmark tests a relp endpoint
  */
-public class Benchmark implements Callable<Long> {
+public final class Benchmark implements Callable<Long> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Benchmark.class);
     private final ExecutorService executorService;

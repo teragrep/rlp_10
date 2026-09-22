@@ -51,7 +51,7 @@ import com.codahale.metrics.SlidingWindowReservoir;
 import com.codahale.metrics.Timer;
 import com.teragrep.rlp_10.config.MetricsConfig;
 
-public class Metrics {
+public final class Metrics {
 
     private final MetricRegistry metricRegistry;
     private final Counter records;

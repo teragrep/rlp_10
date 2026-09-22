@@ -45,7 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
-public class SocketAddressConfig {
+public final class SocketAddressConfig {
 
     private final String hostname;
     private final int port;

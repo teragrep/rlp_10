@@ -54,7 +54,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class ConfigFactory {
+public final class ConfigFactory {
 
     private final Map<String, String> configValues;
 

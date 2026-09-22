@@ -49,7 +49,7 @@ import com.teragrep.rlp_10.exception.ConfigurationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-class PrometheusConfigTest {
+public final class PrometheusConfigTest {
 
     @Test
     void testValidPort() {

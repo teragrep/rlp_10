@@ -47,7 +47,7 @@ package com.teragrep.rlp_10.config;
 
 import java.util.concurrent.TimeUnit;
 
-public class ReportConfig {
+public final class ReportConfig {
 
     private final long interval;
     private final TimeUnit rateTimeUnit;

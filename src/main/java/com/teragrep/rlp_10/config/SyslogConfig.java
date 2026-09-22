@@ -45,7 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
-public class SyslogConfig {
+public final class SyslogConfig {
 
     private final String hostname;
     private final String appName;

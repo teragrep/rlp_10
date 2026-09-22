@@ -45,7 +45,7 @@
  */
 package com.teragrep.rlp_10.exception;
 
-public class ConfigurationException extends RuntimeException {
+public final class ConfigurationException extends RuntimeException {
 
     public ConfigurationException() {
         super();

@@ -50,9 +50,7 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.charset.Charset;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-class RecordStreamImplTest {
+public final class RecordStreamImplTest {
 
     @Test
     void testRecordsExhausted() {

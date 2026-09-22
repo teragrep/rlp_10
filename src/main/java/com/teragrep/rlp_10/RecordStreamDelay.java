@@ -47,7 +47,7 @@ package com.teragrep.rlp_10;
 
 import java.util.concurrent.locks.LockSupport;
 
-class RecordStreamDelay implements RecordStream {
+public final class RecordStreamDelay implements RecordStream {
 
     private final RecordStream recordStream;
     private final long delay;

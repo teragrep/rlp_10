@@ -53,7 +53,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-class ConfigFactoryTest {
+public final class ConfigFactoryTest {
 
     @Test
     void testDefaultConfig() {

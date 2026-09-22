@@ -47,7 +47,7 @@ package com.teragrep.rlp_10.config;
 
 import com.teragrep.rlp_10.exception.ConfigurationException;
 
-public class InitiatorConfig {
+public final class InitiatorConfig {
 
     private final int initiatorCount;
     private final int retryTransmissionCount;

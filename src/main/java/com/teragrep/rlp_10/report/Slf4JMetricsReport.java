@@ -53,7 +53,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
-public class Slf4JMetricsReport implements MetricsReport {
+public final class Slf4JMetricsReport implements MetricsReport {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Slf4JMetricsReport.class);
     private final ReportConfig config;

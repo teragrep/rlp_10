@@ -45,7 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
-public class TimeoutConfig {
+public final class TimeoutConfig {
 
     private final long openTimeout;
     private final long payloadTimeout;

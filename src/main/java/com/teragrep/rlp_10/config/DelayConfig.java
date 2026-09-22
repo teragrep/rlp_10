@@ -47,7 +47,7 @@ package com.teragrep.rlp_10.config;
 
 import java.time.Duration;
 
-public class DelayConfig {
+public final class DelayConfig {
 
     private final Duration delay;
 

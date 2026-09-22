@@ -56,7 +56,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PrometheusMetricsReport implements MetricsReport {
+public final class PrometheusMetricsReport implements MetricsReport {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PrometheusMetricsReport.class);
     private final MetricRegistry registry;

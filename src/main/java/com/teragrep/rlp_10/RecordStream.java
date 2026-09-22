@@ -47,6 +47,6 @@ package com.teragrep.rlp_10;
 
 import java.util.function.Supplier;
 
-interface RecordStream extends Supplier<byte[]> {
+public interface RecordStream extends Supplier<byte[]> {
 
 }

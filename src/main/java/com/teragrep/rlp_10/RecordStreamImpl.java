@@ -55,7 +55,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class RecordStreamImpl implements RecordStream {
+public final class RecordStreamImpl implements RecordStream {
 
     private final String origin;
     private final String hostname;

@@ -59,7 +59,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-class Initiator implements Callable<Long> {
+public final class Initiator implements Callable<Long> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Initiator.class);
     private static final RelpFrameFactory relpFrameFactory = new RelpFrameFactory();

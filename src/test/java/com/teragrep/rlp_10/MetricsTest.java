@@ -54,7 +54,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
-class MetricsTest {
+public final class MetricsTest {
 
     final MetricsConfig config = new MetricsConfig();
     final Metrics metrics = new Metrics(config);

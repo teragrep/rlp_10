@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Main {
+public final class Main {
 
     private static Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
@@ -66,7 +66,7 @@ public class Main {
         try {
             configurationValues.putAll(pathConfiguration.asMap());
         }
-        catch (ConfigurationException configurationException) {
+        catch (final ConfigurationException configurationException) {
             LOGGER.warn("Could not load properties from configuration path, proceeding with defaults...");
         }
         final ConfigFactory configFactory = new ConfigFactory(configurationValues);
