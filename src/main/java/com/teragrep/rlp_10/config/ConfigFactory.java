@@ -52,6 +52,7 @@ import java.time.Duration;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public final class ConfigFactory {
@@ -235,5 +236,26 @@ public final class ConfigFactory {
                 configuredTruststorePassword,
                 protocol
         );
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final ConfigFactory that = (ConfigFactory) o;
+            equals = Objects.equals(configValues, that.configValues);
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(configValues);
     }
 }

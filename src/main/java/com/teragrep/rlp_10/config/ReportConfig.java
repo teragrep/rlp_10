@@ -45,6 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public final class ReportConfig {
@@ -75,4 +76,25 @@ public final class ReportConfig {
         return durationTimeUnit;
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final ReportConfig that = (ReportConfig) o;
+            equals = interval == that.interval && rateTimeUnit == that.rateTimeUnit
+                    && durationTimeUnit == that.durationTimeUnit;
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(interval, rateTimeUnit, durationTimeUnit);
+    }
 }

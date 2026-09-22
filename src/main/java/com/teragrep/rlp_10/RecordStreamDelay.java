@@ -45,6 +45,7 @@
  */
 package com.teragrep.rlp_10;
 
+import java.util.Objects;
 import java.util.concurrent.locks.LockSupport;
 
 public final class RecordStreamDelay implements RecordStream {
@@ -63,4 +64,24 @@ public final class RecordStreamDelay implements RecordStream {
         return recordStream.get();
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final RecordStreamDelay that = (RecordStreamDelay) o;
+            equals = delay == that.delay && Objects.equals(recordStream, that.recordStream);
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(recordStream, delay);
+    }
 }

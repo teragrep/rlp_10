@@ -46,6 +46,7 @@
 package com.teragrep.rlp_10.config;
 
 import com.teragrep.cnf_01.ConfigurationException;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -91,5 +92,10 @@ public final class InitiatorConfigTest {
         Assertions.assertEquals(retryConnectionCount, initiatorConfig.retryConnectionCount());
         Assertions.assertThrows(ConfigurationException.class, () -> initiatorConfig.initiatorCount());
         Assertions.assertThrows(ConfigurationException.class, () -> initiatorConfig.eventLoopCount());
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(InitiatorConfig.class).verify();
     }
 }

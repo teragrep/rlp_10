@@ -45,6 +45,8 @@
  */
 package com.teragrep.rlp_10.config;
 
+import java.util.Objects;
+
 public final class TimeoutConfig {
 
     private final long openTimeout;
@@ -67,4 +69,24 @@ public final class TimeoutConfig {
         return payloadTimeout;
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final TimeoutConfig that = (TimeoutConfig) o;
+            equals = openTimeout == that.openTimeout && payloadTimeout == that.payloadTimeout;
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(openTimeout, payloadTimeout);
+    }
 }

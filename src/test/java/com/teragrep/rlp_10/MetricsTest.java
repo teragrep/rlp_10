@@ -47,6 +47,7 @@ package com.teragrep.rlp_10;
 
 import com.codahale.metrics.Timer;
 import com.teragrep.rlp_10.config.MetricsConfig;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -118,5 +119,10 @@ public final class MetricsTest {
         Assertions.assertNotEquals(0, metrics.transmitLatency().getMeanRate());
         Assertions.assertNotEquals(0, metrics.transactionLatency().getMeanRate());
         Assertions.assertNotEquals(0, metrics.receiveLatency().getMeanRate());
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(Metrics.class).verify();
     }
 }

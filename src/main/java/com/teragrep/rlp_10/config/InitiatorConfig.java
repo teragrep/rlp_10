@@ -47,6 +47,8 @@ package com.teragrep.rlp_10.config;
 
 import com.teragrep.cnf_01.ConfigurationException;
 
+import java.util.Objects;
+
 public final class InitiatorConfig {
 
     private final int initiatorCount;
@@ -75,6 +77,28 @@ public final class InitiatorConfig {
             throw new ConfigurationException("InitiatorCount must be positive!", new Throwable());
         }
         return initiatorCount;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final InitiatorConfig that = (InitiatorConfig) o;
+            equals = initiatorCount == that.initiatorCount && retryTransmissionCount == that.retryTransmissionCount
+                    && retryConnectionCount == that.retryConnectionCount && eventLoopCount == that.eventLoopCount;
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(initiatorCount, retryTransmissionCount, retryConnectionCount, eventLoopCount);
     }
 
     public int eventLoopCount() throws ConfigurationException {

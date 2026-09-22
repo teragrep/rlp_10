@@ -45,6 +45,8 @@
  */
 package com.teragrep.rlp_10.config;
 
+import java.util.Objects;
+
 public final class SyslogConfig {
 
     private final String hostname;
@@ -67,4 +69,24 @@ public final class SyslogConfig {
         return appName;
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final SyslogConfig that = (SyslogConfig) o;
+            equals = Objects.equals(hostname, that.hostname) && Objects.equals(appName, that.appName);
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(hostname, appName);
+    }
 }

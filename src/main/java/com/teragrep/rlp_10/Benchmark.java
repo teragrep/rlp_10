@@ -69,10 +69,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
 
@@ -289,5 +286,33 @@ public final class Benchmark implements Callable<Long> {
             }
         }
         return rv;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final Benchmark benchmark = (Benchmark) o;
+            equals = Objects.equals(executorService, benchmark.executorService) && Objects
+                    .equals(initiatorConfig, benchmark.initiatorConfig)
+                    && Objects.equals(metricsConfig, benchmark.metricsConfig) && Objects.equals(prometheusConfig, benchmark.prometheusConfig) && Objects.equals(timeoutConfig, benchmark.timeoutConfig) && Objects.equals(transportConfig, benchmark.transportConfig) && Objects.equals(recordStreamConfig, benchmark.recordStreamConfig) && Objects.equals(reportConfig, benchmark.reportConfig) && Objects.equals(socketAddressConfig, benchmark.socketAddressConfig) && Objects.equals(delayConfig, benchmark.delayConfig) && Objects.equals(syslogConfig, benchmark.syslogConfig) && Objects.equals(eventLoops, benchmark.eventLoops) && Objects.equals(reports, benchmark.reports) && Objects.equals(executorTasks, benchmark.executorTasks);
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects
+                .hash(
+                        executorService, initiatorConfig, metricsConfig, prometheusConfig, timeoutConfig,
+                        transportConfig, recordStreamConfig, reportConfig, socketAddressConfig, delayConfig,
+                        syslogConfig, eventLoops, reports, executorTasks
+                );
     }
 }

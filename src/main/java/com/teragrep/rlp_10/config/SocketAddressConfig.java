@@ -45,6 +45,8 @@
  */
 package com.teragrep.rlp_10.config;
 
+import java.util.Objects;
+
 public final class SocketAddressConfig {
 
     private final String hostname;
@@ -67,4 +69,24 @@ public final class SocketAddressConfig {
         return port;
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final SocketAddressConfig that = (SocketAddressConfig) o;
+            equals = port == that.port && Objects.equals(hostname, that.hostname);
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(hostname, port);
+    }
 }

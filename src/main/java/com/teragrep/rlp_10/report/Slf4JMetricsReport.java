@@ -51,6 +51,7 @@ import com.teragrep.rlp_10.config.ReportConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public final class Slf4JMetricsReport implements MetricsReport {
@@ -77,5 +78,26 @@ public final class Slf4JMetricsReport implements MetricsReport {
     @Override
     public void stop() {
         slf4jReport.stop();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final Slf4JMetricsReport that = (Slf4JMetricsReport) o;
+            equals = Objects.equals(config, that.config) && Objects.equals(slf4jReport, that.slf4jReport);
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(config, slf4jReport);
     }
 }

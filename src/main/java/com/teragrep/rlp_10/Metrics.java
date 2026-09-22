@@ -51,6 +51,8 @@ import com.codahale.metrics.SlidingWindowReservoir;
 import com.codahale.metrics.Timer;
 import com.teragrep.rlp_10.config.MetricsConfig;
 
+import java.util.Objects;
+
 public final class Metrics {
 
     private final MetricRegistry metricRegistry;
@@ -120,5 +122,31 @@ public final class Metrics {
 
     public Timer transmitLatency() {
         return transmitLatency;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final Metrics metrics = (Metrics) o;
+            equals = Objects.equals(metricRegistry, metrics.metricRegistry) && Objects.equals(records, metrics.records)
+                    && Objects.equals(resends, metrics.resends) && Objects.equals(connects, metrics.connects) && Objects.equals(disconnects, metrics.disconnects) && Objects.equals(retriedConnects, metrics.retriedConnects) && Objects.equals(transactionLatency, metrics.transactionLatency) && Objects.equals(transmitLatency, metrics.transmitLatency) && Objects.equals(receiveLatency, metrics.receiveLatency) && Objects.equals(connectLatency, metrics.connectLatency);
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects
+                .hash(
+                        metricRegistry, records, resends, connects, disconnects, retriedConnects, transactionLatency,
+                        transmitLatency, receiveLatency, connectLatency
+                );
     }
 }

@@ -45,6 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -155,6 +156,11 @@ public final class ConfigFactoryTest {
         Assertions
                 .assertEquals(Paths.get("/opt/teragrep/rlp_10/tls/truststore.jks").toAbsolutePath().toFile(), transportConfig.trustStoreFile());
         Assertions.assertEquals("TLSv1.3", transportConfig.protocol());
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(ConfigFactory.class).verify();
     }
 
 }

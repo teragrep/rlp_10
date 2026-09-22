@@ -45,6 +45,7 @@
  */
 package com.teragrep.rlp_10;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -82,5 +83,10 @@ public final class RecordStreamImplTest {
         // once RecordStream is exhausted, it should return empty bytearrays
         final byte[] emptyRecord = recordStream.get();
         Assertions.assertTrue(new String(emptyRecord, Charset.defaultCharset()).isEmpty());
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(RecordStreamImpl.class).verify();
     }
 }

@@ -45,6 +45,8 @@
  */
 package com.teragrep.rlp_10.config;
 
+import java.util.Objects;
+
 public final class RecordStreamConfig {
 
     private static final long maxRecords = Long.MAX_VALUE;
@@ -61,5 +63,26 @@ public final class RecordStreamConfig {
 
     public long records() {
         return records;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final RecordStreamConfig that = (RecordStreamConfig) o;
+            equals = records == that.records;
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(records);
     }
 }

@@ -52,6 +52,7 @@ import com.teragrep.rlp_03.frame.FrameDelegationClockFactory;
 import com.teragrep.rlp_03.frame.delegate.DefaultFrameDelegate;
 import com.teragrep.net_01.server.ServerFactory;
 import com.teragrep.rlp_10.config.*;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -358,4 +359,8 @@ public final class BenchmarkTest {
         Assertions.assertTrue(response.body().contains("# TYPE resends gauge"));
     }
 
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(Benchmark.class).verify();
+    }
 }

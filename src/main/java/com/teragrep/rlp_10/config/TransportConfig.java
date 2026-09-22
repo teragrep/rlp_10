@@ -48,6 +48,7 @@ package com.teragrep.rlp_10.config;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 public final class TransportConfig {
 
@@ -102,4 +103,27 @@ public final class TransportConfig {
         return protocol;
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final TransportConfig that = (TransportConfig) o;
+            equals = tls == that.tls && Objects.equals(keystorePath, that.keystorePath) && Objects
+                    .equals(truststorePath, that.truststorePath) && Objects
+                            .equals(keystorePassword, that.keystorePassword)
+                    && Objects.equals(truststorePassword, that.truststorePassword) && Objects.equals(protocol, that.protocol);
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(tls, keystorePath, truststorePath, keystorePassword, truststorePassword, protocol);
+    }
 }

@@ -53,6 +53,7 @@ import jakarta.json.JsonObject;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class RecordStreamImpl implements RecordStream {
@@ -100,4 +101,26 @@ public final class RecordStreamImpl implements RecordStream {
         return rv;
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final RecordStreamImpl that = (RecordStreamImpl) o;
+            equals = records == that.records && Objects.equals(origin, that.origin) && Objects
+                    .equals(hostname, that.hostname) && Objects.equals(appname, that.appname)
+                    && Objects.equals(sent, that.sent);
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(origin, hostname, appname, records, sent);
+    }
 }

@@ -46,6 +46,7 @@
 package com.teragrep.rlp_10.config;
 
 import java.time.Duration;
+import java.util.Objects;
 
 public final class DelayConfig {
 
@@ -63,4 +64,24 @@ public final class DelayConfig {
         return delay.toNanos();
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final DelayConfig that = (DelayConfig) o;
+            equals = Objects.equals(delay, that.delay);
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(delay);
+    }
 }

@@ -55,6 +55,8 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
+
 public final class PrometheusMetricsReport implements MetricsReport {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PrometheusMetricsReport.class);
@@ -97,5 +99,27 @@ public final class PrometheusMetricsReport implements MetricsReport {
             LOGGER.error("Failed to stop Prometheus reporting server!");
         }
         //CHECKSTYLE:ON
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final PrometheusMetricsReport that = (PrometheusMetricsReport) o;
+            equals = Objects.equals(registry, that.registry)
+                    && Objects.equals(prometheusMetricsServer, that.prometheusMetricsServer);
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(registry, prometheusMetricsServer);
     }
 }

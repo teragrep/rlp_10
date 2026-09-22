@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -231,5 +232,35 @@ public final class Initiator implements Callable<Long> {
 
     public void stop() {
         run = false;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final Initiator initiator = (Initiator) o;
+            equals = port == initiator.port && openTimeout == initiator.openTimeout
+                    && payloadTimeout == initiator.payloadTimeout
+                    && retryTransmissionCount == initiator.retryTransmissionCount
+                    && retryConnectCount == initiator.retryConnectCount && run == initiator.run && Objects
+                            .equals(relpClientFactory, initiator.relpClientFactory)
+                    && Objects.equals(recordStream, initiator.recordStream) && Objects.equals(metrics, initiator.metrics) && Objects.equals(hostname, initiator.hostname) && Objects.equals(recordsSent, initiator.recordsSent);
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects
+                .hash(
+                        relpClientFactory, recordStream, metrics, hostname, port, openTimeout, payloadTimeout,
+                        retryTransmissionCount, retryConnectCount, run, recordsSent
+                );
     }
 }

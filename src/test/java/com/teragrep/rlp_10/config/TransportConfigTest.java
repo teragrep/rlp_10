@@ -45,42 +45,15 @@
  */
 package com.teragrep.rlp_10.config;
 
-import java.util.Objects;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import org.junit.jupiter.api.Test;
 
-public final class MetricsConfig {
+import static org.junit.jupiter.api.Assertions.*;
 
-    private final int window;
+public final class TransportConfigTest {
 
-    public MetricsConfig() {
-        this(10000);
-    }
-
-    public MetricsConfig(final int window) {
-        this.window = window;
-    }
-
-    public int window() {
-        return window;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        final boolean equals;
-        if (this == o) {
-            equals = true;
-        }
-        else if (o == null || getClass() != o.getClass()) {
-            equals = false;
-        }
-        else {
-            final MetricsConfig that = (MetricsConfig) o;
-            equals = window == that.window;
-        }
-        return equals;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(window);
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(TransportConfig.class).verify();
     }
 }

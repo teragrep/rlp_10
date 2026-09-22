@@ -85,6 +85,13 @@
       <version>5.9.0</version>
       <scope>test</scope>
     </dependency>
+    <!-- equalsVerifier for tests -->
+    <dependency>
+      <groupId>nl.jqno.equalsverifier</groupId>
+      <artifactId>equalsverifier</artifactId>
+      <version>4.5.2</version>
+      <scope>test</scope>
+    </dependency>
     <!-- logging -->
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>

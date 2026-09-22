@@ -46,6 +46,7 @@
 package com.teragrep.rlp_10.config;
 
 import com.teragrep.cnf_01.ConfigurationException;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -64,5 +65,10 @@ public final class PrometheusConfigTest {
         final int invalidPort = 65536;
         final PrometheusConfig prometheusConfig = new PrometheusConfig(invalidPort);
         Assertions.assertThrows(ConfigurationException.class, () -> prometheusConfig.port());
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(PrometheusConfig.class).verify();
     }
 }

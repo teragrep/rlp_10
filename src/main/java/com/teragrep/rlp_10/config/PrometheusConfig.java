@@ -47,6 +47,8 @@ package com.teragrep.rlp_10.config;
 
 import com.teragrep.cnf_01.ConfigurationException;
 
+import java.util.Objects;
+
 public final class PrometheusConfig {
 
     private final int port;
@@ -69,5 +71,26 @@ public final class PrometheusConfig {
         else {
             return port;
         }
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final PrometheusConfig that = (PrometheusConfig) o;
+            equals = port == that.port;
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(port);
     }
 }
