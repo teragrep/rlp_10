@@ -58,7 +58,7 @@ public class Main {
 
     private static Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
-    public static void main(final String[] args) throws ConfigurationException {
+    public static void main(final String[] args) {
         final PathConfiguration pathConfiguration = new PathConfiguration(
                 System.getProperty("configurationPath", "config/rlp_10.properties")
         );
