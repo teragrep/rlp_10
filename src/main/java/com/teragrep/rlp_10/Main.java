@@ -56,7 +56,7 @@ import java.util.Map;
 
 public class Main {
 
-    public static Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     public static void main(final String[] args) throws ConfigurationException {
         final PathConfiguration pathConfiguration = new PathConfiguration(
