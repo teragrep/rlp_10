@@ -48,16 +48,27 @@ package com.teragrep.rlp_10;
 import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.cnf_01.PathConfiguration;
 import com.teragrep.rlp_10.config.ConfigFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class Main {
+
+    public static Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     public static void main(final String[] args) throws ConfigurationException {
         final PathConfiguration pathConfiguration = new PathConfiguration(
                 System.getProperty("configurationPath", "config/rlp_10.properties")
         );
-        final Map<String, String> configurationValues = pathConfiguration.asMap();
+        final Map<String, String> configurationValues = new HashMap<>();
+        try {
+            configurationValues.putAll(pathConfiguration.asMap());
+        }
+        catch (ConfigurationException configurationException) {
+            LOGGER.warn("Could not load properties from configuration path, proceeding with defaults...");
+        }
         final ConfigFactory configFactory = new ConfigFactory(configurationValues);
         final Benchmark benchmark = new Benchmark(
                 configFactory.initiatorConfig(),
