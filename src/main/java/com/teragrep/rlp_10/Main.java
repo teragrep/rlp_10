@@ -69,19 +69,25 @@ public final class Main {
         catch (final ConfigurationException configurationException) {
             LOGGER.warn("Could not load properties from configuration path, proceeding with defaults...");
         }
-        final ConfigFactory configFactory = new ConfigFactory(configurationValues);
-        final Benchmark benchmark = new Benchmark(
-                configFactory.initiatorConfig(),
-                configFactory.metricsConfig(),
-                configFactory.prometheusConfig(),
-                configFactory.timeoutConfig(),
-                configFactory.transportConfig(),
-                configFactory.recordStreamConfig(),
-                configFactory.reportConfig(),
-                configFactory.socketAddressConfig(),
-                configFactory.delayConfig(),
-                configFactory.syslogConfig()
-        );
-        benchmark.call();
+
+        try {
+            final ConfigFactory configFactory = new ConfigFactory(configurationValues);
+            final Benchmark benchmark = new Benchmark(
+                    configFactory.initiatorConfig(),
+                    configFactory.metricsConfig(),
+                    configFactory.prometheusConfig(),
+                    configFactory.timeoutConfig(),
+                    configFactory.transportConfig(),
+                    configFactory.recordStreamConfig(),
+                    configFactory.reportConfig(),
+                    configFactory.socketAddressConfig(),
+                    configFactory.delayConfig(),
+                    configFactory.syslogConfig()
+            );
+            benchmark.call();
+        }
+        catch (ConfigurationException configurationException) {
+            LOGGER.error("Invalid configuration!", configurationException);
+        }
     }
 }

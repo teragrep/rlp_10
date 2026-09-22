@@ -45,11 +45,9 @@
  */
 package com.teragrep.rlp_10.config;
 
-import com.teragrep.rlp_10.exception.ConfigurationException;
+import com.teragrep.cnf_01.ConfigurationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 public final class InitiatorConfigTest {
 
@@ -65,10 +63,16 @@ public final class InitiatorConfigTest {
                 expectedRetryConnectionCount,
                 expectedEventLoopCount
         );
-        Assertions.assertEquals(expectedInitiatorCount, initiatorConfig.initiatorCount());
+        Assertions
+                .assertEquals(
+                        expectedInitiatorCount, Assertions.assertDoesNotThrow(() -> initiatorConfig.initiatorCount())
+                );
         Assertions.assertEquals(expectedRetryTransmissionCount, initiatorConfig.retryTransmissionCount());
         Assertions.assertEquals(expectedRetryConnectionCount, initiatorConfig.retryConnectionCount());
-        Assertions.assertEquals(expectedEventLoopCount, initiatorConfig.eventLoopCount());
+        Assertions
+                .assertEquals(
+                        expectedEventLoopCount, Assertions.assertDoesNotThrow(() -> initiatorConfig.eventLoopCount())
+                );
     }
 
     @Test

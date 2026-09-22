@@ -130,14 +130,14 @@ public final class ConfigFactoryTest {
         final TransportConfig transportConfig = Assertions.assertDoesNotThrow(() -> configFactory.transportConfig());
 
         // metrics with assigned values should have corresponding values in configuration objects. omitted values should remain as default
-        Assertions.assertEquals(10, initiatorConfig.initiatorCount());
-        Assertions.assertEquals(1, initiatorConfig.eventLoopCount());
+        Assertions.assertEquals(10, Assertions.assertDoesNotThrow(() -> initiatorConfig.initiatorCount()));
+        Assertions.assertEquals(1, Assertions.assertDoesNotThrow(() -> initiatorConfig.eventLoopCount()));
         Assertions.assertEquals(3, initiatorConfig.retryConnectionCount());
         Assertions.assertEquals(3, initiatorConfig.retryTransmissionCount());
         Assertions.assertEquals(100000, recordStreamConfig.records());
         Assertions.assertEquals(1000000000, delayConfig.delay());
         Assertions.assertEquals(2000, metricsConfig.window());
-        Assertions.assertEquals(8000, prometheusConfig.port());
+        Assertions.assertEquals(8000, Assertions.assertDoesNotThrow(() -> prometheusConfig.port()));
         Assertions.assertEquals(60000, reportConfig.interval());
         Assertions.assertEquals(TimeUnit.MILLISECONDS, reportConfig.durationTimeUnit());
         Assertions.assertEquals(TimeUnit.SECONDS, reportConfig.rateTimeUnit());

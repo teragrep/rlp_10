@@ -45,7 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
-import com.teragrep.rlp_10.exception.ConfigurationException;
+import com.teragrep.cnf_01.ConfigurationException;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -62,21 +62,21 @@ public final class ConfigFactory {
         this.configValues = Collections.unmodifiableMap(configValues);
     }
 
-    public DelayConfig delayConfig() {
+    public DelayConfig delayConfig() throws com.teragrep.cnf_01.ConfigurationException {
         final String configuredDuration = configValues.getOrDefault("delay.duration", "PT0S");
         try {
             final Duration delayDuration = Duration.parse(configuredDuration);
             return new DelayConfig(delayDuration);
         }
         catch (final DateTimeParseException dateTimeParseException) {
-            throw new ConfigurationException(
+            throw new com.teragrep.cnf_01.ConfigurationException(
                     "DelayConfig contains invalid configuration value!",
                     dateTimeParseException
             );
         }
     }
 
-    public InitiatorConfig initiatorConfig() {
+    public InitiatorConfig initiatorConfig() throws ConfigurationException {
         final String configuredInitiatorCount = configValues.getOrDefault("initiator.count", "1");
         final String configuredEventloopCount = configValues.getOrDefault("initiator.eventloopcount", "1");
         final String configuredRetryTransmissionCount = configValues
@@ -97,7 +97,7 @@ public final class ConfigFactory {
         }
     }
 
-    public MetricsConfig metricsConfig() {
+    public MetricsConfig metricsConfig() throws ConfigurationException {
         try {
             final String configuredWindow = configValues.getOrDefault("metrics.window", "10000");
             final int window = Integer.parseInt(configuredWindow);
@@ -111,7 +111,7 @@ public final class ConfigFactory {
         }
     }
 
-    public PrometheusConfig prometheusConfig() {
+    public PrometheusConfig prometheusConfig() throws ConfigurationException {
         final String configuredPort = configValues.getOrDefault("prometheus.port", "8080");
         try {
             final int port = Integer.parseInt(configuredPort);
@@ -125,7 +125,7 @@ public final class ConfigFactory {
         }
     }
 
-    public RecordStreamConfig recordStreamConfig() {
+    public RecordStreamConfig recordStreamConfig() throws ConfigurationException {
         final String configuredRecords = configValues
                 .getOrDefault("recordstream.records", String.valueOf(Long.MAX_VALUE));
         try {
@@ -140,7 +140,7 @@ public final class ConfigFactory {
         }
     }
 
-    public ReportConfig reportConfig() {
+    public ReportConfig reportConfig() throws ConfigurationException {
         final String configuredInterval = configValues.getOrDefault("report.interval", "1000");
         final String configuredRateTimeUnit = configValues.getOrDefault("report.ratetimeunit", "SECONDS");
         final String configuredDurationTimeUnit = configValues.getOrDefault("report.durationtimeunit", "MILLISECONDS");
@@ -158,7 +158,7 @@ public final class ConfigFactory {
         }
     }
 
-    public SocketAddressConfig socketAddressConfig() {
+    public SocketAddressConfig socketAddressConfig() throws ConfigurationException {
         final String configuredHostname = configValues.getOrDefault("socket.hostname", "localhost");
         final String configuredPort = configValues.getOrDefault("socket.port", "1601");
         try {
@@ -180,7 +180,7 @@ public final class ConfigFactory {
         return new SyslogConfig(configuredHostname, configuredAppName);
     }
 
-    public TimeoutConfig timeoutConfig() {
+    public TimeoutConfig timeoutConfig() throws ConfigurationException {
         final String configuredOpenTimeout = configValues.getOrDefault("timeout.open", "10");
         final String configuredPayloadTimeout = configValues.getOrDefault("timeout.payload", "5");
         try {
@@ -196,7 +196,7 @@ public final class ConfigFactory {
         }
     }
 
-    public TransportConfig transportConfig() {
+    public TransportConfig transportConfig() throws ConfigurationException {
         final String configuredTls = configValues.getOrDefault("transport.tls", "false");
         final String configuredKeystorePassword = configValues.getOrDefault("transport.keystorepassword", "changeit");
         final String configuredTruststorePassword = configValues
@@ -213,16 +213,18 @@ public final class ConfigFactory {
         // Detect path traversal
         if (!keystorePath.startsWith(baseDirectory)) {
             throw new ConfigurationException(
-                    "TransportConfig contains invalid keystore path! Keystore should be located within /opt/teragrep/rlp_10 directory!"
+                    "TransportConfig contains invalid keystore path! Keystore should be located within /opt/teragrep/rlp_10 directory!",
+                    new Throwable()
             );
         }
         if (!truststorePath.startsWith(baseDirectory)) {
             throw new ConfigurationException(
-                    "TransportConfig contains invalid truststore path! Truststore should be located within /opt/teragrep/rlp_10 directory!"
+                    "TransportConfig contains invalid truststore path! Truststore should be located within /opt/teragrep/rlp_10 directory!",
+                    new Throwable()
             );
         }
         if (!"true".equals(configuredTls) && !"false".equals(configuredTls)) {
-            throw new ConfigurationException("TransportConfig contains invalid TLS boolean!");
+            throw new ConfigurationException("TransportConfig contains invalid TLS boolean!", new Throwable());
         }
         final boolean tls = Boolean.parseBoolean(configuredTls);
         return new TransportConfig(

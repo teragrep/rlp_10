@@ -46,7 +46,6 @@
 package com.teragrep.rlp_10.report;
 
 import com.codahale.metrics.MetricRegistry;
-import com.teragrep.rlp_10.config.PrometheusConfig;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
 import io.prometheus.client.exporter.MetricsServlet;
@@ -62,13 +61,9 @@ public final class PrometheusMetricsReport implements MetricsReport {
     private final MetricRegistry registry;
     private final Server prometheusMetricsServer;
 
-    public PrometheusMetricsReport(final MetricRegistry registry) {
-        this(registry, new PrometheusConfig());
-    }
-
-    public PrometheusMetricsReport(final MetricRegistry registry, final PrometheusConfig prometheusConfiguration) {
+    public PrometheusMetricsReport(final MetricRegistry registry, final int prometheusport) {
         this.registry = registry;
-        this.prometheusMetricsServer = new Server(prometheusConfiguration.port());
+        this.prometheusMetricsServer = new Server(prometheusport);
     }
 
     @Override

@@ -45,7 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
-import com.teragrep.rlp_10.exception.ConfigurationException;
+import com.teragrep.cnf_01.ConfigurationException;
 
 public final class InitiatorConfig {
 
@@ -70,16 +70,16 @@ public final class InitiatorConfig {
         this.eventLoopCount = eventLoopCount;
     }
 
-    public int initiatorCount() {
+    public int initiatorCount() throws ConfigurationException {
         if (initiatorCount < 0) {
-            throw new ConfigurationException("InitiatorCount must be positive!");
+            throw new ConfigurationException("InitiatorCount must be positive!", new Throwable());
         }
         return initiatorCount;
     }
 
-    public int eventLoopCount() {
+    public int eventLoopCount() throws ConfigurationException {
         if (eventLoopCount < 1) {
-            throw new ConfigurationException("Must have at least one EventLoop!");
+            throw new ConfigurationException("Must have at least one EventLoop!", new Throwable());
         }
         return eventLoopCount;
     }

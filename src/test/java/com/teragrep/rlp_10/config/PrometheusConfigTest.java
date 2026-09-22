@@ -45,7 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
-import com.teragrep.rlp_10.exception.ConfigurationException;
+import com.teragrep.cnf_01.ConfigurationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

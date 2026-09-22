@@ -45,6 +45,7 @@
  */
 package com.teragrep.rlp_10;
 
+import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.net_01.channel.context.ConnectContextFactory;
 import com.teragrep.net_01.channel.socket.PlainFactory;
 import com.teragrep.net_01.channel.socket.SocketFactory;
@@ -119,7 +120,7 @@ public final class Benchmark implements Callable<Long> {
         this.socketAddressConfig = socketAddressConfig;
         this.delayConfig = delayConfig;
         this.syslogConfig = syslogConfig;
-        this.eventLoops = new HashMap<>(initiatorConfig.eventLoopCount());
+        this.eventLoops = new HashMap<>();
         this.reports = new ArrayList<>();
         this.executorTasks = new ArrayList<>();
     }
@@ -128,12 +129,18 @@ public final class Benchmark implements Callable<Long> {
         final Metrics metrics = new Metrics(metricsConfig);
 
         // reports
-        final PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(
-                metrics.registry(),
-                prometheusConfig
-        );
+        try {
+            final int prometheusPort = prometheusConfig.port();
+            final PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(
+                    metrics.registry(),
+                    prometheusPort
+            );
+            reports.add(prometheusMetricsReport);
+        }
+        catch (ConfigurationException configurationException) {
+            LOGGER.error("Failed to start PrometheusServer!", configurationException);
+        }
         final Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metrics.registry(), reportConfig);
-        reports.add(prometheusMetricsReport);
         reports.add(slf4JMetricsReport);
 
         for (final MetricsReport report : reports) {
@@ -160,10 +167,10 @@ public final class Benchmark implements Callable<Long> {
 
         final EventLoopFactory eventLoopFactory = new EventLoopFactory();
         final SocketFactory socketFactory = createSocketFactory();
-        final int baseInitiators = initiatorConfig.initiatorCount() / initiatorConfig.eventLoopCount();
-        final int remainder = initiatorConfig.initiatorCount() % initiatorConfig.eventLoopCount();
-        final List<Initiator> initiators = new ArrayList<>();
         try {
+            final int baseInitiators = initiatorConfig.initiatorCount() / initiatorConfig.eventLoopCount();
+            final int remainder = initiatorConfig.initiatorCount() % initiatorConfig.eventLoopCount();
+            final List<Initiator> initiators = new ArrayList<>();
             // create and start a thread for configured number of EventLoops and distribute configured number of Initiators among them equally
             for (int eventLoopCount = 0; eventLoopCount < initiatorConfig.eventLoopCount(); eventLoopCount++) {
                 final EventLoop eventLoop = eventLoopFactory.create();
@@ -208,7 +215,7 @@ public final class Benchmark implements Callable<Long> {
             stopBenchmark();
             return totalRecords;
         }
-        catch (final InterruptedException | ExecutionException | IOException e) {
+        catch (final InterruptedException | ExecutionException | IOException | ConfigurationException e) {
             // unrecoverable exceptions
             throw new RuntimeException(e);
         }

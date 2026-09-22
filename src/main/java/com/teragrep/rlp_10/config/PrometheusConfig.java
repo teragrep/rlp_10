@@ -45,7 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
-import com.teragrep.rlp_10.exception.ConfigurationException;
+import com.teragrep.cnf_01.ConfigurationException;
 
 public final class PrometheusConfig {
 
@@ -59,9 +59,12 @@ public final class PrometheusConfig {
         this.port = port;
     }
 
-    public int port() {
+    public int port() throws ConfigurationException {
         if (port < 1 || port > 65535) {
-            throw new ConfigurationException("Prometheus port is not within expected range!");
+            throw new ConfigurationException(
+                    "Prometheus port is not within expected range!",
+                    new Throwable("Prometheus port is not within expected range!")
+            );
         }
         else {
             return port;
