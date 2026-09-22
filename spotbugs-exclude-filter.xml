@@ -12,7 +12,12 @@
     </Match>
     <!-- Ignore path traversal in configuration files -->
     <Match>
-        <Class name="TransportConfig.java"/>
+        <Class name="com.teragrep.rlp_10.config.TransportConfig"/>
         <Bug pattern="PATH_TRAVERSAL_IN" />
+    </Match>
+    <!-- Ignore absolute filenames in test classes -->
+    <Match>
+        <Class name="com.teragrep.rlp_10.config.ConfigFactoryTest"/>
+        <Bug pattern="DMI_HARDCODED_ABSOLUTE_FILENAME" />
     </Match>
 </FindBugsFilter>

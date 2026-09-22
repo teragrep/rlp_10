@@ -212,7 +212,7 @@
             <exclude>README.adoc</exclude>
             <exclude>README.md</exclude>
             <!-- config file -->
-            <exclude>src/main/resources/rlp_10.properties</exclude>
+            <exclude>src/main/resources/config/rlp_10.properties</exclude>
             <!-- Doxyfile -->
             <exclude>Doxyfile</exclude>
             <!-- rpm -->

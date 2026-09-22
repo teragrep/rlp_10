@@ -49,18 +49,16 @@ import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.cnf_01.PathConfiguration;
 import com.teragrep.rlp_10.config.ConfigFactory;
 
-import java.nio.file.Path;
 import java.util.Map;
 
 public class Main {
 
-    static final Path baseDirectory = Path.of("/etc/rlp_10");
-    static final Path configPath = Path.of("config/rlp_10.properties");
-
     public static void main(final String[] args) throws ConfigurationException {
-        final PathConfiguration pathConfiguration = new PathConfiguration(baseDirectory.resolve(configPath).toFile());
+        final PathConfiguration pathConfiguration = new PathConfiguration(
+                System.getProperty("configurationPath", "config/rlp_10.properties")
+        );
         final Map<String, String> configurationValues = pathConfiguration.asMap();
-        final ConfigFactory configFactory = new ConfigFactory(baseDirectory, configurationValues);
+        final ConfigFactory configFactory = new ConfigFactory(configurationValues);
         final Benchmark benchmark = new Benchmark(
                 configFactory.initiatorConfig(),
                 configFactory.metricsConfig(),

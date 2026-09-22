@@ -48,7 +48,6 @@ package com.teragrep.rlp_10.config;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,12 +55,10 @@ import java.util.concurrent.TimeUnit;
 
 class ConfigFactoryTest {
 
-    Path baseTlsDirectory = Path.of("src/test/resources/tls");
-
     @Test
     void testDefaultConfig() {
         final Map<String, String> configMap = new HashMap<>();
-        final ConfigFactory configFactory = new ConfigFactory(baseTlsDirectory, configMap);
+        final ConfigFactory configFactory = new ConfigFactory(configMap);
 
         // you should be able to create every kind of configuration object.
         final InitiatorConfig initiatorConfig = Assertions.assertDoesNotThrow(() -> configFactory.initiatorConfig());
@@ -116,7 +113,7 @@ class ConfigFactoryTest {
         configMap.put("syslog.appname", "testApp");
         configMap.put("timeout.open", "1");
         configMap.put("transport.tls", "true");
-        final ConfigFactory configFactory = new ConfigFactory(baseTlsDirectory, configMap);
+        final ConfigFactory configFactory = new ConfigFactory(configMap);
 
         // you should be able to create every kind of configuration object.
         final InitiatorConfig initiatorConfig = Assertions.assertDoesNotThrow(() -> configFactory.initiatorConfig());
@@ -154,9 +151,9 @@ class ConfigFactoryTest {
         Assertions.assertEquals("changeit", transportConfig.keyStorePassword());
         Assertions.assertEquals("changeit", transportConfig.trustStorePassword());
         Assertions
-                .assertEquals(Paths.get("src/test/resources/tls/keystore.jks").toAbsolutePath().toFile(), transportConfig.keyStoreFile());
+                .assertEquals(Paths.get("/opt/teragrep/rlp_10/tls/keystore.jks").toAbsolutePath().toFile(), transportConfig.keyStoreFile());
         Assertions
-                .assertEquals(Paths.get("src/test/resources/tls/truststore.jks").toAbsolutePath().toFile(), transportConfig.trustStoreFile());
+                .assertEquals(Paths.get("/opt/teragrep/rlp_10/tls/truststore.jks").toAbsolutePath().toFile(), transportConfig.trustStoreFile());
         Assertions.assertEquals("TLSv1.3", transportConfig.protocol());
     }
 

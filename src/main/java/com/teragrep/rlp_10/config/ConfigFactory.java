@@ -57,10 +57,8 @@ import java.util.concurrent.TimeUnit;
 public class ConfigFactory {
 
     private final Map<String, String> configValues;
-    private final Path baseTlsDirectory;
 
-    public ConfigFactory(final Path baseTlsDirectory, final Map<String, String> configValues) {
-        this.baseTlsDirectory = baseTlsDirectory.toAbsolutePath().normalize();
+    public ConfigFactory(final Map<String, String> configValues) {
         this.configValues = Collections.unmodifiableMap(configValues);
     }
 
@@ -200,20 +198,28 @@ public class ConfigFactory {
 
     public TransportConfig transportConfig() {
         final String configuredTls = configValues.getOrDefault("transport.tls", "false");
-        final String configuredKeystorePath = configValues.getOrDefault("transport.keystorepath", "keystore.jks");
-        final String configuredTruststorePath = configValues.getOrDefault("transport.truststorepath", "truststore.jks");
-        final Path keystorePath = baseTlsDirectory.resolve(configuredKeystorePath).normalize();
-        final Path truststorePath = baseTlsDirectory.resolve(configuredTruststorePath).normalize();
         final String configuredKeystorePassword = configValues.getOrDefault("transport.keystorepassword", "changeit");
         final String configuredTruststorePassword = configValues
                 .getOrDefault("transport.truststorepassword", "changeit");
         final String protocol = configValues.getOrDefault("transport.protocol", "TLSv1.3");
+
+        final String configuredKeystorePath = configValues
+                .getOrDefault("transport.keystorepath", "/opt/teragrep/rlp_10/tls/keystore.jks");
+        final String configuredTruststorePath = configValues
+                .getOrDefault("transport.truststorepath", "/opt/teragrep/rlp_10/tls/truststore.jks");
+        final Path baseDirectory = Path.of("/opt/teragrep/rlp_10");
+        final Path keystorePath = Path.of(configuredKeystorePath).normalize();
+        final Path truststorePath = Path.of(configuredTruststorePath).normalize();
         // Detect path traversal
-        if (!keystorePath.startsWith(baseTlsDirectory)) {
-            throw new ConfigurationException("TransportConfig contains invalid keystore path!");
+        if (!keystorePath.startsWith(baseDirectory)) {
+            throw new ConfigurationException(
+                    "TransportConfig contains invalid keystore path! Keystore should be located within /opt/teragrep/rlp_10 directory!"
+            );
         }
-        if (!truststorePath.startsWith(baseTlsDirectory)) {
-            throw new ConfigurationException("TransportConfig contains invalid truststore path!");
+        if (!truststorePath.startsWith(baseDirectory)) {
+            throw new ConfigurationException(
+                    "TransportConfig contains invalid truststore path! Truststore should be located within /opt/teragrep/rlp_10 directory!"
+            );
         }
         if (!"true".equals(configuredTls) && !"false".equals(configuredTls)) {
             throw new ConfigurationException("TransportConfig contains invalid TLS boolean!");
