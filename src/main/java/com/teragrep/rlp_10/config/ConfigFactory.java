@@ -63,14 +63,14 @@ public final class ConfigFactory {
         this.configValues = Collections.unmodifiableMap(configValues);
     }
 
-    public DelayConfig delayConfig() throws com.teragrep.cnf_01.ConfigurationException {
+    public DelayConfig delayConfig() throws ConfigurationException {
         final String configuredDuration = configValues.getOrDefault("delay.duration", "PT0S");
         try {
             final Duration delayDuration = Duration.parse(configuredDuration);
             return new DelayConfig(delayDuration);
         }
         catch (final DateTimeParseException dateTimeParseException) {
-            throw new com.teragrep.cnf_01.ConfigurationException(
+            throw new ConfigurationException(
                     "DelayConfig contains invalid configuration value!",
                     dateTimeParseException
             );
@@ -214,18 +214,16 @@ public final class ConfigFactory {
         // Detect path traversal
         if (!keystorePath.startsWith(baseDirectory)) {
             throw new ConfigurationException(
-                    "TransportConfig contains invalid keystore path! Keystore should be located within /opt/teragrep/rlp_10 directory!",
-                    new Throwable()
+                    "TransportConfig contains invalid keystore path! Keystore should be located within /opt/teragrep/rlp_10 directory!"
             );
         }
         if (!truststorePath.startsWith(baseDirectory)) {
             throw new ConfigurationException(
-                    "TransportConfig contains invalid truststore path! Truststore should be located within /opt/teragrep/rlp_10 directory!",
-                    new Throwable()
+                    "TransportConfig contains invalid truststore path! Truststore should be located within /opt/teragrep/rlp_10 directory!"
             );
         }
         if (!"true".equals(configuredTls) && !"false".equals(configuredTls)) {
-            throw new ConfigurationException("TransportConfig contains invalid TLS boolean!", new Throwable());
+            throw new ConfigurationException("TransportConfig contains invalid TLS boolean!");
         }
         final boolean tls = Boolean.parseBoolean(configuredTls);
         return new TransportConfig(

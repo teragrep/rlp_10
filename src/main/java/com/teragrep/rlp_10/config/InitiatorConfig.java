@@ -74,7 +74,7 @@ public final class InitiatorConfig {
 
     public int initiatorCount() throws ConfigurationException {
         if (initiatorCount < 0) {
-            throw new ConfigurationException("InitiatorCount must be positive!", new Throwable());
+            throw new ConfigurationException("InitiatorCount must be positive!");
         }
         return initiatorCount;
     }
@@ -103,7 +103,7 @@ public final class InitiatorConfig {
 
     public int eventLoopCount() throws ConfigurationException {
         if (eventLoopCount < 1) {
-            throw new ConfigurationException("Must have at least one EventLoop!", new Throwable());
+            throw new ConfigurationException("Must have at least one EventLoop!");
         }
         return eventLoopCount;
     }

@@ -63,10 +63,7 @@ public final class PrometheusConfig {
 
     public int port() throws ConfigurationException {
         if (port < 1 || port > 65535) {
-            throw new ConfigurationException(
-                    "Prometheus port is not within expected range!",
-                    new Throwable("Prometheus port is not within expected range!")
-            );
+            throw new ConfigurationException("Prometheus port is not within expected range!");
         }
         else {
             return port;
