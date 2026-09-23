@@ -43,51 +43,50 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_10;
+package com.teragrep.rlp_10.config;
 
-import com.teragrep.cnf_01.ConfigurationException;
-import com.teragrep.cnf_01.PathConfiguration;
-import com.teragrep.rlp_10.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Objects;
 
-import java.util.HashMap;
-import java.util.Map;
+public final class SocketAddressConfig {
 
-public final class Main {
+    private final String hostname;
+    private final int port;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    public SocketAddressConfig() {
+        this("localhost", 1601);
+    }
 
-    public static void main(final String[] args) {
-        final PathConfiguration pathConfiguration = new PathConfiguration(
-                System.getProperty("configurationPath", "config/rlp_10.properties")
-        );
-        final Map<String, String> configurationValues = new HashMap<>();
-        try {
-            configurationValues.putAll(pathConfiguration.asMap());
+    public SocketAddressConfig(final String hostname, final int port) {
+        this.hostname = hostname;
+        this.port = port;
+    }
+
+    public String hostname() {
+        return hostname;
+    }
+
+    public int port() {
+        return port;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
         }
-        catch (final ConfigurationException configurationException) {
-            LOGGER.warn("Could not load properties from configuration path, proceeding with defaults...");
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
         }
+        else {
+            final SocketAddressConfig that = (SocketAddressConfig) o;
+            equals = port == that.port && Objects.equals(hostname, that.hostname);
+        }
+        return equals;
+    }
 
-        try {
-            final ConfigFactory configFactory = new ConfigFactory(configurationValues);
-            final Benchmark benchmark = new Benchmark(
-                    configFactory.initiatorConfig(),
-                    configFactory.metricsConfig(),
-                    configFactory.prometheusConfig(),
-                    configFactory.timeoutConfig(),
-                    configFactory.transportConfig(),
-                    configFactory.recordStreamConfig(),
-                    configFactory.reportConfig(),
-                    configFactory.socketAddressConfig(),
-                    configFactory.delayConfig(),
-                    configFactory.syslogConfig()
-            );
-            benchmark.call();
-        }
-        catch (final ConfigurationException configurationException) {
-            LOGGER.error("Invalid configuration!", configurationException);
-        }
+    @Override
+    public int hashCode() {
+        return Objects.hash(hostname, port);
     }
 }

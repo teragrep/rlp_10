@@ -43,51 +43,61 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_10;
+package com.teragrep.rlp_10.report;
 
-import com.teragrep.cnf_01.ConfigurationException;
-import com.teragrep.cnf_01.PathConfiguration;
-import com.teragrep.rlp_10.config.ConfigFactory;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Slf4jReporter;
+import com.teragrep.rlp_10.config.ReportConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
-public final class Main {
+public final class Slf4JMetricsReport implements MetricsReport {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Slf4JMetricsReport.class);
+    private final ReportConfig config;
+    private final Slf4jReporter slf4jReport;
 
-    public static void main(final String[] args) {
-        final PathConfiguration pathConfiguration = new PathConfiguration(
-                System.getProperty("configurationPath", "config/rlp_10.properties")
-        );
-        final Map<String, String> configurationValues = new HashMap<>();
-        try {
-            configurationValues.putAll(pathConfiguration.asMap());
-        }
-        catch (final ConfigurationException configurationException) {
-            LOGGER.warn("Could not load properties from configuration path, proceeding with defaults...");
-        }
+    public Slf4JMetricsReport(final MetricRegistry registry, final ReportConfig config) {
+        this.config = config;
+        this.slf4jReport = Slf4jReporter
+                .forRegistry(registry)
+                .outputTo(LOGGER)
+                .convertRatesTo(config.rateTimeUnit())
+                .convertDurationsTo(config.durationTimeUnit())
+                .build();
+    }
 
-        try {
-            final ConfigFactory configFactory = new ConfigFactory(configurationValues);
-            final Benchmark benchmark = new Benchmark(
-                    configFactory.initiatorConfig(),
-                    configFactory.metricsConfig(),
-                    configFactory.prometheusConfig(),
-                    configFactory.timeoutConfig(),
-                    configFactory.transportConfig(),
-                    configFactory.recordStreamConfig(),
-                    configFactory.reportConfig(),
-                    configFactory.socketAddressConfig(),
-                    configFactory.delayConfig(),
-                    configFactory.syslogConfig()
-            );
-            benchmark.call();
+    @Override
+    public void start() {
+        slf4jReport.start(config.interval(), TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public void stop() {
+        slf4jReport.stop();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
         }
-        catch (final ConfigurationException configurationException) {
-            LOGGER.error("Invalid configuration!", configurationException);
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
         }
+        else {
+            final Slf4JMetricsReport that = (Slf4JMetricsReport) o;
+            equals = Objects.equals(config, that.config) && Objects.equals(slf4jReport, that.slf4jReport);
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(config, slf4jReport);
     }
 }

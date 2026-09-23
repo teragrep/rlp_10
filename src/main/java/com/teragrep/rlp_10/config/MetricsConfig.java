@@ -1,6 +1,6 @@
 /*
- * Teragrep RELP Flooder Client RLP_10
- * Copyright (C) 2024  Suomen Kanuuna Oy
+ * Teragrep performance test application for RELP (rlp_10)
+ * Copyright (C) 2026 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,22 +43,44 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
+package com.teragrep.rlp_10.config;
 
-package com.teragrep.rlp_10;
+import java.util.Objects;
 
-import com.teragrep.rlp_09.RelpFlooderIteratorFactory;
+public final class MetricsConfig {
 
-import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicInteger;
+    private final int window;
 
-public class SharedTotalMessageIteratorFactory implements RelpFlooderIteratorFactory {
-    private final AtomicInteger recordsSent = new AtomicInteger(0);
-    private final FlooderConfig flooderConfig;
-    SharedTotalMessageIteratorFactory(FlooderConfig flooderConfig) {
-        this.flooderConfig = flooderConfig;
+    public MetricsConfig() {
+        this(10000);
     }
+
+    public MetricsConfig(final int window) {
+        this.window = window;
+    }
+
+    public int window() {
+        return window;
+    }
+
     @Override
-    public Iterator<byte[]> get(int threadId) {
-        return new SharedTotalMessageIterator(flooderConfig, threadId, recordsSent);
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final MetricsConfig that = (MetricsConfig) o;
+            equals = window == that.window;
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(window);
     }
 }

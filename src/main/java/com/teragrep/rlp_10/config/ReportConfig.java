@@ -43,51 +43,58 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_10;
+package com.teragrep.rlp_10.config;
 
-import com.teragrep.cnf_01.ConfigurationException;
-import com.teragrep.cnf_01.PathConfiguration;
-import com.teragrep.rlp_10.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
-import java.util.HashMap;
-import java.util.Map;
+public final class ReportConfig {
 
-public final class Main {
+    private final long interval;
+    private final TimeUnit rateTimeUnit;
+    private final TimeUnit durationTimeUnit;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    public ReportConfig() {
+        this(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
+    }
 
-    public static void main(final String[] args) {
-        final PathConfiguration pathConfiguration = new PathConfiguration(
-                System.getProperty("configurationPath", "config/rlp_10.properties")
-        );
-        final Map<String, String> configurationValues = new HashMap<>();
-        try {
-            configurationValues.putAll(pathConfiguration.asMap());
+    public ReportConfig(final long intervalMs, final TimeUnit rateTimeUnit, final TimeUnit durationTimeUnit) {
+        this.interval = intervalMs;
+        this.rateTimeUnit = rateTimeUnit;
+        this.durationTimeUnit = durationTimeUnit;
+    }
+
+    public long interval() {
+        return interval;
+    }
+
+    public TimeUnit rateTimeUnit() {
+        return rateTimeUnit;
+    }
+
+    public TimeUnit durationTimeUnit() {
+        return durationTimeUnit;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
         }
-        catch (final ConfigurationException configurationException) {
-            LOGGER.warn("Could not load properties from configuration path, proceeding with defaults...");
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
         }
+        else {
+            final ReportConfig that = (ReportConfig) o;
+            equals = interval == that.interval && rateTimeUnit == that.rateTimeUnit
+                    && durationTimeUnit == that.durationTimeUnit;
+        }
+        return equals;
+    }
 
-        try {
-            final ConfigFactory configFactory = new ConfigFactory(configurationValues);
-            final Benchmark benchmark = new Benchmark(
-                    configFactory.initiatorConfig(),
-                    configFactory.metricsConfig(),
-                    configFactory.prometheusConfig(),
-                    configFactory.timeoutConfig(),
-                    configFactory.transportConfig(),
-                    configFactory.recordStreamConfig(),
-                    configFactory.reportConfig(),
-                    configFactory.socketAddressConfig(),
-                    configFactory.delayConfig(),
-                    configFactory.syslogConfig()
-            );
-            benchmark.call();
-        }
-        catch (final ConfigurationException configurationException) {
-            LOGGER.error("Invalid configuration!", configurationException);
-        }
+    @Override
+    public int hashCode() {
+        return Objects.hash(interval, rateTimeUnit, durationTimeUnit);
     }
 }

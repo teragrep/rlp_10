@@ -43,51 +43,51 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_10;
+package com.teragrep.rlp_10.config;
 
 import com.teragrep.cnf_01.ConfigurationException;
-import com.teragrep.cnf_01.PathConfiguration;
-import com.teragrep.rlp_10.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Objects;
 
-public final class Main {
+public final class PrometheusConfig {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private final int port;
 
-    public static void main(final String[] args) {
-        final PathConfiguration pathConfiguration = new PathConfiguration(
-                System.getProperty("configurationPath", "config/rlp_10.properties")
-        );
-        final Map<String, String> configurationValues = new HashMap<>();
-        try {
-            configurationValues.putAll(pathConfiguration.asMap());
+    public PrometheusConfig() {
+        this(8080);
+    }
+
+    public PrometheusConfig(final int port) {
+        this.port = port;
+    }
+
+    public int port() throws ConfigurationException {
+        if (port < 1 || port > 65535) {
+            throw new ConfigurationException("Prometheus port " + port + " is not within expected range (1 - 65535)!");
         }
-        catch (final ConfigurationException configurationException) {
-            LOGGER.warn("Could not load properties from configuration path, proceeding with defaults...");
+        else {
+            return port;
         }
+    }
 
-        try {
-            final ConfigFactory configFactory = new ConfigFactory(configurationValues);
-            final Benchmark benchmark = new Benchmark(
-                    configFactory.initiatorConfig(),
-                    configFactory.metricsConfig(),
-                    configFactory.prometheusConfig(),
-                    configFactory.timeoutConfig(),
-                    configFactory.transportConfig(),
-                    configFactory.recordStreamConfig(),
-                    configFactory.reportConfig(),
-                    configFactory.socketAddressConfig(),
-                    configFactory.delayConfig(),
-                    configFactory.syslogConfig()
-            );
-            benchmark.call();
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
         }
-        catch (final ConfigurationException configurationException) {
-            LOGGER.error("Invalid configuration!", configurationException);
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
         }
+        else {
+            final PrometheusConfig that = (PrometheusConfig) o;
+            equals = port == that.port;
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(port);
     }
 }

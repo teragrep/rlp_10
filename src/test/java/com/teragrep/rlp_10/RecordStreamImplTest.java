@@ -45,49 +45,48 @@
  */
 package com.teragrep.rlp_10;
 
-import com.teragrep.cnf_01.ConfigurationException;
-import com.teragrep.cnf_01.PathConfiguration;
-import com.teragrep.rlp_10.config.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.charset.Charset;
 
-public final class Main {
+public final class RecordStreamImplTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    @Test
+    void testRecordsExhausted() {
+        final String expectedOrigin = "someOrigin";
+        final String expectedHostname = "localhost";
+        final String expectedAppname = "someApp";
+        final long expectedRecordCount = 100;
 
-    public static void main(final String[] args) {
-        final PathConfiguration pathConfiguration = new PathConfiguration(
-                System.getProperty("configurationPath", "config/rlp_10.properties")
+        final RecordStreamImpl recordStream = new RecordStreamImpl(
+                expectedOrigin,
+                expectedHostname,
+                expectedAppname,
+                expectedRecordCount
         );
-        final Map<String, String> configurationValues = new HashMap<>();
-        try {
-            configurationValues.putAll(pathConfiguration.asMap());
-        }
-        catch (final ConfigurationException configurationException) {
-            LOGGER.warn("Could not load properties from configuration path, proceeding with defaults...");
-        }
 
-        try {
-            final ConfigFactory configFactory = new ConfigFactory(configurationValues);
-            final Benchmark benchmark = new Benchmark(
-                    configFactory.initiatorConfig(),
-                    configFactory.metricsConfig(),
-                    configFactory.prometheusConfig(),
-                    configFactory.timeoutConfig(),
-                    configFactory.transportConfig(),
-                    configFactory.recordStreamConfig(),
-                    configFactory.reportConfig(),
-                    configFactory.socketAddressConfig(),
-                    configFactory.delayConfig(),
-                    configFactory.syslogConfig()
-            );
-            benchmark.call();
+        int i;
+        for (i = 0; i < expectedRecordCount; i++) {
+            final byte[] record = recordStream.get();
+            final String recordAsString = new String(record, Charset.defaultCharset());
+
+            // each record should contain configured fields
+            Assertions.assertFalse(recordAsString.isEmpty());
+            Assertions.assertTrue(recordAsString.contains(expectedOrigin));
+            Assertions.assertTrue(recordAsString.contains(expectedHostname));
+            Assertions.assertTrue(recordAsString.contains(expectedAppname));
         }
-        catch (final ConfigurationException configurationException) {
-            LOGGER.error("Invalid configuration!", configurationException);
-        }
+        Assertions.assertEquals(expectedRecordCount, i);
+
+        // once RecordStream is exhausted, it should return empty bytearrays
+        final byte[] emptyRecord = recordStream.get();
+        Assertions.assertTrue(new String(emptyRecord, Charset.defaultCharset()).isEmpty());
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(RecordStreamImpl.class).verify();
     }
 }
