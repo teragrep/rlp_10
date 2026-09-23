@@ -222,7 +222,7 @@ public final class ConfigFactory {
                     "TransportConfig contains invalid truststore path! Truststore should be located within /opt/teragrep/rlp_10 directory!"
             );
         }
-        if (!"true".equals(configuredTls) && !"false".equals(configuredTls)) {
+        if (!"true".equalsIgnoreCase(configuredTls) && !"false".equalsIgnoreCase(configuredTls)) {
             throw new ConfigurationException("TransportConfig contains invalid TLS boolean!");
         }
         final boolean tls = Boolean.parseBoolean(configuredTls);
