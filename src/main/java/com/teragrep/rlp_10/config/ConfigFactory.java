@@ -99,8 +99,8 @@ public final class ConfigFactory {
     }
 
     public MetricsConfig metricsConfig() throws ConfigurationException {
+        final String configuredWindow = configValues.getOrDefault("metrics.window", "10000");
         try {
-            final String configuredWindow = configValues.getOrDefault("metrics.window", "10000");
             final int window = Integer.parseInt(configuredWindow);
             return new MetricsConfig(window);
         }
