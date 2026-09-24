@@ -56,11 +56,10 @@ import java.util.Map;
 
 public class Configuration {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
 
     /**
-     * Uses CNF_01 to retrieve configuration values from a file path and Java arguments, providing key-value pairs as a
-     * Map of Strings
+     * Uses CNF_01 to retrieve configuration values from a file path and Java arguments, providing key-value pairs as a Map of Strings
      */
     public Configuration() {
     }
