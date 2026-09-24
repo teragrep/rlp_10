@@ -46,37 +46,38 @@
 package com.teragrep.rlp_10;
 
 import com.teragrep.cnf_01.ConfigurationException;
-import com.teragrep.rlp_10.config.ConfigFactory;
+import com.teragrep.cnf_01.PathConfiguration;
+import com.teragrep.cnf_01.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 
-public final class Main {
+public class Configuration {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
 
-    public static void main(final String[] args) {
+    public Configuration() {
+    }
+
+    public Map<String, String> configurationValues() {
+        Map<String, String> configurationValues = new HashMap<>();
+
+        // initialize with any config values in file provided by 'configurationPath' property
+        final PathConfiguration pathConfiguration = new PathConfiguration(
+                System.getProperty("configurationPath", "config/rlp_10.properties")
+        );
+        final PropertiesConfiguration propertiesConfigurationConfiguration = new PropertiesConfiguration();
         try {
-            final Map<String, String> configurationValues = new Configuration().configurationValues();
-            final ConfigFactory configFactory = new ConfigFactory(configurationValues);
-            final Benchmark benchmark = new Benchmark(
-                    configFactory.initiatorConfig(),
-                    configFactory.metricsConfig(),
-                    configFactory.prometheusConfig(),
-                    configFactory.timeoutConfig(),
-                    configFactory.transportConfig(),
-                    configFactory.recordStreamConfig(),
-                    configFactory.reportConfig(),
-                    configFactory.socketAddressConfig(),
-                    configFactory.delayConfig(),
-                    configFactory.syslogConfig()
-            );
-            long recordsSent = benchmark.call();
-            System.out.println(recordsSent);
+            configurationValues.putAll(pathConfiguration.asMap());
         }
         catch (final ConfigurationException configurationException) {
-            LOGGER.error("Invalid configuration!", configurationException);
+            LOGGER.warn("Could not load properties from configuration path, proceeding with defaults...");
         }
+
+        // then apply any config values given directly via Java properties, overriding values from file
+        configurationValues.putAll(propertiesConfigurationConfiguration.asMap());
+        return configurationValues;
     }
 }
