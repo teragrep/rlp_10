@@ -43,7 +43,7 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_10;
+package com.teragrep.rlp_10.config;
 
 import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.cnf_01.PathConfiguration;
@@ -58,6 +58,9 @@ public class Configuration {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
 
+    /**
+     * Uses CNF_01 to retrieve configuration values from a file path and Java arguments, providing key-value pairs as a Map of Strings
+     */
     public Configuration() {
     }
 
