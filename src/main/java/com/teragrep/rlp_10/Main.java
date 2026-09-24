@@ -46,10 +46,13 @@
 package com.teragrep.rlp_10;
 
 import com.teragrep.cnf_01.ConfigurationException;
+import com.teragrep.cnf_01.PathConfiguration;
+import com.teragrep.cnf_01.PropertiesConfiguration;
 import com.teragrep.rlp_10.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public final class Main {
