@@ -47,7 +47,6 @@ package com.teragrep.rlp_10;
 
 import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.rlp_10.config.ConfigFactory;
-import com.teragrep.rlp_10.config.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

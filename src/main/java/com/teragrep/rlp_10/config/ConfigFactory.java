@@ -59,10 +59,6 @@ public final class ConfigFactory {
 
     private final Map<String, String> configValues;
 
-    /**
-     * Takes key-value pairs as a Map of Strings and creates various Config objects based on values received, applying defaults for any omitted values.
-     * @param configValues Map<String,String> containing configuration key-value pairs
-     */
     public ConfigFactory(final Map<String, String> configValues) {
         this.configValues = Collections.unmodifiableMap(configValues);
     }
