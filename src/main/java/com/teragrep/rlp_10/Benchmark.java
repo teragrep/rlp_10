@@ -45,6 +45,7 @@
  */
 package com.teragrep.rlp_10;
 
+import com.teragrep.aer_02.Hostname;
 import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.net_01.channel.context.ConnectContextFactory;
 import com.teragrep.net_01.channel.socket.PlainFactory;
@@ -141,9 +142,8 @@ public final class Benchmark implements Callable<Long> {
             }
 
             // recordStream is shared across all Initiators. Initiators ask for records until the recordstream is exhausted
-            // todo use Hostname class from aer_02 or create new component for it
             final RecordStream recordStream = new RecordStreamImpl(
-                    "someOrigin",
+                    new Hostname("defaultOrigin").toString(),
                     syslogConfig.hostname(),
                     syslogConfig.appName(),
                     recordStreamConfig.records()
