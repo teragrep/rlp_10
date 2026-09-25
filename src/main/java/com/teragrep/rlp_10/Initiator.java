@@ -52,6 +52,7 @@ import com.teragrep.rlp_03.frame.RelpFrameFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -122,9 +123,14 @@ public final class Initiator implements Callable<Long> {
             meteredRelpClient.completeOpen(openFrame);
             connectTimer.close();
             while (run) {
+                final String payload = new String(recordStream.get(), StandardCharsets.UTF_8); // todo recordStream should return a stubable SyslogMessage, currently stubness is represented by empty bytearray
+                if (payload.isEmpty()) {
+                    stop();
+                    break;
+                }
                 Timer.Context transactionTimer = metrics.transactionLatency().time();
-                CompletableFuture<RelpFrame> syslogFrame = meteredRelpClient.transmitSyslog();
-                meteredRelpClient.completeSyslog(syslogFrame);
+                CompletableFuture<RelpFrame> syslogFrame = meteredRelpClient.transmitSyslog(payload);
+                meteredRelpClient.completeSyslog(syslogFrame, payload);
                 transactionTimer.close();
                 recordsSent.incrementAndGet();
             }

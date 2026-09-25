@@ -59,10 +59,12 @@ public interface MeteredRelpClient {
     public abstract CompletableFuture<RelpFrame> completeOpen(CompletableFuture<RelpFrame> openFuture)
             throws ExecutionException, InterruptedException;
 
-    public abstract CompletableFuture<RelpFrame> transmitSyslog();
+    public abstract CompletableFuture<RelpFrame> transmitSyslog(String payload);
 
-    public abstract CompletableFuture<RelpFrame> completeSyslog(CompletableFuture<RelpFrame> syslogFuture)
-            throws ExecutionException, InterruptedException;
+    public abstract CompletableFuture<RelpFrame> completeSyslog(
+            CompletableFuture<RelpFrame> syslogFuture,
+            String payload
+    ) throws ExecutionException, InterruptedException;
 
     public abstract void close() throws ExecutionException, InterruptedException;
 }

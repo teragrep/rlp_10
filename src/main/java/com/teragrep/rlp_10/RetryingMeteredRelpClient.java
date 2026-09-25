@@ -100,21 +100,21 @@ public class RetryingMeteredRelpClient implements MeteredRelpClient {
     }
 
     @Override
-    public CompletableFuture<RelpFrame> transmitSyslog() {
-        return origin.transmitSyslog();
+    public CompletableFuture<RelpFrame> transmitSyslog(String payload) {
+        return origin.transmitSyslog(payload);
     }
 
     @Override
-    public CompletableFuture<RelpFrame> completeSyslog(final CompletableFuture<RelpFrame> syslogFuture)
+    public CompletableFuture<RelpFrame> completeSyslog(final CompletableFuture<RelpFrame> syslogFuture, String payload)
             throws ExecutionException, InterruptedException {
         // try to resolve transmitted "syslog" future
-        CompletableFuture<RelpFrame> futureResult = origin.completeSyslog(syslogFuture);
+        CompletableFuture<RelpFrame> futureResult = origin.completeSyslog(syslogFuture, payload);
         int retries = 0;
         while (futureResult.isCompletedExceptionally() && retries < transmitRetryCount) {
             // if transmitted "syslog" future was completed exceptionally (for example by timing out), retransmit an "syslog" message configured number of times.
             retries++;
             metrics.resends().inc();
-            futureResult = origin.completeSyslog(transmitSyslog());
+            futureResult = origin.completeSyslog(transmitSyslog(payload), payload);
         }
         // after trying to resend configured number of times, if "syslog" was not resolved successfully, throw an exception.
         if (futureResult.isCompletedExceptionally() && futureResult.exceptionNow() instanceof TimeoutException) {
