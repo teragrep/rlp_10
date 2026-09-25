@@ -43,9 +43,10 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_10;
+package com.teragrep.rlp_10.relpClient;
 
 import com.teragrep.rlp_03.frame.RelpFrame;
+import com.teragrep.rlp_10.Metrics;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -57,6 +58,15 @@ public class RetryingMeteredRelpClient implements MeteredRelpClient {
     private final int openRetryCount;
     private final int transmitRetryCount;
 
+    /**
+     * Decorator for MeteredRelpClient which retries sending of open and syslog messages a set number of times.
+     * Increments reconnection and resend counts of a Metrics Object.
+     * 
+     * @param origin             MeteredRelpClient to decorate
+     * @param metrics            Metrics object to increment resend and reconnect counts
+     * @param connectRetryCount  Number of times to retry opening
+     * @param transmitRetryCount Number of times to retry sending
+     */
     public RetryingMeteredRelpClient(
             MeteredRelpClient origin,
             Metrics metrics,

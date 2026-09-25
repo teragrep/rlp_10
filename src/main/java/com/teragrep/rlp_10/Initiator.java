@@ -49,6 +49,10 @@ import com.codahale.metrics.Timer;
 import com.teragrep.rlp_03.client.RelpClientFactory;
 import com.teragrep.rlp_03.frame.RelpFrame;
 import com.teragrep.rlp_03.frame.RelpFrameFactory;
+import com.teragrep.rlp_10.relpClient.MeteredRelpClient;
+import com.teragrep.rlp_10.relpClient.MeteredRelpClientImpl;
+import com.teragrep.rlp_10.relpClient.RetryingMeteredRelpClient;
+import com.teragrep.rlp_10.relpClient.TimeoutMeteredRelpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
