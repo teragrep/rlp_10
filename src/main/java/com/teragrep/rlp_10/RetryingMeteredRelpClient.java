@@ -49,7 +49,6 @@ import com.teragrep.rlp_03.frame.RelpFrame;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 public class RetryingMeteredRelpClient implements MeteredRelpClient {
 
@@ -83,20 +82,24 @@ public class RetryingMeteredRelpClient implements MeteredRelpClient {
     @Override
     public CompletableFuture<RelpFrame> completeOpen(final CompletableFuture<RelpFrame> openFuture)
             throws ExecutionException, InterruptedException {
-        // try to resolve transmitted "open" future
-        CompletableFuture<RelpFrame> futureResult = origin.completeOpen(openFuture);
         int retries = 0;
-        while (futureResult.isCompletedExceptionally() && retries < openRetryCount) {
-            // if transmitted "open" future was completed exceptionally (for example by timing out), retransmit an "open" message configured number of times.
-            retries++;
-            metrics.retriedConnects().inc();
-            futureResult = origin.completeOpen(transmitOpen());
+        CompletableFuture<RelpFrame> openFrame = openFuture;
+        while (retries < openRetryCount) {
+            try {
+                origin.completeOpen(openFrame);
+                return openFrame;
+            }
+            catch (ExecutionException e) {
+                // if transmission fails, retransmit until retryCount is reached.
+                retries++;
+                metrics.retriedConnects().inc();
+                openFrame = origin.transmitOpen();
+            }
+            catch (InterruptedException e) {
+                throw new RuntimeException("An unrecoverable error occurred while opening a connection!", e);
+            }
         }
-        // after trying to reconnect configured number of times, if "open" was not resolved successfully, throw an exception.
-        if (futureResult.isCompletedExceptionally()) {
-            throw new RuntimeException("Failed to open connection in " + retries + " tries!");
-        }
-        return futureResult;
+        return openFrame;
     }
 
     @Override
@@ -107,20 +110,24 @@ public class RetryingMeteredRelpClient implements MeteredRelpClient {
     @Override
     public CompletableFuture<RelpFrame> completeSyslog(final CompletableFuture<RelpFrame> syslogFuture, String payload)
             throws ExecutionException, InterruptedException {
-        // try to resolve transmitted "syslog" future
-        CompletableFuture<RelpFrame> futureResult = origin.completeSyslog(syslogFuture, payload);
         int retries = 0;
-        while (futureResult.isCompletedExceptionally() && retries < transmitRetryCount) {
-            // if transmitted "syslog" future was completed exceptionally (for example by timing out), retransmit an "syslog" message configured number of times.
-            retries++;
-            metrics.resends().inc();
-            futureResult = origin.completeSyslog(transmitSyslog(payload), payload);
+        CompletableFuture<RelpFrame> syslogFrame = syslogFuture;
+        while (retries < transmitRetryCount) {
+            try {
+                origin.completeSyslog(syslogFrame, payload);
+                return syslogFrame;
+            }
+            catch (ExecutionException e) {
+                // if transmission fails, retransmit until retryCount is reached.
+                retries++;
+                metrics.resends().inc();
+                syslogFrame = origin.transmitSyslog(payload);
+            }
+            catch (InterruptedException e) {
+                throw new RuntimeException("An unrecoverable error occurred while transmitting a syslog record!", e);
+            }
         }
-        // after trying to resend configured number of times, if "syslog" was not resolved successfully, throw an exception.
-        if (futureResult.isCompletedExceptionally() && futureResult.exceptionNow() instanceof TimeoutException) {
-            throw new RuntimeException("Failed to send syslog in " + retries + " tries!");
-        }
-        return futureResult;
+        return syslogFrame;
     }
 
     @Override
