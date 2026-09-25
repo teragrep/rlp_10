@@ -49,6 +49,7 @@ import com.teragrep.rlp_03.frame.RelpFrame;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public class RetryingMeteredRelpClient implements MeteredRelpClient {
 
@@ -93,7 +94,7 @@ public class RetryingMeteredRelpClient implements MeteredRelpClient {
         }
         // after trying to reconnect configured number of times, if "open" was not resolved successfully, throw an exception.
         if (futureResult.isCompletedExceptionally()) {
-            throw new RuntimeException("Failed to open connection in " + openRetryCount + " tries!");
+            throw new RuntimeException("Failed to open connection in " + retries + " tries!");
         }
         return futureResult;
     }
@@ -106,18 +107,18 @@ public class RetryingMeteredRelpClient implements MeteredRelpClient {
     @Override
     public CompletableFuture<RelpFrame> completeSyslog(final CompletableFuture<RelpFrame> syslogFuture)
             throws ExecutionException, InterruptedException {
-        // try to resolve transmitted "open" future
+        // try to resolve transmitted "syslog" future
         CompletableFuture<RelpFrame> futureResult = origin.completeSyslog(syslogFuture);
         int retries = 0;
         while (futureResult.isCompletedExceptionally() && retries < transmitRetryCount) {
-            // if transmitted "open" future was completed exceptionally (for example by timing out), retransmit an "open" message configured number of times.
+            // if transmitted "syslog" future was completed exceptionally (for example by timing out), retransmit an "syslog" message configured number of times.
             retries++;
-            metrics.retriedConnects().inc();
+            metrics.resends().inc();
             futureResult = origin.completeSyslog(transmitSyslog());
         }
-        // after trying to reconnect configured number of times, if "open" was not resolved successfully, throw an exception.
-        if (futureResult.isCompletedExceptionally()) {
-            throw new RuntimeException("Failed to open connection in " + transmitRetryCount + " tries!");
+        // after trying to resend configured number of times, if "syslog" was not resolved successfully, throw an exception.
+        if (futureResult.isCompletedExceptionally() && futureResult.exceptionNow() instanceof TimeoutException) {
+            throw new RuntimeException("Failed to send syslog in " + retries + " tries!");
         }
         return futureResult;
     }

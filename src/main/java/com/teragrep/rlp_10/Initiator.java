@@ -123,12 +123,8 @@ public final class Initiator implements Callable<Long> {
             connectTimer.close();
             while (run) {
                 Timer.Context transactionTimer = metrics.transactionLatency().time();
-                Timer.Context transmitTimer = metrics.transmitLatency().time();
                 CompletableFuture<RelpFrame> syslogFrame = meteredRelpClient.transmitSyslog();
-                transmitTimer.close();
-                Timer.Context receiveTimer = metrics.receiveLatency().time();
                 meteredRelpClient.completeSyslog(syslogFrame);
-                receiveTimer.close();
                 transactionTimer.close();
                 recordsSent.incrementAndGet();
             }
