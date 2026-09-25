@@ -109,7 +109,7 @@ public class RetryingMeteredRelpClient implements MeteredRelpClient {
                 throw new RuntimeException("An unrecoverable error occurred while opening a connection!", e);
             }
         }
-        return openFrame;
+        return origin.completeOpen(openFrame);
     }
 
     @Override
@@ -137,7 +137,7 @@ public class RetryingMeteredRelpClient implements MeteredRelpClient {
                 throw new RuntimeException("An unrecoverable error occurred while transmitting a syslog record!", e);
             }
         }
-        return syslogFrame;
+        return origin.completeSyslog(syslogFrame, payload);
     }
 
     @Override
