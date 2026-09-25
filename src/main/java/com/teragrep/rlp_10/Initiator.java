@@ -137,7 +137,8 @@ public final class Initiator implements Callable<Long> {
             meteredRelpClient.close();
         }
         catch (ExecutionException | InterruptedException e) {
-            LOGGER.error("unrecoverable error");
+            LOGGER.error("Initiator encountered an nrecoverable error, stopping...", e);
+            return recordsSent.get();
         }
         return recordsSent.get();
     }
