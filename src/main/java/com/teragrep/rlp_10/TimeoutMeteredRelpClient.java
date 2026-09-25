@@ -80,14 +80,14 @@ public class TimeoutMeteredRelpClient implements MeteredRelpClient {
     }
 
     @Override
-    public CompletableFuture<RelpFrame> transmitSyslog() {
-        return origin.transmitSyslog().orTimeout(payloadTimeout, TimeUnit.SECONDS);
+    public CompletableFuture<RelpFrame> transmitSyslog(String payload) {
+        return origin.transmitSyslog(payload).orTimeout(payloadTimeout, TimeUnit.SECONDS);
     }
 
     @Override
-    public CompletableFuture<RelpFrame> completeSyslog(final CompletableFuture<RelpFrame> syslogFuture)
+    public CompletableFuture<RelpFrame> completeSyslog(final CompletableFuture<RelpFrame> syslogFuture, String payload)
             throws ExecutionException, InterruptedException {
-        return origin.completeSyslog(syslogFuture);
+        return origin.completeSyslog(syslogFuture, payload);
     }
 
     @Override

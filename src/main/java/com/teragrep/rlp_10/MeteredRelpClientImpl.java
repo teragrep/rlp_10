@@ -53,7 +53,6 @@ import com.teragrep.rlp_03.frame.RelpFrame;
 import com.teragrep.rlp_03.frame.RelpFrameFactory;
 
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -93,13 +92,7 @@ public class MeteredRelpClientImpl implements MeteredRelpClient {
     }
 
     @Override
-    public CompletableFuture<RelpFrame> transmitSyslog() {
-        final String payload = new String(recordStream.get(), StandardCharsets.UTF_8); // todo recordStream should return a stubable SyslogMessage, currently stubness is represented by empty bytearray
-        if (payload.isEmpty()) {
-            CompletableFuture<RelpFrame> rv = new CompletableFuture<>();
-            rv.completeExceptionally(new RuntimeException("RecordStream is exhausted!"));
-            return rv;
-        }
+    public CompletableFuture<RelpFrame> transmitSyslog(String payload) {
         try (Timer.Context transmitTimer = metrics.transmitLatency().time()) {
             final CompletableFuture<RelpFrame> syslog = relpClient.transmit(relpFrameFactory.create("syslog", payload));
             return syslog;
@@ -107,7 +100,7 @@ public class MeteredRelpClientImpl implements MeteredRelpClient {
     }
 
     @Override
-    public CompletableFuture<RelpFrame> completeSyslog(CompletableFuture<RelpFrame> syslogFuture)
+    public CompletableFuture<RelpFrame> completeSyslog(CompletableFuture<RelpFrame> syslogFuture, String payload)
             throws ExecutionException, InterruptedException {
         if (syslogFuture.isCompletedExceptionally()) {
             return syslogFuture;
