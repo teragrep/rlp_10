@@ -43,7 +43,7 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_10;
+package com.teragrep.rlp_10.relpClient;
 
 import com.codahale.metrics.Timer;
 import com.teragrep.rlp_03.client.RelpClient;
@@ -51,6 +51,8 @@ import com.teragrep.rlp_03.client.RelpClientFactory;
 import com.teragrep.rlp_03.client.RelpClientStub;
 import com.teragrep.rlp_03.frame.RelpFrame;
 import com.teragrep.rlp_03.frame.RelpFrameFactory;
+import com.teragrep.rlp_10.Metrics;
+import com.teragrep.rlp_10.RecordStream;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
@@ -83,6 +85,12 @@ public class MeteredRelpClientImpl implements MeteredRelpClient {
         this.metrics = metrics;
     }
 
+    /**
+     * Transmits and resolves a close message to the RelpClient. Increments disconnects counter when completed
+     * successfully.
+     * 
+     * @return returns a CopmletableFuture which can be resolved to determine whether the message succeeded or not.
+     */
     @Override
     public void close() throws ExecutionException, InterruptedException {
         final CompletableFuture<RelpFrame> close = relpClient.transmit(relpFrameFactory.create("close", ""));
@@ -91,6 +99,11 @@ public class MeteredRelpClientImpl implements MeteredRelpClient {
         relpClient.close();
     }
 
+    /**
+     * Transmits a syslog message to the RelpClient, and runs a Timer measuring how long the transmitting took.
+     * 
+     * @return returns a CopmletableFuture which can be resolved to determine whether the message succeeded or not.
+     */
     @Override
     public CompletableFuture<RelpFrame> transmitSyslog(String payload) {
         try (Timer.Context transmitTimer = metrics.transmitLatency().time()) {
@@ -99,6 +112,12 @@ public class MeteredRelpClientImpl implements MeteredRelpClient {
         }
     }
 
+    /**
+     * Resolves a CompletableFuture representing a syslog message, and runs a Timer measuring how long resolving the
+     * future took. Increments record count when completed successfully.
+     * 
+     * @return returns the same CopmletableFuture that was supplied.
+     */
     @Override
     public CompletableFuture<RelpFrame> completeSyslog(CompletableFuture<RelpFrame> syslogFuture, String payload)
             throws ExecutionException, InterruptedException {
@@ -109,11 +128,19 @@ public class MeteredRelpClientImpl implements MeteredRelpClient {
         }
     }
 
+    /**
+     * Creates a RelpClient by connecting to the configured host and port.
+     */
     @Override
     public void connect() throws ExecutionException, InterruptedException {
         relpClient = relpClientFactory.open(new InetSocketAddress(hostname, port)).get();
     }
 
+    /**
+     * Transmits an open message to the RelpClient, and runs a Timer measuring how long the transmitting took.
+     * 
+     * @return returns a CopmletableFuture which can be resolved to determine whether the message succeeded or not.
+     */
     @Override
     public CompletableFuture<RelpFrame> transmitOpen() {
         final RelpFrame openFrame = relpFrameFactory.create("open", "a hallo yo client");
@@ -121,6 +148,12 @@ public class MeteredRelpClientImpl implements MeteredRelpClient {
         return open;
     }
 
+    /**
+     * Resolves a CompletableFuture representing an open message, and runs a Timer measuring how long resolving the
+     * future took. Increments connects count when completed successfully
+     * 
+     * @return returns the same CopmletableFuture that was supplied.
+     */
     @Override
     public CompletableFuture<RelpFrame> completeOpen(CompletableFuture<RelpFrame> openFuture)
             throws ExecutionException, InterruptedException {

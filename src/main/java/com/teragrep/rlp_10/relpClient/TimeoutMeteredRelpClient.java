@@ -43,28 +43,63 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_10;
+package com.teragrep.rlp_10.relpClient;
 
 import com.teragrep.rlp_03.frame.RelpFrame;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
-public interface MeteredRelpClient {
+public class TimeoutMeteredRelpClient implements MeteredRelpClient {
 
-    public abstract void connect() throws ExecutionException, InterruptedException;
+    private final MeteredRelpClient origin;
+    private final long connectionTimeout;
+    private final long payloadTimeout;
 
-    public abstract CompletableFuture<RelpFrame> transmitOpen();
+    /**
+     * Decorator for MeteredRelpClient which waits for at most the set amount of milliseconds when sending open and
+     * syslog messages before failing.
+     * 
+     * @param origin         MeteredRelpClient to decorate.
+     * @param connectTimeout Maximum time to wait for connect messages to resolve before failing in milliseconds.
+     * @param payloadTimeout Maximum time to wait for syslog messages to resolve before failing in milliseconds.
+     */
+    public TimeoutMeteredRelpClient(MeteredRelpClient origin, long connectTimeout, long payloadTimeout) {
+        this.origin = origin;
+        this.connectionTimeout = connectTimeout;
+        this.payloadTimeout = payloadTimeout;
+    }
 
-    public abstract CompletableFuture<RelpFrame> completeOpen(CompletableFuture<RelpFrame> openFuture)
-            throws ExecutionException, InterruptedException;
+    @Override
+    public void connect() throws ExecutionException, InterruptedException {
+        origin.connect();
+    }
 
-    public abstract CompletableFuture<RelpFrame> transmitSyslog(String payload);
+    @Override
+    public CompletableFuture<RelpFrame> transmitOpen() {
+        return origin.transmitOpen().orTimeout(connectionTimeout, TimeUnit.SECONDS);
+    }
 
-    public abstract CompletableFuture<RelpFrame> completeSyslog(
-            CompletableFuture<RelpFrame> syslogFuture,
-            String payload
-    ) throws ExecutionException, InterruptedException;
+    @Override
+    public CompletableFuture<RelpFrame> completeOpen(final CompletableFuture<RelpFrame> openFuture)
+            throws ExecutionException, InterruptedException {
+        return origin.completeOpen(openFuture);
+    }
 
-    public abstract void close() throws ExecutionException, InterruptedException;
+    @Override
+    public CompletableFuture<RelpFrame> transmitSyslog(String payload) {
+        return origin.transmitSyslog(payload).orTimeout(payloadTimeout, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public CompletableFuture<RelpFrame> completeSyslog(final CompletableFuture<RelpFrame> syslogFuture, String payload)
+            throws ExecutionException, InterruptedException {
+        return origin.completeSyslog(syslogFuture, payload);
+    }
+
+    @Override
+    public void close() throws ExecutionException, InterruptedException {
+        origin.close();
+    }
 }
