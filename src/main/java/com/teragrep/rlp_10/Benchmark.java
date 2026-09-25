@@ -45,6 +45,7 @@
  */
 package com.teragrep.rlp_10;
 
+import com.teragrep.aer_02.Hostname;
 import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.net_01.channel.context.ConnectContextFactory;
 import com.teragrep.net_01.channel.socket.PlainFactory;
@@ -133,38 +134,32 @@ public final class Benchmark implements Callable<Long> {
                     prometheusPort
             );
             reports.add(prometheusMetricsReport);
-        }
-        catch (final ConfigurationException configurationException) {
-            LOGGER.error("Failed to start PrometheusServer!", configurationException);
-        }
-        final Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metrics.registry(), reportConfig);
-        reports.add(slf4JMetricsReport);
+            final Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metrics.registry(), reportConfig);
+            reports.add(slf4JMetricsReport);
 
-        for (final MetricsReport report : reports) {
-            report.start();
-        }
+            for (final MetricsReport report : reports) {
+                report.start();
+            }
 
-        // recordStream is shared across all Initiators. Initiators ask for records until the recordstream is exhausted
-        // todo use Hostname class from aer_02 or create new component for it
-        final RecordStream recordStream = new RecordStreamImpl(
-                "someOrigin",
-                syslogConfig.hostname(),
-                syslogConfig.appName(),
-                recordStreamConfig.records()
-        );
+            // recordStream is shared across all Initiators. Initiators ask for records until the recordstream is exhausted
+            final RecordStream recordStream = new RecordStreamImpl(
+                    new Hostname("defaultOrigin").toString(),
+                    syslogConfig.hostname(),
+                    syslogConfig.appName(),
+                    recordStreamConfig.records()
+            );
 
-        // apply delay to recordStream if configured
-        final RecordStream delayedStream;
-        if (delayConfig.delay() > 0) {
-            delayedStream = new RecordStreamDelay(delayConfig.delay(), recordStream);
-        }
-        else {
-            delayedStream = recordStream;
-        }
+            // apply delay to recordStream if configured
+            final RecordStream delayedStream;
+            if (delayConfig.delay() > 0) {
+                delayedStream = new RecordStreamDelay(delayConfig.delay(), recordStream);
+            }
+            else {
+                delayedStream = recordStream;
+            }
 
-        final EventLoopFactory eventLoopFactory = new EventLoopFactory();
-        final SocketFactory socketFactory = createSocketFactory();
-        try {
+            final EventLoopFactory eventLoopFactory = new EventLoopFactory();
+            final SocketFactory socketFactory = createSocketFactory();
             final int baseInitiators = initiatorConfig.initiatorCount() / initiatorConfig.eventLoopCount();
             final int remainder = initiatorConfig.initiatorCount() % initiatorConfig.eventLoopCount();
             final List<Initiator> initiators = new ArrayList<>();
@@ -213,6 +208,7 @@ public final class Benchmark implements Callable<Long> {
             return totalRecords;
         }
         catch (final InterruptedException | ExecutionException | IOException | ConfigurationException e) {
+            LOGGER.error("An unrecoverable Exception occurred while running Benchmark!", e);
             // unrecoverable exceptions
             throw new RuntimeException(e);
         }
