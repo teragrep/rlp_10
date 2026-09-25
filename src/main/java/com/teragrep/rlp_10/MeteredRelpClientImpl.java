@@ -102,9 +102,6 @@ public class MeteredRelpClientImpl implements MeteredRelpClient {
     @Override
     public CompletableFuture<RelpFrame> completeSyslog(CompletableFuture<RelpFrame> syslogFuture, String payload)
             throws ExecutionException, InterruptedException {
-        if (syslogFuture.isCompletedExceptionally()) {
-            return syslogFuture;
-        }
         try (Timer.Context receiveTimer = metrics.receiveLatency().time()) {
             syslogFuture.get();
             metrics.records().inc();
