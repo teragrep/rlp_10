@@ -100,20 +100,23 @@ public class MeteredRelpClientImpl implements MeteredRelpClient {
             rv.completeExceptionally(new RuntimeException("RecordStream is exhausted!"));
             return rv;
         }
-        Timer.Context transmitTimer = metrics.transmitLatency().time();
-        final CompletableFuture<RelpFrame> syslog = relpClient.transmit(relpFrameFactory.create("syslog", payload));
-        transmitTimer.close();
-        return syslog;
+        try (Timer.Context transmitTimer = metrics.transmitLatency().time()) {
+            final CompletableFuture<RelpFrame> syslog = relpClient.transmit(relpFrameFactory.create("syslog", payload));
+            return syslog;
+        }
     }
 
     @Override
     public CompletableFuture<RelpFrame> completeSyslog(CompletableFuture<RelpFrame> syslogFuture)
             throws ExecutionException, InterruptedException {
-        Timer.Context receiveTimer = metrics.receiveLatency().time();
-        syslogFuture.get();
-        metrics.records().inc();
-        receiveTimer.close();
-        return syslogFuture;
+        if (syslogFuture.isCompletedExceptionally()) {
+            return syslogFuture;
+        }
+        try (Timer.Context receiveTimer = metrics.receiveLatency().time()) {
+            syslogFuture.get();
+            metrics.records().inc();
+            return syslogFuture;
+        }
     }
 
     @Override
