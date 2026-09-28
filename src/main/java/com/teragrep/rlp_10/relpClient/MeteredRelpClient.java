@@ -86,13 +86,13 @@ public class MeteredRelpClient implements RelpClient {
             }
             else if (relpFrame.command().toString().equals("syslog")) {
                 try (Timer.Context transactionTimer = metrics.transactionLatency().time()) {
-                    try (Timer.Context transmitTimer = metrics.transmitLatency().time()) {
-                        rv = origin.transmit(relpFrame);
-                    }
-                    try (Timer.Context receiveTimer = metrics.receiveLatency().time()) {
-                        rv.get();
-                        metrics.records().inc();
-                    }
+                    Timer.Context transmitTimer = metrics.transmitLatency().time();
+                    rv = origin.transmit(relpFrame);
+                    transmitTimer.close();
+                    Timer.Context receiveTimer = metrics.receiveLatency().time();
+                    rv.get();
+                    metrics.records().inc();
+                    receiveTimer.close();
                 }
             }
             else if (relpFrame.command().toString().equals("close")) {
@@ -107,6 +107,8 @@ public class MeteredRelpClient implements RelpClient {
         }
         catch (ExecutionException | InterruptedException exception) {
             LOGGER.error("Failed to transmit {} frame!", relpFrame.command().toString(), exception);
+            // we return an exceptionally completed Future here, since RelpClient's transmit() signature does not declare any Exceptions.
+            // Calling get() on the return value of this method will allow access to the underlying Exception.
             rv.completeExceptionally(exception);
             return rv;
         }
