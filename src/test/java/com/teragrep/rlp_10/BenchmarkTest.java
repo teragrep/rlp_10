@@ -66,7 +66,6 @@ import java.util.function.Supplier;
 public final class BenchmarkTest {
 
     private EventLoop eventLoop;
-    private Thread eventLoopThread;
     private ExecutorService executorService;
 
     // default configs to reduce clutter
@@ -86,11 +85,9 @@ public final class BenchmarkTest {
 
         final EventLoopFactory eventLoopFactory = new EventLoopFactory();
         Assertions.assertDoesNotThrow(() -> eventLoop = eventLoopFactory.create());
+        executorService = Executors.newVirtualThreadPerTaskExecutor();
+        executorService.submit(eventLoop);
 
-        eventLoopThread = new Thread(eventLoop);
-        eventLoopThread.start();
-
-        executorService = Executors.newSingleThreadExecutor();
         final ServerFactory serverFactory = new ServerFactory(
                 eventLoop,
                 executorService,
@@ -104,7 +101,6 @@ public final class BenchmarkTest {
     public void clearMessageList() {
         eventLoop.stop();
         executorService.shutdown();
-        Assertions.assertDoesNotThrow(() -> eventLoopThread.join());
         // clear received list
         messageDeque.clear();
     }
