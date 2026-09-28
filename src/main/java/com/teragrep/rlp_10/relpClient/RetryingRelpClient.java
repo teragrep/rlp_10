@@ -57,13 +57,18 @@ import java.util.concurrent.ExecutionException;
 
 public class RetryingRelpClient implements RelpClient {
 
-    Logger LOGGER = LoggerFactory.getLogger(RetryingRelpClient.class);
-    RelpClient origin;
-    Metrics metrics;
-    int retryOpenCount;
-    int retrySyslogCount;
+    private static final Logger LOGGER = LoggerFactory.getLogger(RetryingRelpClient.class);
+    private final RelpClient origin;
+    private final Metrics metrics;
+    private final int retryOpenCount;
+    private final int retrySyslogCount;
 
-    public RetryingRelpClient(RelpClient origin, Metrics metrics, int retryOpenCount, int retrySyslogCount) {
+    public RetryingRelpClient(
+            final RelpClient origin,
+            final Metrics metrics,
+            final int retryOpenCount,
+            final int retrySyslogCount
+    ) {
         this.origin = origin;
         this.metrics = metrics;
         this.retryOpenCount = retryOpenCount;
@@ -76,12 +81,12 @@ public class RetryingRelpClient implements RelpClient {
         try {
             rv.get();
         }
-        catch (ExecutionException | InterruptedException exception) {
-            String command = relpFrame.command().toString();
-            if (command.equals("open")) {
+        catch (final ExecutionException | InterruptedException exception) {
+            final String command = relpFrame.command().toString();
+            if ("open".equals(command)) {
                 rv = retryTransmission(relpFrame, 0, retryOpenCount, metrics.retriedConnects());
             }
-            else if (command.equals("syslog")) {
+            else if ("syslog".equals(command)) {
                 rv = retryTransmission(relpFrame, 0, retrySyslogCount, metrics.resends());
             }
         }
@@ -89,17 +94,17 @@ public class RetryingRelpClient implements RelpClient {
     }
 
     private CompletableFuture<RelpFrame> retryTransmission(
-            RelpFrame relpFrame,
+            final RelpFrame relpFrame,
             int retries,
-            int maxRetries,
-            Counter counter
+            final int maxRetries,
+            final Counter counter
     ) {
         try {
-            CompletableFuture<RelpFrame> frame = origin.transmit(relpFrame);
+            final CompletableFuture<RelpFrame> frame = origin.transmit(relpFrame);
             frame.get();
             return frame;
         }
-        catch (ExecutionException | InterruptedException exception) {
+        catch (final ExecutionException | InterruptedException exception) {
             LOGGER.error("Failed to send <{}> frame, retrying!", relpFrame.command().toString(), exception);
             if (retries < maxRetries) {
                 retries++;
