@@ -45,71 +45,40 @@
  */
 package com.teragrep.rlp_10.relpClient;
 
-import com.codahale.metrics.Timer;
 import com.teragrep.rlp_03.client.RelpClient;
 import com.teragrep.rlp_03.frame.RelpFrame;
 import com.teragrep.rlp_10.Metrics;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
-public class MeteredRelpClient implements RelpClient {
+public class TimeoutRelpClient implements RelpClient {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(MeteredRelpClient.class);
-    public final Metrics metrics;
-    public final RelpClient origin;
+    private final RelpClient origin;
+    private final Metrics metrics;
+    private final long openTimeout;
+    private final long syslogTimeout;
 
-    public MeteredRelpClient(RelpClient origin, Metrics metrics) {
+    public TimeoutRelpClient(RelpClient origin, Metrics metrics, long openTimeout, long syslogTimeout) {
         this.origin = origin;
         this.metrics = metrics;
+        this.openTimeout = openTimeout;
+        this.syslogTimeout = syslogTimeout;
     }
 
-    /**
-     * Transmits a RelpFrame to decorated RelpClient while measuring transaction time. Syslog frames block until
-     * resolved to measure transmit and receive timers.
-     * 
-     * @param relpFrame
-     * @return
-     */
     @Override
     public CompletableFuture<RelpFrame> transmit(final RelpFrame relpFrame) {
-        CompletableFuture<RelpFrame> rv = new CompletableFuture<>();
-        try {
-            if (relpFrame.command().toString().equals("open")) {
-                try (Timer.Context connectTimer = metrics.connectLatency().time()) {
-                    rv = origin.transmit(relpFrame);
-                    rv.get();
-                    metrics.connects().inc();
-                }
-            }
-            else if (relpFrame.command().toString().equals("syslog")) {
-                try (Timer.Context transactionTimer = metrics.transactionLatency().time()) {
-                    try (Timer.Context transmitTimer = metrics.transmitLatency().time()) {
-                        rv = origin.transmit(relpFrame);
-                    }
-                    try (Timer.Context receiveTimer = metrics.receiveLatency().time()) {
-                        rv.get();
-                        metrics.records().inc();
-                    }
-                }
-            }
-            else if (relpFrame.command().toString().equals("close")) {
-                rv = origin.transmit(relpFrame);
-                rv.get();
-                metrics.disconnects().inc();
-            }
-            else {
-                rv = origin.transmit(relpFrame);
-            }
-            return rv;
+        final CompletableFuture<RelpFrame> rv;
+        if (relpFrame.command().toString().equals("open")) {
+            rv = origin.transmit(relpFrame).orTimeout(openTimeout, TimeUnit.SECONDS);
         }
-        catch (ExecutionException | InterruptedException exception) {
-            LOGGER.error("Failed to transmit {} frame!", relpFrame.command().toString(), exception);
-            rv.completeExceptionally(exception);
-            return rv;
+        else if (relpFrame.command().toString().equals("syslog")) {
+            rv = origin.transmit(relpFrame).orTimeout(syslogTimeout, TimeUnit.SECONDS);
         }
+        else {
+            rv = origin.transmit(relpFrame);
+        }
+        return rv;
     }
 
     @Override

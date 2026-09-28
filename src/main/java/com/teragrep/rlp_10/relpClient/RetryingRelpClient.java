@@ -45,7 +45,7 @@
  */
 package com.teragrep.rlp_10.relpClient;
 
-import com.codahale.metrics.Timer;
+import com.codahale.metrics.Counter;
 import com.teragrep.rlp_03.client.RelpClient;
 import com.teragrep.rlp_03.frame.RelpFrame;
 import com.teragrep.rlp_10.Metrics;
@@ -55,60 +55,63 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-public class MeteredRelpClient implements RelpClient {
+public class RetryingRelpClient implements RelpClient {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(MeteredRelpClient.class);
-    public final Metrics metrics;
-    public final RelpClient origin;
+    Logger LOGGER = LoggerFactory.getLogger(RetryingRelpClient.class);
+    RelpClient origin;
+    Metrics metrics;
+    int retryOpenCount;
+    int retrySyslogCount;
 
-    public MeteredRelpClient(RelpClient origin, Metrics metrics) {
+    public RetryingRelpClient(RelpClient origin, Metrics metrics, int retryOpenCount, int retrySyslogCount) {
         this.origin = origin;
         this.metrics = metrics;
+        this.retryOpenCount = retryOpenCount;
+        this.retrySyslogCount = retrySyslogCount;
     }
 
-    /**
-     * Transmits a RelpFrame to decorated RelpClient while measuring transaction time. Syslog frames block until
-     * resolved to measure transmit and receive timers.
-     * 
-     * @param relpFrame
-     * @return
-     */
     @Override
     public CompletableFuture<RelpFrame> transmit(final RelpFrame relpFrame) {
-        CompletableFuture<RelpFrame> rv = new CompletableFuture<>();
+        CompletableFuture<RelpFrame> rv = origin.transmit(relpFrame);
         try {
-            if (relpFrame.command().toString().equals("open")) {
-                try (Timer.Context connectTimer = metrics.connectLatency().time()) {
-                    rv = origin.transmit(relpFrame);
-                    rv.get();
-                    metrics.connects().inc();
-                }
-            }
-            else if (relpFrame.command().toString().equals("syslog")) {
-                try (Timer.Context transactionTimer = metrics.transactionLatency().time()) {
-                    try (Timer.Context transmitTimer = metrics.transmitLatency().time()) {
-                        rv = origin.transmit(relpFrame);
-                    }
-                    try (Timer.Context receiveTimer = metrics.receiveLatency().time()) {
-                        rv.get();
-                        metrics.records().inc();
-                    }
-                }
-            }
-            else if (relpFrame.command().toString().equals("close")) {
-                rv = origin.transmit(relpFrame);
-                rv.get();
-                metrics.disconnects().inc();
-            }
-            else {
-                rv = origin.transmit(relpFrame);
-            }
-            return rv;
+            rv.get();
         }
         catch (ExecutionException | InterruptedException exception) {
-            LOGGER.error("Failed to transmit {} frame!", relpFrame.command().toString(), exception);
-            rv.completeExceptionally(exception);
-            return rv;
+            String command = relpFrame.command().toString();
+            if (command.equals("open")) {
+                rv = retryTransmission(relpFrame, 0, retryOpenCount, metrics.retriedConnects());
+            }
+            else if (command.equals("syslog")) {
+                rv = retryTransmission(relpFrame, 0, retrySyslogCount, metrics.resends());
+            }
+        }
+        return rv;
+    }
+
+    private CompletableFuture<RelpFrame> retryTransmission(
+            RelpFrame relpFrame,
+            int retries,
+            int maxRetries,
+            Counter counter
+    ) {
+        try {
+            CompletableFuture<RelpFrame> frame = origin.transmit(relpFrame);
+            frame.get();
+            return frame;
+        }
+        catch (ExecutionException | InterruptedException exception) {
+            LOGGER.error("Failed to send <{}> frame, retrying!", relpFrame.command().toString(), exception);
+            if (retries < maxRetries) {
+                retries++;
+                counter.inc();
+                return retryTransmission(relpFrame, retries, maxRetries, counter);
+            }
+            else {
+                throw new RuntimeException(
+                        "Failed to send " + relpFrame.command().toString() + " frame after " + retries + " tries!",
+                        exception
+                );
+            }
         }
     }
 
