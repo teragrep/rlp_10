@@ -55,6 +55,7 @@ import com.teragrep.rlp_10.Metrics;
 import com.teragrep.rlp_10.RecordStream;
 
 import java.net.InetSocketAddress;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -162,4 +163,27 @@ public class MeteredRelpClientImpl implements MeteredRelpClient {
         return openFuture;
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final MeteredRelpClientImpl that = (MeteredRelpClientImpl) o;
+            equals = port == that.port && Objects.equals(relpClientFactory, that.relpClientFactory) && Objects
+                    .equals(relpFrameFactory, that.relpFrameFactory) && Objects
+                            .equals(recordStream, that.recordStream)
+                    && Objects.equals(hostname, that.hostname) && Objects.equals(relpClient, that.relpClient) && Objects.equals(metrics, that.metrics);
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(relpClientFactory, relpFrameFactory, recordStream, hostname, port, relpClient, metrics);
+    }
 }

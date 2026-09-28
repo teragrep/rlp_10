@@ -47,6 +47,7 @@ package com.teragrep.rlp_10.relpClient;
 
 import com.teragrep.rlp_03.frame.RelpFrame;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -101,5 +102,27 @@ public class TimeoutMeteredRelpClient implements MeteredRelpClient {
     @Override
     public void close() throws ExecutionException, InterruptedException {
         origin.close();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final TimeoutMeteredRelpClient that = (TimeoutMeteredRelpClient) o;
+            equals = connectionTimeout == that.connectionTimeout && payloadTimeout == that.payloadTimeout
+                    && Objects.equals(origin, that.origin);
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(origin, connectionTimeout, payloadTimeout);
     }
 }
