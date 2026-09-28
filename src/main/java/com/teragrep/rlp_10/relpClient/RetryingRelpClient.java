@@ -76,7 +76,9 @@ public class RetryingRelpClient implements RelpClient {
     }
 
     /**
-     * Transmit a RelpFrame, retrying configured number of times if unsuccessful. Note that this methdo blocks until the transmission is completed either successfully or exceptionally.
+     * Transmit a RelpFrame, retrying configured number of times if unsuccessful. Note that this methdo blocks until the
+     * transmission is completed either successfully or exceptionally.
+     * 
      * @param relpFrame RelpFrame to transmit
      * @return CompletableFuture received from decorated RelpClient
      */
