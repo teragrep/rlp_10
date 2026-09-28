@@ -67,11 +67,12 @@ public class MeteredRelpClient implements RelpClient {
     }
 
     /**
-     * Transmits a RelpFrame to decorated RelpClient while measuring transaction time. Note that Syslog frames block until
-     * resolved either normally or exceptionally in order to measure transmit and receive timers.
+     * Transmits a RelpFrame to decorated RelpClient while measuring transaction time. Note that Syslog frames block
+     * until resolved either normally or exceptionally in order to measure transmit and receive timers.
      * 
      * @param relpFrame RelpFrame to transmit
-     * @return CompletableFuture from decorated RelpClient if successful, or an exceptionally completed CompletableFuture if an error occurs.
+     * @return CompletableFuture from decorated RelpClient if successful, or an exceptionally completed
+     *         CompletableFuture if an error occurs.
      */
     @Override
     public CompletableFuture<RelpFrame> transmit(final RelpFrame relpFrame) {
