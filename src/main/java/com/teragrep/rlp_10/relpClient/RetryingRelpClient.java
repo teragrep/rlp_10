@@ -77,11 +77,13 @@ public class RetryingRelpClient implements RelpClient {
 
     @Override
     public CompletableFuture<RelpFrame> transmit(final RelpFrame relpFrame) {
+        // attempt to transmit normally
         CompletableFuture<RelpFrame> rv = origin.transmit(relpFrame);
         try {
             rv.get();
         }
         catch (final ExecutionException | InterruptedException exception) {
+            // if any error occurs during transmission, retry
             final String command = relpFrame.command().toString();
             if ("open".equals(command)) {
                 rv = retryTransmission(relpFrame, 0, retryOpenCount, metrics.retriedConnects());
@@ -100,6 +102,7 @@ public class RetryingRelpClient implements RelpClient {
             final Counter counter
     ) {
         try {
+            counter.inc();
             final CompletableFuture<RelpFrame> frame = origin.transmit(relpFrame);
             frame.get();
             return frame;
@@ -108,7 +111,6 @@ public class RetryingRelpClient implements RelpClient {
             LOGGER.error("Failed to send <{}> frame, retrying!", relpFrame.command().toString(), exception);
             if (retries < maxRetries) {
                 retries++;
-                counter.inc();
                 return retryTransmission(relpFrame, retries, maxRetries, counter);
             }
             else {
