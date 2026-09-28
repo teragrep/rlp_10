@@ -45,17 +45,15 @@
  */
 package com.teragrep.rlp_10;
 
-import com.codahale.metrics.Timer;
+import com.teragrep.rlp_03.client.RelpClient;
 import com.teragrep.rlp_03.client.RelpClientFactory;
 import com.teragrep.rlp_03.frame.RelpFrame;
 import com.teragrep.rlp_03.frame.RelpFrameFactory;
-import com.teragrep.rlp_10.relpClient.MeteredRelpClient;
-import com.teragrep.rlp_10.relpClient.MeteredRelpClientImpl;
-import com.teragrep.rlp_10.relpClient.RetryingMeteredRelpClient;
-import com.teragrep.rlp_10.relpClient.TimeoutMeteredRelpClient;
+import com.teragrep.rlp_10.relpClient.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.concurrent.*;
@@ -104,41 +102,28 @@ public final class Initiator implements Callable<Long> {
     @Override
     public Long call() {
         try {
-            MeteredRelpClient meteredRelpClient = new RetryingMeteredRelpClient(
-                    new TimeoutMeteredRelpClient(
-                            new MeteredRelpClientImpl(
-                                    relpClientFactory,
-                                    relpFrameFactory,
-                                    recordStream,
-                                    hostname,
-                                    port,
-                                    metrics
-                            ),
-                            openTimeout,
-                            payloadTimeout
+            final RelpClient relpClient = new RetryingRelpClient(
+                    new MeteredRelpClient(
+                            new TimeoutRelpClient(relpClientFactory.open(new InetSocketAddress(hostname, port)).get(), metrics, openTimeout, payloadTimeout), metrics
                     ),
                     metrics,
                     retryConnectCount,
                     retryTransmissionCount
             );
-            meteredRelpClient.connect();
-            Timer.Context connectTimer = metrics.connectLatency().time();
-            CompletableFuture<RelpFrame> openFrame = meteredRelpClient.transmitOpen();
-            meteredRelpClient.completeOpen(openFrame);
-            connectTimer.close();
+            final RelpFrame open = relpFrameFactory.create("open", "a hallo yo client");
+            relpClient.transmit(open).get();
             while (run) {
                 final String payload = new String(recordStream.get(), StandardCharsets.UTF_8); // todo recordStream should return a stubable SyslogMessage, currently stubness is represented by empty bytearray
                 if (payload.isEmpty()) {
                     stop();
                     break;
                 }
-                Timer.Context transactionTimer = metrics.transactionLatency().time();
-                CompletableFuture<RelpFrame> syslogFrame = meteredRelpClient.transmitSyslog(payload);
-                meteredRelpClient.completeSyslog(syslogFrame, payload);
-                transactionTimer.close();
+                RelpFrame syslog = relpFrameFactory.create("syslog", payload);
+                relpClient.transmit(syslog).get();
                 recordsSent.incrementAndGet();
             }
-            meteredRelpClient.close();
+            RelpFrame close = relpFrameFactory.create("close", "");
+            relpClient.transmit(close);
         }
         catch (ExecutionException | InterruptedException e) {
             LOGGER.error("Initiator encountered an nrecoverable error, stopping...", e);
