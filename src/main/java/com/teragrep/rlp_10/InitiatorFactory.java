@@ -43,49 +43,56 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_10.config;
+package com.teragrep.rlp_10;
 
-import com.teragrep.aer_02.Hostname;
-import com.teragrep.rlp_10.RecordStream;
-import com.teragrep.rlp_10.RecordStreamDelay;
-import com.teragrep.rlp_10.RecordStreamImpl;
+import com.teragrep.rlp_03.client.RelpClientFactory;
+import com.teragrep.rlp_10.config.InitiatorConfig;
+import com.teragrep.rlp_10.config.SocketAddressConfig;
+import com.teragrep.rlp_10.config.TimeoutConfig;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
-public final class RecordStreamConfig {
+public final class InitiatorFactory {
 
-    private static final long maxRecords = Long.MAX_VALUE;
+    private final RecordStream recordStream;
+    private final SocketAddressConfig socketAddressConfig;
+    private final Metrics metrics;
+    private final TimeoutConfig timeoutConfig;
+    private final InitiatorConfig initiatorConfig;
 
-    private final long records;
-
-    public RecordStreamConfig() {
-        this(maxRecords);
+    public InitiatorFactory(
+            RecordStream recordStream,
+            Metrics metrics,
+            SocketAddressConfig socketAddressConfig,
+            TimeoutConfig timeoutConfig,
+            InitiatorConfig initiatorConfig
+    ) {
+        this.recordStream = recordStream;
+        this.metrics = metrics;
+        this.socketAddressConfig = socketAddressConfig;
+        this.timeoutConfig = timeoutConfig;
+        this.initiatorConfig = initiatorConfig;
     }
 
-    public RecordStreamConfig(final long records) {
-        this.records = records;
-    }
-
-    public long records() {
-        return records;
-    }
-
-    public RecordStream recordStream(String hostname, String appName, long delay) {
-        final RecordStream recordStream = new RecordStreamImpl(
-                new Hostname("defaultOrigin").toString(),
-                hostname,
-                appName,
-                records
-        );
-        // apply delay to recordStream if configured
-        final RecordStream delayedStream;
-        if (delay > 0) {
-            delayedStream = new RecordStreamDelay(delay, recordStream);
+    public List<Initiator> createInitiators(long numberOfInitiators, RelpClientFactory relpClientFactory) {
+        final List<Initiator> initiators = new ArrayList<>();
+        for (int initiatorCount = 0; initiatorCount < numberOfInitiators; initiatorCount++) {
+            final Initiator initiator = new Initiator(
+                    relpClientFactory,
+                    recordStream,
+                    socketAddressConfig.hostname(),
+                    socketAddressConfig.port(),
+                    metrics,
+                    timeoutConfig.openTimeout(),
+                    timeoutConfig.payloadTimeout(),
+                    initiatorConfig.retryTransmissionCount(),
+                    initiatorConfig.retryConnectionCount()
+            );
+            initiators.add(initiator);
         }
-        else {
-            delayedStream = recordStream;
-        }
-        return delayedStream;
+        return initiators;
     }
 
     @Override
@@ -98,14 +105,15 @@ public final class RecordStreamConfig {
             equals = false;
         }
         else {
-            final RecordStreamConfig that = (RecordStreamConfig) o;
-            equals = records == that.records;
+            final InitiatorFactory that = (InitiatorFactory) o;
+            equals = Objects.equals(recordStream, that.recordStream)
+                    && Objects.equals(socketAddressConfig, that.socketAddressConfig) && Objects.equals(metrics, that.metrics) && Objects.equals(timeoutConfig, that.timeoutConfig) && Objects.equals(initiatorConfig, that.initiatorConfig);
         }
         return equals;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(records);
+        return Objects.hash(recordStream, socketAddressConfig, metrics, timeoutConfig, initiatorConfig);
     }
 }

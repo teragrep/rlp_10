@@ -81,7 +81,6 @@ public final class BenchmarkTest {
     private final ConcurrentLinkedDeque<byte[]> messageDeque = new ConcurrentLinkedDeque<>();
 
     public void init(final Supplier<FrameDelegate> frameDelegateSupplier) {
-        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
 
         final EventLoopFactory eventLoopFactory = new EventLoopFactory();
         Assertions.assertDoesNotThrow(() -> eventLoop = eventLoopFactory.create());

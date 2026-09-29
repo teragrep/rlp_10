@@ -54,4 +54,8 @@ public final class RecordStreamConfigTest {
     public void testContract() {
         EqualsVerifier.forClass(RecordStreamConfig.class).verify();
     }
+
+    @Test
+    void recordStream() {
+    }
 }
