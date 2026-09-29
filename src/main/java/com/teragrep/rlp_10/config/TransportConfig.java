@@ -153,8 +153,8 @@ public final class TransportConfig {
                 rv = new TLSFactory(sslContext, sslEngineFunction);
             }
             catch (
-                    final KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException
-                          | UnrecoverableKeyException | KeyManagementException e
+                final KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException
+                        | UnrecoverableKeyException | KeyManagementException e
             ) {
                 // unrecoverable error
                 throw new RuntimeException("Error while initializing TLS connection, check your configuration!", e);
