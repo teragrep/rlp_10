@@ -104,7 +104,7 @@ public final class Initiator implements Callable<Long> {
         try {
             final RelpClient relpClient = new RetryingRelpClient(
                     new MeteredRelpClient(
-                            new TimeoutRelpClient(relpClientFactory.open(new InetSocketAddress(hostname, port)).get(), metrics, openTimeout, payloadTimeout), metrics
+                            new TimeoutRelpClient(relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.SECONDS), metrics, openTimeout, payloadTimeout), metrics
                     ),
                     metrics,
                     retryConnectCount,
@@ -125,8 +125,8 @@ public final class Initiator implements Callable<Long> {
             RelpFrame close = relpFrameFactory.create("close", "");
             relpClient.transmit(close);
         }
-        catch (ExecutionException | InterruptedException e) {
-            LOGGER.error("Initiator encountered an nrecoverable error, stopping...", e);
+        catch (ExecutionException | InterruptedException | TimeoutException e) {
+            LOGGER.error("Initiator encountered an unrecoverable error, stopping...", e);
             return recordsSent.get();
         }
         return recordsSent.get();
