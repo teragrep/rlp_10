@@ -45,7 +45,6 @@
  */
 package com.teragrep.rlp_10;
 
-import com.teragrep.aer_02.Hostname;
 import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.net_01.channel.context.ConnectContextFactory;
 import com.teragrep.net_01.channel.socket.PlainFactory;
