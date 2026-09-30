@@ -64,7 +64,7 @@ public final class Main {
         final PathConfiguration pathConfiguration = new PathConfiguration(
                 System.getProperty("configurationPath", "config/rlp_10.properties")
         );
-        final PropertiesConfiguration propertiesConfigurationConfiguration = new PropertiesConfiguration();
+        final PropertiesConfiguration propertiesConfiguration = new PropertiesConfiguration();
 
         try {
             configurationValues.putAll(pathConfiguration.asMap());
@@ -72,7 +72,7 @@ public final class Main {
         catch (final ConfigurationException configurationException) {
             LOGGER.warn("Could not load properties from configuration path, proceeding with defaults...");
         }
-        configurationValues.putAll(propertiesConfigurationConfiguration.asMap());
+        configurationValues.putAll(propertiesConfiguration.asMap());
 
         try {
             final ConfigFactory configFactory = new ConfigFactory(configurationValues);
