@@ -45,6 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
+import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.net_01.channel.socket.PlainFactory;
 import com.teragrep.net_01.channel.socket.SocketFactory;
 import com.teragrep.net_01.channel.socket.TLSFactory;
@@ -116,7 +117,7 @@ public final class TransportConfig {
         return protocol;
     }
 
-    public SocketFactory socketFactory() {
+    public SocketFactory socketFactory() throws ConfigurationException {
         final SocketFactory rv;
         if (!tls()) {
             rv = new PlainFactory();
@@ -157,7 +158,10 @@ public final class TransportConfig {
                         | UnrecoverableKeyException | KeyManagementException e
             ) {
                 // unrecoverable error
-                throw new RuntimeException("Error while initializing TLS connection, check your configuration!", e);
+                throw new ConfigurationException(
+                        "Error while initializing TLS connection, check your configuration!",
+                        e
+                );
             }
         }
         return rv;
