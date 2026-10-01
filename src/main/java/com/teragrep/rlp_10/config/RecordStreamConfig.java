@@ -45,6 +45,10 @@
  */
 package com.teragrep.rlp_10.config;
 
+import com.teragrep.rlp_10.RecordStream;
+import com.teragrep.rlp_10.RecordStreamDelay;
+import com.teragrep.rlp_10.RecordStreamImpl;
+
 import java.util.Objects;
 
 public final class RecordStreamConfig {
@@ -63,6 +67,19 @@ public final class RecordStreamConfig {
 
     public long records() {
         return records;
+    }
+
+    public RecordStream recordStream(final String hostname, final String appName, final long delay) {
+        final RecordStream recordStream = new RecordStreamImpl("defaultOrigin", hostname, appName, records);
+        // apply delay to recordStream if configured
+        final RecordStream delayedStream;
+        if (delay > 0) {
+            delayedStream = new RecordStreamDelay(delay, recordStream);
+        }
+        else {
+            delayedStream = recordStream;
+        }
+        return delayedStream;
     }
 
     @Override

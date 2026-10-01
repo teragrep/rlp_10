@@ -51,11 +51,13 @@ import com.teragrep.net_01.eventloop.EventLoopFactory;
 import com.teragrep.rlp_03.frame.FrameDelegationClockFactory;
 import com.teragrep.rlp_03.frame.delegate.DefaultFrameDelegate;
 import com.teragrep.net_01.server.ServerFactory;
+import com.teragrep.rlp_03.frame.delegate.FrameDelegate;
 import com.teragrep.rlp_10.config.*;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.*;
 
 import java.util.concurrent.*;
+import java.util.function.Supplier;
 
 /**
  * These are a copy from rlp_03 test suite
@@ -64,7 +66,6 @@ import java.util.concurrent.*;
 public final class BenchmarkTest {
 
     private EventLoop eventLoop;
-    private Thread eventLoopThread;
     private ExecutorService executorService;
 
     // default configs to reduce clutter
@@ -79,35 +80,26 @@ public final class BenchmarkTest {
 
     private final ConcurrentLinkedDeque<byte[]> messageDeque = new ConcurrentLinkedDeque<>();
 
-    @BeforeAll
-    public void init() {
-        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
+    public void init(final Supplier<FrameDelegate> frameDelegateSupplier) {
 
         final EventLoopFactory eventLoopFactory = new EventLoopFactory();
         Assertions.assertDoesNotThrow(() -> eventLoop = eventLoopFactory.create());
+        executorService = Executors.newVirtualThreadPerTaskExecutor();
+        executorService.submit(eventLoop);
 
-        eventLoopThread = new Thread(eventLoop);
-        eventLoopThread.start();
-
-        executorService = Executors.newSingleThreadExecutor();
         final ServerFactory serverFactory = new ServerFactory(
                 eventLoop,
                 executorService,
                 new PlainFactory(),
-                new FrameDelegationClockFactory(() -> new DefaultFrameDelegate((frame) -> messageDeque.add(frame.relpFrame().payload().toBytes())))
+                new FrameDelegationClockFactory(() -> frameDelegateSupplier.get())
         );
         Assertions.assertDoesNotThrow(() -> serverFactory.create(socketAddressConfig.port()));
     }
 
-    @AfterAll
-    public void cleanup() {
-        eventLoop.stop();
-        executorService.shutdown();
-        Assertions.assertDoesNotThrow(() -> eventLoopThread.join());
-    }
-
     @AfterEach
     public void clearMessageList() {
+        eventLoop.stop();
+        executorService.shutdown();
         // clear received list
         messageDeque.clear();
     }
@@ -117,6 +109,7 @@ public final class BenchmarkTest {
      */
     @Test
     public void testMessageCount() {
+        init(() -> new DefaultFrameDelegate((frame) -> messageDeque.add(frame.relpFrame().payload().toBytes())));
         final int clients = 123;
         final long messageCount = 100000;
         final int retryTransmissionCount = 3;
@@ -141,7 +134,7 @@ public final class BenchmarkTest {
                 delayConfig,
                 syslogConfig
         );
-        Assertions.assertEquals(messageCount, benchmark.call());
+        Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.call()));
         Assertions.assertFalse(messageDeque.isEmpty());
         Assertions.assertEquals(messageCount, messageDeque.size());
     }
@@ -151,6 +144,7 @@ public final class BenchmarkTest {
      */
     @Test
     public void testFewerClientsThanEventLoops() {
+        init(() -> new DefaultFrameDelegate((frame) -> messageDeque.add(frame.relpFrame().payload().toBytes())));
         final int clients = 5;
         final long messageCount = 5000;
         final int retryTransmissionCount = 3;
@@ -175,7 +169,7 @@ public final class BenchmarkTest {
                 delayConfig,
                 syslogConfig
         );
-        Assertions.assertEquals(messageCount, benchmark.call());
+        Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.call()));
         Assertions.assertFalse(messageDeque.isEmpty());
         Assertions.assertEquals(messageCount, messageDeque.size());
     }
@@ -185,6 +179,7 @@ public final class BenchmarkTest {
      */
     @Test
     public void testNoClients() {
+        init(() -> new DefaultFrameDelegate((frame) -> messageDeque.add(frame.relpFrame().payload().toBytes())));
         final int clients = 0;
         final long messageCount = 5000;
         final int retryTransmissionCount = 3;
@@ -209,8 +204,51 @@ public final class BenchmarkTest {
                 delayConfig,
                 syslogConfig
         );
-        benchmark.call();
+        Assertions.assertDoesNotThrow(() -> benchmark.call());
         Assertions.assertTrue(messageDeque.isEmpty());
+    }
+
+    /**
+     * Should be able to reconnect and resend messages if server fails to answer in time.
+     */
+    @Test
+    public void testRetries() {
+        // initialize with AcceleratingDelegate
+        init(
+                () -> new DelayedDefaultFrameDelegate(
+                        frameContext -> messageDeque.add(frameContext.relpFrame().payload().toBytes()),
+                        2000000000L,
+                        2000000000L
+                )
+        );
+        final int clients = 1;
+        final long messageCount = 10;
+        final int retryTransmissionCount = 5;
+        final int retryConnectionCount = 5;
+        final long openTimeout = 1000000000L;
+        final long syslogTimeout = 1000000000L;
+        final int eventLoopCount = 1;
+        final InitiatorConfig initiatorConfig = new InitiatorConfig(
+                clients,
+                retryTransmissionCount,
+                retryConnectionCount,
+                eventLoopCount
+        );
+        final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
+        final TimeoutConfig timeoutConfig = new TimeoutConfig(openTimeout, syslogTimeout);
+        final Benchmark benchmark = new Benchmark(
+                initiatorConfig,
+                metricsConfiguration,
+                prometheusConfiguration,
+                timeoutConfig,
+                transportConfiguration,
+                recordStreamConfig,
+                reportConfig,
+                socketAddressConfig,
+                delayConfig,
+                syslogConfig
+        );
+        Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.call()));
     }
 
     @Test

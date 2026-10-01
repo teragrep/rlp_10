@@ -43,19 +43,62 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_10.config;
+package com.teragrep.rlp_10;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.jupiter.api.Test;
+import com.teragrep.rlp_03.frame.delegate.EventDelegate;
+import com.teragrep.rlp_03.frame.delegate.FrameContext;
+import com.teragrep.rlp_03.frame.delegate.FrameDelegate;
+import com.teragrep.rlp_03.frame.delegate.SequencingDelegate;
+import com.teragrep.rlp_03.frame.delegate.event.RelpEvent;
+import com.teragrep.rlp_03.frame.delegate.event.RelpEventClose;
+import com.teragrep.rlp_03.frame.delegate.event.RelpEventOpen;
+import com.teragrep.rlp_03.frame.delegate.event.RelpEventSyslog;
 
-public final class RecordStreamConfigTest {
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
 
-    @Test
-    public void testContract() {
-        EqualsVerifier.forClass(RecordStreamConfig.class).verify();
+/**
+ * Used for testing purposes. Simulates a delay from server to test retrying of connections and transmissions.
+ */
+public class DelayedDefaultFrameDelegate implements FrameDelegate {
+
+    private final FrameDelegate frameDelegate;
+
+    public DelayedDefaultFrameDelegate(final Consumer<FrameContext> cbFunction) {
+        this(cbFunction, 4000000000L, 4000000000L);
     }
 
-    @Test
-    void recordStream() {
+    public DelayedDefaultFrameDelegate(
+            final Consumer<FrameContext> cbFunction,
+            final long connectionDelayNanos,
+            final long transmitDelayNanos
+    ) {
+        final Map<String, RelpEvent> relpCommandConsumerMap = new HashMap<>();
+        relpCommandConsumerMap.put("close", new RelpEventClose());
+        relpCommandConsumerMap.put("open", new RelpEventOpen());
+        relpCommandConsumerMap.put("syslog", new RelpEventSyslog(cbFunction));
+
+        this.frameDelegate = new AcceleratingDelegate(
+                new SequencingDelegate(new EventDelegate(relpCommandConsumerMap)),
+                connectionDelayNanos,
+                transmitDelayNanos
+        );
     }
+
+    @Override
+    public boolean accept(final FrameContext frameContext) {
+        return frameDelegate.accept(frameContext);
+    }
+
+    @Override
+    public void close() throws Exception {
+        frameDelegate.close();
+    }
+
+    @Override
+    public boolean isStub() {
+        return frameDelegate.isStub();
+    }
+
 }
