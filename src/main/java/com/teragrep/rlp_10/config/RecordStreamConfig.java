@@ -45,7 +45,6 @@
  */
 package com.teragrep.rlp_10.config;
 
-import com.teragrep.aer_02.Hostname;
 import com.teragrep.rlp_10.RecordStream;
 import com.teragrep.rlp_10.RecordStreamDelay;
 import com.teragrep.rlp_10.RecordStreamImpl;
@@ -71,12 +70,7 @@ public final class RecordStreamConfig {
     }
 
     public RecordStream recordStream(final String hostname, final String appName, final long delay) {
-        final RecordStream recordStream = new RecordStreamImpl(
-                new Hostname("defaultOrigin").toString(),
-                hostname,
-                appName,
-                records
-        );
+        final RecordStream recordStream = new RecordStreamImpl("defaultOrigin", hostname, appName, records);
         // apply delay to recordStream if configured
         final RecordStream delayedStream;
         if (delay > 0) {

@@ -105,17 +105,13 @@ public final class Benchmark implements Callable<Long> {
     public Long call() throws ConfigurationException, InterruptedException, ExecutionException, IOException {
 
         // reports
-        
-            final int prometheusPort = prometheusConfig.port();
-            final PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(
-                    metrics.registry(),
-                    prometheusPort
-            );
-            reports.add(prometheusMetricsReport);
-        }
-        catch (final ConfigurationException configurationException) {
-            LOGGER.error("Failed to start PrometheusServer!", configurationException);
-        }
+
+        final int prometheusPort = prometheusConfig.port();
+        final PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(
+                metrics.registry(),
+                prometheusPort
+        );
+        reports.add(prometheusMetricsReport);
         final Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metrics.registry(), reportConfig);
         reports.add(slf4JMetricsReport);
 
