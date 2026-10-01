@@ -107,7 +107,7 @@ public class MeteredRelpClient implements RelpClient {
             return rv;
         }
         catch (ExecutionException | InterruptedException exception) {
-            LOGGER.error("Failed to transmit {} frame!", relpFrame.command().toString(), exception);
+            LOGGER.warn("Failed to transmit {} frame!", relpFrame.command().toString(), exception);
             // we return an exceptionally completed Future here, since RelpClient's transmit() signature does not declare any Exceptions.
             // Calling get() on the return value of this method will allow access to the underlying Exception.
             rv.completeExceptionally(exception);

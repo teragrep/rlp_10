@@ -115,16 +115,20 @@ public class RetryingRelpClient implements RelpClient {
             return frame;
         }
         catch (final ExecutionException | InterruptedException exception) {
-            LOGGER.error("Failed to send <{}> frame, retrying!", relpFrame.command().toString(), exception);
+            LOGGER.warn("Failed to send <{}> frame, retrying!", relpFrame.command().toString(), exception);
             if (retries < maxRetries) {
                 retries++;
                 return retryTransmission(relpFrame, retries, maxRetries, counter);
             }
             else {
-                throw new RuntimeException(
-                        "Failed to send " + relpFrame.command().toString() + " frame after " + retries + " tries!",
-                        exception
-                );
+                LOGGER
+                        .error(
+                                "Failed to send <{}> frame after {} tries!", relpFrame.command().toString(), retries,
+                                exception
+                        );
+                final CompletableFuture<RelpFrame> rv = new CompletableFuture<>();
+                rv.completeExceptionally(exception);
+                return rv;
             }
         }
     }
