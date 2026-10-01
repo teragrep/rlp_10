@@ -118,14 +118,15 @@ public final class Initiator implements Callable<Long> {
                     stop();
                     break;
                 }
-                RelpFrame syslog = relpFrameFactory.create("syslog", payload);
+                final RelpFrame syslog = relpFrameFactory.create("syslog", payload);
                 relpClient.transmit(syslog).get();
                 recordsSent.incrementAndGet();
             }
-            RelpFrame close = relpFrameFactory.create("close", "");
+            final RelpFrame close = relpFrameFactory.create("close", "");
             relpClient.transmit(close);
         }
-        catch (ExecutionException | InterruptedException | TimeoutException e) {
+        catch (final ExecutionException | InterruptedException | TimeoutException e) {
+            // individual Initiators are allowed to fail without stopping the whole program, but should be logged as Errors.
             LOGGER.error("Initiator encountered an unrecoverable error, stopping...", e);
             return recordsSent.get();
         }

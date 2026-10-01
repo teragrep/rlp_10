@@ -59,6 +59,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+/**
+ * BenchmarkExecution starts a configured number of Eventloops within a given ExecutorService and keeps track of every
+ * Task within each of the EventLoops
+ */
 public final class BenchmarkExecution {
 
     private final Map<EventLoop, List<Initiator>> eventLoops;
@@ -75,15 +79,15 @@ public final class BenchmarkExecution {
     private final TransportConfig transportConfig;
 
     public BenchmarkExecution(
-            ExecutorService executorService,
-            Metrics metrics,
-            InitiatorConfig initiatorConfig,
-            SocketAddressConfig socketAddressConfig,
-            SyslogConfig syslogConfig,
-            RecordStreamConfig recordStreamConfig,
-            DelayConfig delayConfig,
-            TimeoutConfig timeoutConfig,
-            TransportConfig transportConfig
+            final ExecutorService executorService,
+            final Metrics metrics,
+            final InitiatorConfig initiatorConfig,
+            final SocketAddressConfig socketAddressConfig,
+            final SyslogConfig syslogConfig,
+            final RecordStreamConfig recordStreamConfig,
+            final DelayConfig delayConfig,
+            final TimeoutConfig timeoutConfig,
+            final TransportConfig transportConfig
     ) {
         this.executorService = executorService;
         this.metrics = metrics;
@@ -104,10 +108,10 @@ public final class BenchmarkExecution {
         final SocketFactory socketFactory = transportConfig.socketFactory();
 
         // recordStream is shared across all Initiators. Initiators ask for records until the recordstream is exhausted
-        RecordStream recordStream = recordStreamConfig
+        final RecordStream recordStream = recordStreamConfig
                 .recordStream(syslogConfig.hostname(), syslogConfig.appName(), delayConfig.delay());
 
-        InitiatorFactory initiatorFactory = new InitiatorFactory(
+        final InitiatorFactory initiatorFactory = new InitiatorFactory(
                 recordStream,
                 metrics,
                 socketAddressConfig,
@@ -134,7 +138,7 @@ public final class BenchmarkExecution {
             // create and start initiators for this eventloop
             final List<Initiator> initiators = initiatorFactory
                     .createInitiators(initiatorsForEventLoop, relpClientFactory);
-            for (Initiator initiator : initiators) {
+            for (final Initiator initiator : initiators) {
                 executorTasks.add(executorService.submit(initiator));
             }
             eventLoops.put(eventLoop, initiators);

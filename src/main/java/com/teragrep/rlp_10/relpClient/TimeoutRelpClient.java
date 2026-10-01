@@ -59,7 +59,12 @@ public class TimeoutRelpClient implements RelpClient {
     private final long openTimeout;
     private final long syslogTimeout;
 
-    public TimeoutRelpClient(RelpClient origin, Metrics metrics, long openTimeout, long syslogTimeout) {
+    public TimeoutRelpClient(
+            final RelpClient origin,
+            final Metrics metrics,
+            final long openTimeout,
+            final long syslogTimeout
+    ) {
         this.origin = origin;
         this.metrics = metrics;
         this.openTimeout = openTimeout;

@@ -61,7 +61,7 @@ public class MeteredRelpClient implements RelpClient {
     public final Metrics metrics;
     public final RelpClient origin;
 
-    public MeteredRelpClient(RelpClient origin, Metrics metrics) {
+    public MeteredRelpClient(final RelpClient origin, final Metrics metrics) {
         this.origin = origin;
         this.metrics = metrics;
     }
@@ -79,18 +79,18 @@ public class MeteredRelpClient implements RelpClient {
         CompletableFuture<RelpFrame> rv = new CompletableFuture<>();
         try {
             if (relpFrame.command().toString().equals("open")) {
-                try (Timer.Context connectTimer = metrics.connectLatency().time()) {
+                try (final Timer.Context connectTimer = metrics.connectLatency().time()) {
                     rv = origin.transmit(relpFrame);
                     rv.get();
                     metrics.connects().inc();
                 }
             }
             else if (relpFrame.command().toString().equals("syslog")) {
-                try (Timer.Context transactionTimer = metrics.transactionLatency().time()) {
-                    Timer.Context transmitTimer = metrics.transmitLatency().time();
+                try (final Timer.Context transactionTimer = metrics.transactionLatency().time()) {
+                    final Timer.Context transmitTimer = metrics.transmitLatency().time();
                     rv = origin.transmit(relpFrame);
                     transmitTimer.close();
-                    Timer.Context receiveTimer = metrics.receiveLatency().time();
+                    final Timer.Context receiveTimer = metrics.receiveLatency().time();
                     rv.get();
                     metrics.records().inc();
                     receiveTimer.close();
@@ -106,7 +106,7 @@ public class MeteredRelpClient implements RelpClient {
             }
             return rv;
         }
-        catch (ExecutionException | InterruptedException exception) {
+        catch (final ExecutionException | InterruptedException exception) {
             LOGGER.warn("Failed to transmit {} frame!", relpFrame.command().toString(), exception);
             // we return an exceptionally completed Future here, since RelpClient's transmit() signature does not declare any Exceptions.
             // Calling get() on the return value of this method will allow access to the underlying Exception.

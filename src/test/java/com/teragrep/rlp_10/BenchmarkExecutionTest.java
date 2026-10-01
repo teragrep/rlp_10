@@ -96,18 +96,18 @@ class BenchmarkExecutionTest {
     @Test
     void testExecution() {
 
-        long expectedRecords = 5000;
+        final long expectedRecords = 5000;
 
         init(() -> new DefaultFrameDelegate((frame) -> {
         }));
-        Metrics metrics = new Metrics(new MetricsConfig());
-        InitiatorConfig initiatorConfig = new InitiatorConfig();
-        SyslogConfig syslogConfig = new SyslogConfig();
-        RecordStreamConfig recordStreamConfig = new RecordStreamConfig(expectedRecords);
-        DelayConfig delayConfig = new DelayConfig();
-        TimeoutConfig timeoutConfig = new TimeoutConfig();
-        TransportConfig transportConfig = new TransportConfig();
-        BenchmarkExecution benchmarkExecution = new BenchmarkExecution(
+        final Metrics metrics = new Metrics(new MetricsConfig());
+        final InitiatorConfig initiatorConfig = new InitiatorConfig();
+        final SyslogConfig syslogConfig = new SyslogConfig();
+        final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(expectedRecords);
+        final DelayConfig delayConfig = new DelayConfig();
+        final TimeoutConfig timeoutConfig = new TimeoutConfig();
+        final TransportConfig transportConfig = new TransportConfig();
+        final BenchmarkExecution benchmarkExecution = new BenchmarkExecution(
                 executorService,
                 metrics,
                 initiatorConfig,

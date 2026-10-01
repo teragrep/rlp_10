@@ -54,6 +54,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * InitiatorFactory creates a configured number of Initiators for a single EventLoop
+ */
+
 public final class InitiatorFactory {
 
     private final RecordStream recordStream;
@@ -63,11 +67,11 @@ public final class InitiatorFactory {
     private final InitiatorConfig initiatorConfig;
 
     public InitiatorFactory(
-            RecordStream recordStream,
-            Metrics metrics,
-            SocketAddressConfig socketAddressConfig,
-            TimeoutConfig timeoutConfig,
-            InitiatorConfig initiatorConfig
+            final RecordStream recordStream,
+            final Metrics metrics,
+            final SocketAddressConfig socketAddressConfig,
+            final TimeoutConfig timeoutConfig,
+            final InitiatorConfig initiatorConfig
     ) {
         this.recordStream = recordStream;
         this.metrics = metrics;
@@ -76,7 +80,7 @@ public final class InitiatorFactory {
         this.initiatorConfig = initiatorConfig;
     }
 
-    public List<Initiator> createInitiators(long numberOfInitiators, RelpClientFactory relpClientFactory) {
+    public List<Initiator> createInitiators(final long numberOfInitiators, final RelpClientFactory relpClientFactory) {
         final List<Initiator> initiators = new ArrayList<>();
         for (int initiatorCount = 0; initiatorCount < numberOfInitiators; initiatorCount++) {
             final Initiator initiator = new Initiator(

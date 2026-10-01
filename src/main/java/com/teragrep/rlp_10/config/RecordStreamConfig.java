@@ -70,7 +70,7 @@ public final class RecordStreamConfig {
         return records;
     }
 
-    public RecordStream recordStream(String hostname, String appName, long delay) {
+    public RecordStream recordStream(final String hostname, final String appName, final long delay) {
         final RecordStream recordStream = new RecordStreamImpl(
                 new Hostname("defaultOrigin").toString(),
                 hostname,

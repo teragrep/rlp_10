@@ -58,7 +58,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- * Benchmark tests a relp endpoint
+ * Benchmark runs a set of MetricsReports and starts an instance of BenchmarkExecution
  */
 public final class Benchmark implements Callable<Long> {
 
@@ -131,7 +131,7 @@ public final class Benchmark implements Callable<Long> {
             Runtime.getRuntime().addShutdownHook(shutdownHook);
 
             // wait until execution is finished, then stop benchmark
-            long totalRecords = benchmarkExecution.awaitTermination();
+            final long totalRecords = benchmarkExecution.awaitTermination();
             stopBenchmark();
             return totalRecords;
         }
