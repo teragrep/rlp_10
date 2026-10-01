@@ -70,10 +70,10 @@ public class TimeoutRelpClient implements RelpClient {
     public CompletableFuture<RelpFrame> transmit(final RelpFrame relpFrame) {
         final CompletableFuture<RelpFrame> rv;
         if (relpFrame.command().toString().equals("open")) {
-            rv = origin.transmit(relpFrame).orTimeout(openTimeout, TimeUnit.SECONDS);
+            rv = origin.transmit(relpFrame).orTimeout(openTimeout, TimeUnit.NANOSECONDS);
         }
         else if (relpFrame.command().toString().equals("syslog")) {
-            rv = origin.transmit(relpFrame).orTimeout(syslogTimeout, TimeUnit.SECONDS);
+            rv = origin.transmit(relpFrame).orTimeout(syslogTimeout, TimeUnit.NANOSECONDS);
         }
         else {
             rv = origin.transmit(relpFrame);

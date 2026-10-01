@@ -225,8 +225,8 @@ public final class BenchmarkTest {
         final long messageCount = 10;
         final int retryTransmissionCount = 5;
         final int retryConnectionCount = 5;
-        final int openTimeout = 1;
-        final int syslogTimeout = 1;
+        final long openTimeout = 1000000000L;
+        final long syslogTimeout = 1000000000L;
         final int eventLoopCount = 1;
         final InitiatorConfig initiatorConfig = new InitiatorConfig(
                 clients,

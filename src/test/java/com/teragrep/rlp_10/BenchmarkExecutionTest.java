@@ -105,7 +105,7 @@ class BenchmarkExecutionTest {
         SyslogConfig syslogConfig = new SyslogConfig();
         RecordStreamConfig recordStreamConfig = new RecordStreamConfig(expectedRecords);
         DelayConfig delayConfig = new DelayConfig();
-        TimeoutConfig timeoutConfig = new TimeoutConfig(1, 1);
+        TimeoutConfig timeoutConfig = new TimeoutConfig();
         TransportConfig transportConfig = new TransportConfig();
         BenchmarkExecution benchmarkExecution = new BenchmarkExecution(
                 executorService,

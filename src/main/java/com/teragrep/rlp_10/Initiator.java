@@ -104,7 +104,7 @@ public final class Initiator implements Callable<Long> {
         try {
             final RelpClient relpClient = new RetryingRelpClient(
                     new MeteredRelpClient(
-                            new TimeoutRelpClient(relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.SECONDS), metrics, openTimeout, payloadTimeout), metrics
+                            new TimeoutRelpClient(relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.NANOSECONDS), metrics, openTimeout, payloadTimeout), metrics
                     ),
                     metrics,
                     retryConnectCount,
