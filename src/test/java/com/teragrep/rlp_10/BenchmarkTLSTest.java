@@ -185,7 +185,7 @@ public final class BenchmarkTLSTest {
                 delayConfig,
                 syslogConfig
         );
-        Assertions.assertEquals(messageCount, benchmark.call());
+        Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.call()));
         Assertions.assertFalse(messageDeque.isEmpty());
         Assertions.assertEquals(messageCount, messageDeque.size());
     }
@@ -220,7 +220,7 @@ public final class BenchmarkTLSTest {
                 delayConfig,
                 syslogConfig
         );
-        Assertions.assertEquals(messageCount, benchmark.call());
+        Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.call()));
         Assertions.assertFalse(messageDeque.isEmpty());
         Assertions.assertEquals(messageCount, messageDeque.size());
     }
@@ -255,7 +255,7 @@ public final class BenchmarkTLSTest {
                 delayConfig,
                 syslogConfig
         );
-        Assertions.assertEquals(clients, benchmark.call());
+        Assertions.assertEquals(clients, Assertions.assertDoesNotThrow(() -> benchmark.call()));
         Assertions.assertTrue(messageDeque.isEmpty());
     }
 
@@ -299,7 +299,7 @@ public final class BenchmarkTLSTest {
                 delayConfig,
                 syslogConfig
         );
-        Assertions.assertEquals(messageCount, benchmark.call());
+        Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.call()));
     }
 
     @Test

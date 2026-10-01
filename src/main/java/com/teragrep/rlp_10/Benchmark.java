@@ -102,10 +102,10 @@ public final class Benchmark implements Callable<Long> {
         );
     }
 
-    public Long call() {
+    public Long call() throws ConfigurationException, InterruptedException, ExecutionException, IOException {
 
         // reports
-        try {
+        
             final int prometheusPort = prometheusConfig.port();
             final PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(
                     metrics.registry(),
@@ -123,22 +123,17 @@ public final class Benchmark implements Callable<Long> {
             report.start();
         }
 
-            // start eventloops
-            benchmarkExecution.start();
+        // start eventloops
+        benchmarkExecution.start();
 
-            // shutdown hook in case JVM is terminated
-            final Thread shutdownHook = new Thread(this::stopBenchmark);
-            Runtime.getRuntime().addShutdownHook(shutdownHook);
+        // shutdown hook in case JVM is terminated
+        final Thread shutdownHook = new Thread(this::stopBenchmark);
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
 
-            // wait until execution is finished, then stop benchmark
-            final long totalRecords = benchmarkExecution.awaitTermination();
-            stopBenchmark();
-            return totalRecords;
-        }
-        catch (final InterruptedException | ExecutionException | IOException | ConfigurationException e) {
-            // unrecoverable exceptions
-            throw new RuntimeException(e);
-        }
+        // wait until execution is finished, then stop benchmark
+        final long totalRecords = benchmarkExecution.awaitTermination();
+        stopBenchmark();
+        return totalRecords;
     }
 
     private void stopBenchmark() {

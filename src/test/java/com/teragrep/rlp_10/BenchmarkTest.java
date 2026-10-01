@@ -134,7 +134,7 @@ public final class BenchmarkTest {
                 delayConfig,
                 syslogConfig
         );
-        Assertions.assertEquals(messageCount, benchmark.call());
+        Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.call()));
         Assertions.assertFalse(messageDeque.isEmpty());
         Assertions.assertEquals(messageCount, messageDeque.size());
     }
@@ -169,7 +169,7 @@ public final class BenchmarkTest {
                 delayConfig,
                 syslogConfig
         );
-        Assertions.assertEquals(messageCount, benchmark.call());
+        Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.call()));
         Assertions.assertFalse(messageDeque.isEmpty());
         Assertions.assertEquals(messageCount, messageDeque.size());
     }
@@ -204,7 +204,7 @@ public final class BenchmarkTest {
                 delayConfig,
                 syslogConfig
         );
-        benchmark.call();
+        Assertions.assertDoesNotThrow(() -> benchmark.call());
         Assertions.assertTrue(messageDeque.isEmpty());
     }
 
@@ -248,7 +248,7 @@ public final class BenchmarkTest {
                 delayConfig,
                 syslogConfig
         );
-        Assertions.assertEquals(messageCount, benchmark.call());
+        Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.call()));
     }
 
     @Test
