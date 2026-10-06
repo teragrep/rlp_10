@@ -45,54 +45,48 @@
  */
 package com.teragrep.rlp_10;
 
-import com.teragrep.cnf_01.ConfigurationException;
-import com.teragrep.cnf_01.PathConfiguration;
-import com.teragrep.cnf_01.PropertiesConfiguration;
-import com.teragrep.rlp_10.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Objects;
 
-public final class Main {
+public final class Hostname {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private final String defaultHostname;
+    private static final Logger LOGGER = LoggerFactory.getLogger(Hostname.class);
 
-    public static void main(final String[] args) {
-        final Map<String, String> configurationValues = new HashMap<>();
-        final PathConfiguration pathConfiguration = new PathConfiguration(
-                System.getProperty("configurationPath", "config/rlp_10.properties")
-        );
-        final PropertiesConfiguration propertiesConfiguration = new PropertiesConfiguration();
+    public Hostname(final String defaultHostname) {
+        this.defaultHostname = defaultHostname;
+    }
 
+    public String hostname() {
+        String rv;
         try {
-            configurationValues.putAll(pathConfiguration.asMap());
+            rv = InetAddress.getLocalHost().getHostName();
         }
-        catch (final ConfigurationException configurationException) {
-            LOGGER.warn("Could not load properties from configuration path, proceeding with defaults...");
+        catch (UnknownHostException e) {
+            rv = defaultHostname;
+            LOGGER.warn("Could not determine hostname, defaulting to <{}>", defaultHostname, e);
         }
-        configurationValues.putAll(propertiesConfiguration.asMap());
+        return rv;
+    }
 
-        try {
-            final ConfigFactory configFactory = new ConfigFactory(configurationValues);
-            final Benchmark benchmark = new Benchmark(
-                    configFactory.initiatorConfig(),
-                    configFactory.metricsConfig(),
-                    configFactory.prometheusConfig(),
-                    configFactory.timeoutConfig(),
-                    configFactory.transportConfig(),
-                    configFactory.recordStreamConfig(),
-                    configFactory.reportConfig(),
-                    configFactory.socketAddressConfig(),
-                    configFactory.delayConfig(),
-                    configFactory.syslogConfig()
-            );
-            long recordsSent = benchmark.call();
-            System.out.println(recordsSent);
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
         }
-        catch (final ConfigurationException configurationException) {
-            LOGGER.error("Invalid configuration!", configurationException);
+        if (o == null || getClass() != o.getClass()) {
+            return false;
         }
+        Hostname hostname = (Hostname) o;
+        return Objects.equals(defaultHostname, hostname.defaultHostname);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(defaultHostname);
     }
 }
