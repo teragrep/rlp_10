@@ -270,6 +270,8 @@
             <exclude>src/test/resources/tls/**</exclude>
             <!-- spotbugs filter -->
             <exclude>spotbugs-exclude-filter.xml</exclude>
+            <!-- logging config -->
+            <exclude>log4j2.xml</exclude>
           </excludes>
         </configuration>
         <executions>
