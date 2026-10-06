@@ -115,9 +115,9 @@ public final class Benchmark implements Callable<Long> {
         final Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metrics.registry(), reportConfig);
         reports.add(slf4JMetricsReport);
 
-            for (final MetricsReport report : reports) {
-                report.start();
-            }
+        for (final MetricsReport report : reports) {
+            report.start();
+        }
 
         // start eventloops
         benchmarkExecution.start();
