@@ -43,19 +43,56 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_10.config;
+package com.teragrep.rlp_10.relpClient;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.jupiter.api.Test;
+import com.teragrep.rlp_03.client.RelpClient;
+import com.teragrep.rlp_03.frame.RelpFrame;
+import com.teragrep.rlp_10.Metrics;
 
-public final class RecordStreamConfigTest {
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
-    @Test
-    public void testContract() {
-        EqualsVerifier.forClass(RecordStreamConfig.class).verify();
+public class TimeoutRelpClient implements RelpClient {
+
+    private final RelpClient origin;
+    private final Metrics metrics;
+    private final long openTimeout;
+    private final long syslogTimeout;
+
+    public TimeoutRelpClient(
+            final RelpClient origin,
+            final Metrics metrics,
+            final long openTimeout,
+            final long syslogTimeout
+    ) {
+        this.origin = origin;
+        this.metrics = metrics;
+        this.openTimeout = openTimeout;
+        this.syslogTimeout = syslogTimeout;
     }
 
-    @Test
-    void recordStream() {
+    @Override
+    public CompletableFuture<RelpFrame> transmit(final RelpFrame relpFrame) {
+        final CompletableFuture<RelpFrame> rv;
+        if (relpFrame.command().toString().equals("open")) {
+            rv = origin.transmit(relpFrame).orTimeout(openTimeout, TimeUnit.NANOSECONDS);
+        }
+        else if (relpFrame.command().toString().equals("syslog")) {
+            rv = origin.transmit(relpFrame).orTimeout(syslogTimeout, TimeUnit.NANOSECONDS);
+        }
+        else {
+            rv = origin.transmit(relpFrame);
+        }
+        return rv;
+    }
+
+    @Override
+    public void close() {
+        origin.close();
+    }
+
+    @Override
+    public boolean isStub() {
+        return false;
     }
 }

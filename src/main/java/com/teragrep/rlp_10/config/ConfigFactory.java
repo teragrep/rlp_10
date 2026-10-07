@@ -59,6 +59,12 @@ public final class ConfigFactory {
 
     private final Map<String, String> configValues;
 
+    /**
+     * Takes key-value pairs as a Map of Strings and creates various Config objects based on values received, applying
+     * defaults for any omitted values.
+     *
+     * @param configValues Map<String,String> containing configuration key-value pairs
+     */
     public ConfigFactory(final Map<String, String> configValues) {
         this.configValues = Collections.unmodifiableMap(configValues);
     }
@@ -182,17 +188,18 @@ public final class ConfigFactory {
     }
 
     public TimeoutConfig timeoutConfig() throws ConfigurationException {
-        final String configuredOpenTimeout = configValues.getOrDefault("timeout.open", "10");
-        final String configuredPayloadTimeout = configValues.getOrDefault("timeout.payload", "5");
         try {
-            final long openTimeout = Long.parseLong(configuredOpenTimeout);
-            final long payloadTimeout = Long.parseLong(configuredPayloadTimeout);
+            final Duration configuredOpenTimeout = Duration.parse(configValues.getOrDefault("timeout.open", "PT10S"));
+            final Duration configuredPayloadTimeout = Duration
+                    .parse(configValues.getOrDefault("timeout.payload", "PT5S"));
+            final long openTimeout = configuredOpenTimeout.toNanos();
+            final long payloadTimeout = configuredPayloadTimeout.toNanos();
             return new TimeoutConfig(openTimeout, payloadTimeout);
         }
-        catch (final NumberFormatException numberFormatException) {
+        catch (DateTimeParseException dateTimeParseException) {
             throw new ConfigurationException(
                     "TimeoutConfig contains invalid configuration value!",
-                    numberFormatException
+                    dateTimeParseException
             );
         }
     }

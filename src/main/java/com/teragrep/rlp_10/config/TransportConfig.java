@@ -45,10 +45,24 @@
  */
 package com.teragrep.rlp_10.config;
 
+import com.teragrep.cnf_01.ConfigurationException;
+import com.teragrep.net_01.channel.socket.PlainFactory;
+import com.teragrep.net_01.channel.socket.SocketFactory;
+import com.teragrep.net_01.channel.socket.TLSFactory;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.Objects;
+import java.util.function.Function;
 
 public final class TransportConfig {
 
@@ -101,6 +115,56 @@ public final class TransportConfig {
 
     public String protocol() {
         return protocol;
+    }
+
+    public SocketFactory socketFactory() throws ConfigurationException {
+        final SocketFactory rv;
+        if (!tls()) {
+            rv = new PlainFactory();
+        }
+        else {
+            try {
+                final SSLContext sslContext = SSLContext.getInstance(protocol);
+                final KeyStore ks = KeyStore.getInstance("JKS");
+                final KeyStore ts = KeyStore.getInstance("JKS");
+
+                final File ksFile = keyStoreFile();
+                final File tsFile = trustStoreFile();
+
+                final FileInputStream ksFileIS = new FileInputStream(ksFile);
+                final FileInputStream tsFileIS = new FileInputStream(tsFile);
+                ts.load(tsFileIS, truststorePassword.toCharArray());
+                final TrustManagerFactory tmf = TrustManagerFactory
+                        .getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                tmf.init(ts);
+
+                ks.load(ksFileIS, keystorePassword.toCharArray());
+                final KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                kmf.init(ks, keystorePassword.toCharArray());
+                sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+
+                tsFileIS.close();
+                ksFileIS.close();
+
+                final Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
+                    final SSLEngine engine = context.createSSLEngine();
+                    engine.setUseClientMode(true);
+                    return engine;
+                };
+                rv = new TLSFactory(sslContext, sslEngineFunction);
+            }
+            catch (
+                final KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException
+                        | UnrecoverableKeyException | KeyManagementException e
+            ) {
+                // unrecoverable error
+                throw new ConfigurationException(
+                        "Error while initializing TLS connection, check your configuration!",
+                        e
+                );
+            }
+        }
+        return rv;
     }
 
     @Override

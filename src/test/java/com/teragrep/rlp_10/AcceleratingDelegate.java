@@ -43,19 +43,51 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_10.config;
+package com.teragrep.rlp_10;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.jupiter.api.Test;
+import com.teragrep.rlp_03.frame.delegate.FrameContext;
+import com.teragrep.rlp_03.frame.delegate.FrameDelegate;
 
-public final class RecordStreamConfigTest {
+import java.util.concurrent.locks.LockSupport;
 
-    @Test
-    public void testContract() {
-        EqualsVerifier.forClass(RecordStreamConfig.class).verify();
+/**
+ * Initially delays open and syslog transmissions by a configured delay, with delay rapidly decreasing for each received
+ * message
+ */
+public class AcceleratingDelegate implements FrameDelegate {
+
+    private final FrameDelegate origin;
+    private final long initialOpenDelay;
+    private final long initialSyslogDelay;
+    private int openCount = 1;
+    private int syslogCount = 1;
+
+    public AcceleratingDelegate(final FrameDelegate origin, final long openDelayNanos, final long syslogDelayNanos) {
+        this.origin = origin;
+        this.initialOpenDelay = openDelayNanos;
+        this.initialSyslogDelay = syslogDelayNanos;
     }
 
-    @Test
-    void recordStream() {
+    @Override
+    public boolean accept(final FrameContext frameContext) {
+        if (frameContext.relpFrame().command().toString().equals("open")) {
+            LockSupport.parkNanos(initialOpenDelay / openCount);
+            openCount++;
+        }
+        else if (frameContext.relpFrame().command().toString().equals("syslog")) {
+            LockSupport.parkNanos(initialSyslogDelay / syslogCount);
+            syslogCount++;
+        }
+        return origin.accept(frameContext);
+    }
+
+    @Override
+    public void close() throws Exception {
+        origin.close();
+    }
+
+    @Override
+    public boolean isStub() {
+        return false;
     }
 }

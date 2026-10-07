@@ -52,8 +52,10 @@ import com.teragrep.rlp_10.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public final class Main {
 
@@ -88,11 +90,16 @@ public final class Main {
                     configFactory.delayConfig(),
                     configFactory.syslogConfig()
             );
-            long recordsSent = benchmark.call();
+            final long recordsSent = benchmark.call();
             System.out.println(recordsSent);
         }
         catch (final ConfigurationException configurationException) {
             LOGGER.error("Invalid configuration!", configurationException);
+            System.exit(1);
+        }
+        catch (final InterruptedException | IOException | ExecutionException unrecoverableException) {
+            LOGGER.error("An unrecoverable exception occurred!", unrecoverableException);
+            System.exit(1);
         }
     }
 }

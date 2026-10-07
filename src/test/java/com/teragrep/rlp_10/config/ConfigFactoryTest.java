@@ -45,6 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
+import com.teragrep.cnf_01.ConfigurationException;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -112,7 +113,7 @@ public final class ConfigFactoryTest {
         configMap.put("report.interval", "60000");
         configMap.put("socket.hostname", "127.0.0.1");
         configMap.put("syslog.appname", "testApp");
-        configMap.put("timeout.open", "1");
+        configMap.put("timeout.open", "PT1S");
         configMap.put("transport.tls", "true");
         final ConfigFactory configFactory = new ConfigFactory(configMap);
 
@@ -146,8 +147,8 @@ public final class ConfigFactoryTest {
         Assertions.assertEquals(1601, socketAddressConfig.port());
         Assertions.assertEquals("testApp", syslogConfig.appName());
         Assertions.assertEquals("localhost", syslogConfig.hostname());
-        Assertions.assertEquals(1, timeoutConfig.openTimeout());
-        Assertions.assertEquals(5, timeoutConfig.payloadTimeout());
+        Assertions.assertEquals(1000000000, timeoutConfig.openTimeout());
+        Assertions.assertEquals(5000000000L, timeoutConfig.payloadTimeout());
         Assertions.assertEquals(true, transportConfig.tls());
         Assertions.assertEquals("changeit", transportConfig.keyStorePassword());
         Assertions.assertEquals("changeit", transportConfig.trustStorePassword());
@@ -156,6 +157,32 @@ public final class ConfigFactoryTest {
         Assertions
                 .assertEquals(Paths.get("/opt/teragrep/rlp_10/tls/truststore.jks").toAbsolutePath().toFile(), transportConfig.trustStoreFile());
         Assertions.assertEquals("TLSv1.3", transportConfig.protocol());
+    }
+
+    @Test
+    void testInvalidFormats() {
+        final Map<String, String> configMap = new HashMap<>();
+        configMap.put("initiator.count", "i should be an integer");
+        configMap.put("recordstream.records", "i should be an integer");
+        configMap.put("delay.duration", "i should be an integer");
+        configMap.put("metrics.window", "i should be an integer");
+        configMap.put("prometheus.port", "i should be an integer");
+        configMap.put("report.interval", "i should be an integer");
+        configMap.put("socket.port", "i should be an integer");
+        configMap.put("timeout.open", "i should be in ISO-8601 format");
+        configMap.put("transport.tls", "i should be a boolean");
+        final ConfigFactory configFactory = new ConfigFactory(configMap);
+
+        // assigning even one malformed configuration value should result in a ConfigurationException when creating Config objects
+        Assertions.assertThrows(ConfigurationException.class, () -> configFactory.initiatorConfig());
+        Assertions.assertThrows(ConfigurationException.class, () -> configFactory.recordStreamConfig());
+        Assertions.assertThrows(ConfigurationException.class, () -> configFactory.delayConfig());
+        Assertions.assertThrows(ConfigurationException.class, () -> configFactory.metricsConfig());
+        Assertions.assertThrows(ConfigurationException.class, () -> configFactory.prometheusConfig());
+        Assertions.assertThrows(ConfigurationException.class, () -> configFactory.reportConfig());
+        Assertions.assertThrows(ConfigurationException.class, () -> configFactory.socketAddressConfig());
+        Assertions.assertThrows(ConfigurationException.class, () -> configFactory.timeoutConfig());
+        Assertions.assertThrows(ConfigurationException.class, () -> configFactory.transportConfig());
     }
 
     @Test
