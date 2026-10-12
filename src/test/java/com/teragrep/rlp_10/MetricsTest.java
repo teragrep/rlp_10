@@ -58,7 +58,7 @@ import java.util.concurrent.*;
 public final class MetricsTest {
 
     final MetricsConfig config = new MetricsConfig();
-    final Metrics metrics = new Metrics(config);
+    final Metrics metrics = new Metrics(config.window());
     final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
 
     // counters should be incremented properly even when called asynchronously

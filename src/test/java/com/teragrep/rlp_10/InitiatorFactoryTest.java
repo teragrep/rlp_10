@@ -71,16 +71,19 @@ class InitiatorFactoryTest {
 
         final int expectedInitiators = 500;
         final RecordStream recordStream = new RecordStreamImpl("testOrigin", "testHost", "testApp", 2500);
-        final Metrics metrics = new Metrics(new MetricsConfig());
+        final Metrics metrics = new MetricsConfig().metrics();
         final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
         final TimeoutConfig timeoutConfig = new TimeoutConfig();
         final InitiatorConfig initiatorConfig = new InitiatorConfig();
         final InitiatorFactory initiatorFactory = new InitiatorFactory(
                 recordStream,
                 metrics,
-                socketAddressConfig,
-                timeoutConfig,
-                initiatorConfig
+                socketAddressConfig.hostname(),
+                socketAddressConfig.port(),
+                timeoutConfig.openTimeout(),
+                timeoutConfig.payloadTimeout(),
+                initiatorConfig.retryTransmissionCount(),
+                initiatorConfig.retryConnectionCount()
         );
 
         final ConnectContextFactory connectContextFactory = new ConnectContextFactory(

@@ -45,7 +45,6 @@
  */
 package com.teragrep.rlp_10;
 
-import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.net_01.channel.context.ConnectContextFactory;
 import com.teragrep.net_01.channel.socket.SocketFactory;
 import com.teragrep.net_01.eventloop.EventLoop;
@@ -69,62 +68,36 @@ public final class BenchmarkExecution {
     private final EventLoopFactory eventLoopFactory;
     private final List<Future<Long>> executorTasks;
     private final ExecutorService executorService;
-    private final Metrics metrics;
-    private final InitiatorConfig initiatorConfig;
-    private final SocketAddressConfig socketAddressConfig;
-    private final SyslogConfig syslogConfig;
-    private final RecordStreamConfig recordStreamConfig;
-    private final DelayConfig delayConfig;
-    private final TimeoutConfig timeoutConfig;
-    private final TransportConfig transportConfig;
+    private final SocketFactory socketFactory;
+    private final InitiatorFactory initiatorFactory;
+    private final int initiatorCount;
+    private final int eventLoopCount;
 
     public BenchmarkExecution(
             final ExecutorService executorService,
-            final Metrics metrics,
-            final InitiatorConfig initiatorConfig,
-            final SocketAddressConfig socketAddressConfig,
-            final SyslogConfig syslogConfig,
-            final RecordStreamConfig recordStreamConfig,
-            final DelayConfig delayConfig,
-            final TimeoutConfig timeoutConfig,
-            final TransportConfig transportConfig
+            final SocketFactory socketFactory,
+            final InitiatorFactory initiatorFactory,
+            final int initiatorCount,
+            final int eventLoopCount
     ) {
         this.executorService = executorService;
-        this.metrics = metrics;
-        this.initiatorConfig = initiatorConfig;
-        this.socketAddressConfig = socketAddressConfig;
-        this.syslogConfig = syslogConfig;
-        this.recordStreamConfig = recordStreamConfig;
-        this.delayConfig = delayConfig;
-        this.timeoutConfig = timeoutConfig;
-        this.transportConfig = transportConfig;
         this.eventLoopFactory = new EventLoopFactory();
         this.eventLoops = new HashMap<>();
         this.executorTasks = new ArrayList<>();
+        this.socketFactory = socketFactory;
+        this.initiatorFactory = initiatorFactory;
+        this.initiatorCount = initiatorCount;
+        this.eventLoopCount = eventLoopCount;
     }
 
-    public void start() throws ConfigurationException, IOException {
-
-        final SocketFactory socketFactory = transportConfig.socketFactory();
-
-        // recordStream is shared across all Initiators. Initiators ask for records until the recordstream is exhausted
-        final RecordStream recordStream = recordStreamConfig
-                .recordStream(syslogConfig.hostname(), syslogConfig.appName(), delayConfig.delay());
-
-        final InitiatorFactory initiatorFactory = new InitiatorFactory(
-                recordStream,
-                metrics,
-                socketAddressConfig,
-                timeoutConfig,
-                initiatorConfig
-        );
-        final int baseInitiators = initiatorConfig.initiatorCount() / initiatorConfig.eventLoopCount();
-        final int remainder = initiatorConfig.initiatorCount() % initiatorConfig.eventLoopCount();
+    public void start() throws IOException {
+        final int baseInitiators = initiatorCount / eventLoopCount;
+        final int remainder = initiatorCount % eventLoopCount;
 
         // create and start configured number of EventLoops
-        for (int eventLoopCount = 0; eventLoopCount < initiatorConfig.eventLoopCount(); eventLoopCount++) {
+        for (int i = 0; i < eventLoopCount; i++) {
             // use remainder to determine if this EventLoop should get an additional Initiator or not in order to fit all Initiators within configured number of EventLoops
-            final int initiatorsForEventLoop = baseInitiators + (eventLoopCount < remainder ? 1 : 0);
+            final int initiatorsForEventLoop = baseInitiators + (i < remainder ? 1 : 0);
             final ConnectContextFactory connectContextFactory = new ConnectContextFactory(
                     executorService,
                     socketFactory
@@ -141,7 +114,7 @@ public final class BenchmarkExecution {
             for (final Initiator initiator : initiators) {
                 executorTasks.add(executorService.submit(initiator));
             }
-            eventLoops.put(eventLoop, initiators);
+            this.eventLoops.put(eventLoop, initiators);
         }
     }
 
@@ -164,6 +137,7 @@ public final class BenchmarkExecution {
             }
             eventLoop.stop();
         }
+        executorService.shutdown();
     }
 
     @Override
@@ -177,9 +151,10 @@ public final class BenchmarkExecution {
         }
         else {
             final BenchmarkExecution that = (BenchmarkExecution) o;
-            equals = Objects.equals(eventLoops, that.eventLoops) && Objects
-                    .equals(eventLoopFactory, that.eventLoopFactory)
-                    && Objects.equals(executorTasks, that.executorTasks) && Objects.equals(executorService, that.executorService) && Objects.equals(metrics, that.metrics) && Objects.equals(initiatorConfig, that.initiatorConfig) && Objects.equals(socketAddressConfig, that.socketAddressConfig) && Objects.equals(syslogConfig, that.syslogConfig) && Objects.equals(recordStreamConfig, that.recordStreamConfig) && Objects.equals(delayConfig, that.delayConfig) && Objects.equals(timeoutConfig, that.timeoutConfig) && Objects.equals(transportConfig, that.transportConfig);
+            equals = initiatorCount == that.initiatorCount && eventLoopCount == that.eventLoopCount && Objects
+                    .equals(eventLoops, that.eventLoops) && Objects
+                            .equals(eventLoopFactory, that.eventLoopFactory)
+                    && Objects.equals(executorTasks, that.executorTasks) && Objects.equals(executorService, that.executorService) && Objects.equals(socketFactory, that.socketFactory) && Objects.equals(initiatorFactory, that.initiatorFactory);
         }
         return equals;
     }
@@ -188,9 +163,8 @@ public final class BenchmarkExecution {
     public int hashCode() {
         return Objects
                 .hash(
-                        eventLoops, eventLoopFactory, executorTasks, executorService, metrics, initiatorConfig,
-                        socketAddressConfig, syslogConfig, recordStreamConfig, delayConfig, timeoutConfig,
-                        transportConfig
+                        eventLoops, eventLoopFactory, executorTasks, executorService, socketFactory, initiatorFactory,
+                        initiatorCount, eventLoopCount
                 );
     }
 }

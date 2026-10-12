@@ -53,13 +53,7 @@ import java.util.Objects;
 
 public final class RecordStreamConfig {
 
-    private static final long maxRecords = Long.MAX_VALUE;
-
     private final long records;
-
-    public RecordStreamConfig() {
-        this(maxRecords);
-    }
 
     public RecordStreamConfig(final long records) {
         this.records = records;

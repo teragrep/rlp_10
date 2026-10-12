@@ -46,38 +46,44 @@
 package com.teragrep.rlp_10;
 
 import com.teragrep.rlp_03.client.RelpClientFactory;
-import com.teragrep.rlp_10.config.InitiatorConfig;
-import com.teragrep.rlp_10.config.SocketAddressConfig;
-import com.teragrep.rlp_10.config.TimeoutConfig;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 /**
- * InitiatorFactory creates a configured number of Initiators for a single EventLoop
+ * InitiatorFactory creates a configured number of Initiators with configured settings
  */
 
 public final class InitiatorFactory {
 
     private final RecordStream recordStream;
-    private final SocketAddressConfig socketAddressConfig;
     private final Metrics metrics;
-    private final TimeoutConfig timeoutConfig;
-    private final InitiatorConfig initiatorConfig;
+    private final String hostname;
+    private final int port;
+    private final long openTimeout;
+    private final long payloadTimeout;
+    private final int retryTransmissionCount;
+    private final int retryConnectionCount;
 
     public InitiatorFactory(
             final RecordStream recordStream,
             final Metrics metrics,
-            final SocketAddressConfig socketAddressConfig,
-            final TimeoutConfig timeoutConfig,
-            final InitiatorConfig initiatorConfig
+            final String hostname,
+            final int port,
+            final long openTimeout,
+            final long payloadTimeout,
+            final int retryTransmissionCount,
+            final int retryConnectionCount
     ) {
         this.recordStream = recordStream;
         this.metrics = metrics;
-        this.socketAddressConfig = socketAddressConfig;
-        this.timeoutConfig = timeoutConfig;
-        this.initiatorConfig = initiatorConfig;
+        this.hostname = hostname;
+        this.port = port;
+        this.openTimeout = openTimeout;
+        this.payloadTimeout = payloadTimeout;
+        this.retryTransmissionCount = retryTransmissionCount;
+        this.retryConnectionCount = retryConnectionCount;
     }
 
     public List<Initiator> createInitiators(final long numberOfInitiators, final RelpClientFactory relpClientFactory) {
@@ -86,13 +92,13 @@ public final class InitiatorFactory {
             final Initiator initiator = new Initiator(
                     relpClientFactory,
                     recordStream,
-                    socketAddressConfig.hostname(),
-                    socketAddressConfig.port(),
+                    hostname,
+                    port,
                     metrics,
-                    timeoutConfig.openTimeout(),
-                    timeoutConfig.payloadTimeout(),
-                    initiatorConfig.retryTransmissionCount(),
-                    initiatorConfig.retryConnectionCount()
+                    openTimeout,
+                    payloadTimeout,
+                    retryTransmissionCount,
+                    retryConnectionCount
             );
             initiators.add(initiator);
         }
@@ -110,14 +116,21 @@ public final class InitiatorFactory {
         }
         else {
             final InitiatorFactory that = (InitiatorFactory) o;
-            equals = Objects.equals(recordStream, that.recordStream)
-                    && Objects.equals(socketAddressConfig, that.socketAddressConfig) && Objects.equals(metrics, that.metrics) && Objects.equals(timeoutConfig, that.timeoutConfig) && Objects.equals(initiatorConfig, that.initiatorConfig);
+            equals = port == that.port && openTimeout == that.openTimeout && payloadTimeout == that.payloadTimeout
+                    && retryTransmissionCount == that.retryTransmissionCount
+                    && retryConnectionCount == that.retryConnectionCount && Objects
+                            .equals(recordStream, that.recordStream)
+                    && Objects.equals(metrics, that.metrics) && Objects.equals(hostname, that.hostname);
         }
         return equals;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(recordStream, socketAddressConfig, metrics, timeoutConfig, initiatorConfig);
+        return Objects
+                .hash(
+                        recordStream, metrics, hostname, port, openTimeout, payloadTimeout, retryTransmissionCount,
+                        retryConnectionCount
+                );
     }
 }

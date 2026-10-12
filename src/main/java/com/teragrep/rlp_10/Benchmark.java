@@ -48,10 +48,6 @@ package com.teragrep.rlp_10;
 import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.rlp_10.config.*;
 import com.teragrep.rlp_10.report.MetricsReport;
-import com.teragrep.rlp_10.report.PrometheusMetricsReport;
-import com.teragrep.rlp_10.report.Slf4JMetricsReport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -62,59 +58,20 @@ import java.util.concurrent.*;
  */
 public final class Benchmark implements Callable<Long> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Benchmark.class);
     private final ExecutorService executorService;
-    private final PrometheusConfig prometheusConfig;
-    private final ReportConfig reportConfig;
     private final List<MetricsReport> reports;
     private final List<Future<Long>> executorTasks;
     private final BenchmarkExecution benchmarkExecution;
-    private final Metrics metrics;
 
-    public Benchmark(
-            final InitiatorConfig initiatorConfig,
-            final MetricsConfig metricsConfig,
-            final PrometheusConfig prometheusConfig,
-            final TimeoutConfig timeoutConfig,
-            final TransportConfig transportConfig,
-            final RecordStreamConfig recordStreamConfig,
-            final ReportConfig reportConfig,
-            final SocketAddressConfig socketAddressConfig,
-            final DelayConfig delayConfig,
-            final SyslogConfig syslogConfig
-    ) {
+    public Benchmark(final BenchmarkExecution benchmarkExecution, final List<MetricsReport> reports) {
         this.executorService = Executors.newVirtualThreadPerTaskExecutor();
-        this.prometheusConfig = prometheusConfig;
-        this.reportConfig = reportConfig;
-        this.reports = new ArrayList<>();
         this.executorTasks = new ArrayList<>();
-        this.metrics = new Metrics(metricsConfig);
-        this.benchmarkExecution = new BenchmarkExecution(
-                executorService,
-                metrics,
-                initiatorConfig,
-                socketAddressConfig,
-                syslogConfig,
-                recordStreamConfig,
-                delayConfig,
-                timeoutConfig,
-                transportConfig
-        );
+        this.reports = List.copyOf(reports);
+        this.benchmarkExecution = benchmarkExecution;
     }
 
     public Long call() throws ConfigurationException, InterruptedException, ExecutionException, IOException {
-
-        // reports
-
-        final int prometheusPort = prometheusConfig.port();
-        final PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(
-                metrics.registry(),
-                prometheusPort
-        );
-        reports.add(prometheusMetricsReport);
-        final Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metrics.registry(), reportConfig);
-        reports.add(slf4JMetricsReport);
-
+        // start reports
         for (final MetricsReport report : reports) {
             report.start();
         }
@@ -137,7 +94,6 @@ public final class Benchmark implements Callable<Long> {
         for (final MetricsReport report : reports) {
             report.stop();
         }
-        executorService.shutdown();
     }
 
     @Override
@@ -152,18 +108,14 @@ public final class Benchmark implements Callable<Long> {
         else {
             final Benchmark benchmark = (Benchmark) o;
             equals = Objects.equals(executorService, benchmark.executorService) && Objects
-                    .equals(prometheusConfig, benchmark.prometheusConfig)
-                    && Objects.equals(reportConfig, benchmark.reportConfig) && Objects.equals(reports, benchmark.reports) && Objects.equals(executorTasks, benchmark.executorTasks) && Objects.equals(benchmarkExecution, benchmark.benchmarkExecution) && Objects.equals(metrics, benchmark.metrics);
+                    .equals(reports, benchmark.reports) && Objects.equals(executorTasks, benchmark.executorTasks)
+                    && Objects.equals(benchmarkExecution, benchmark.benchmarkExecution);
         }
         return equals;
     }
 
     @Override
     public int hashCode() {
-        return Objects
-                .hash(
-                        executorService, prometheusConfig, reportConfig, reports, executorTasks, benchmarkExecution,
-                        metrics
-                );
+        return Objects.hash(executorService, reports, executorTasks, benchmarkExecution);
     }
 }

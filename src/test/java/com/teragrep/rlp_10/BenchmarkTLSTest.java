@@ -45,6 +45,7 @@
  */
 package com.teragrep.rlp_10;
 
+import com.teragrep.net_01.channel.socket.SocketFactory;
 import com.teragrep.net_01.channel.socket.TLSFactory;
 import com.teragrep.net_01.eventloop.EventLoop;
 import com.teragrep.net_01.eventloop.EventLoopFactory;
@@ -64,6 +65,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.nio.file.Path;
 import java.security.KeyStore;
+import java.util.ArrayList;
 import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -161,30 +163,33 @@ public final class BenchmarkTLSTest {
     @Test
     public void testMessageCount() {
         init(() -> new DefaultFrameDelegate((frame) -> messageDeque.add(frame.relpFrame().payload().toBytes())));
-        final int clients = 123;
+        final int initiatorCount = 123;
         final long messageCount = 100000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
         final int eventLoopCount = 19;
-        final InitiatorConfig initiatorConfig = new InitiatorConfig(
-                clients,
+
+        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::socketFactory);
+        final RecordStream recordStream = new RecordStreamConfig(messageCount)
+                .recordStream(syslogConfig.hostname(), syslogConfig.appName(), delayConfig.delay());
+        final InitiatorFactory initiatorFactory = new InitiatorFactory(
+                recordStream,
+                metricsConfiguration.metrics(),
+                socketAddressConfig.hostname(),
+                socketAddressConfig.port(),
+                timeoutConfiguration.openTimeout(),
+                timeoutConfiguration.payloadTimeout(),
                 retryTransmissionCount,
-                retryConnectionCount,
+                retryConnectionCount
+        );
+        final BenchmarkExecution benchmarkExecution = new BenchmarkExecution(
+                executorService,
+                socketFactory,
+                initiatorFactory,
+                initiatorCount,
                 eventLoopCount
         );
-        final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
-        final Benchmark benchmark = new Benchmark(
-                initiatorConfig,
-                metricsConfiguration,
-                prometheusConfiguration,
-                timeoutConfiguration,
-                transportConfiguration,
-                recordStreamConfig,
-                reportConfig,
-                socketAddressConfig,
-                delayConfig,
-                syslogConfig
-        );
+        final Benchmark benchmark = new Benchmark(benchmarkExecution, new ArrayList<>());
         Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.call()));
         Assertions.assertFalse(messageDeque.isEmpty());
         Assertions.assertEquals(messageCount, messageDeque.size());
@@ -196,30 +201,33 @@ public final class BenchmarkTLSTest {
     @Test
     public void testFewerClientsThanEventLoops() {
         init(() -> new DefaultFrameDelegate((frame) -> messageDeque.add(frame.relpFrame().payload().toBytes())));
-        final int clients = 5;
+        final int initiatorCount = 5;
         final long messageCount = 5000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
         final int eventLoopCount = 19;
-        final InitiatorConfig initiatorConfig = new InitiatorConfig(
-                clients,
+
+        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::socketFactory);
+        final RecordStream recordStream = new RecordStreamConfig(messageCount)
+                .recordStream(syslogConfig.hostname(), syslogConfig.appName(), delayConfig.delay());
+        final InitiatorFactory initiatorFactory = new InitiatorFactory(
+                recordStream,
+                metricsConfiguration.metrics(),
+                socketAddressConfig.hostname(),
+                socketAddressConfig.port(),
+                timeoutConfiguration.openTimeout(),
+                timeoutConfiguration.payloadTimeout(),
                 retryTransmissionCount,
-                retryConnectionCount,
+                retryConnectionCount
+        );
+        final BenchmarkExecution benchmarkExecution = new BenchmarkExecution(
+                executorService,
+                socketFactory,
+                initiatorFactory,
+                initiatorCount,
                 eventLoopCount
         );
-        final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
-        final Benchmark benchmark = new Benchmark(
-                initiatorConfig,
-                metricsConfiguration,
-                prometheusConfiguration,
-                timeoutConfiguration,
-                transportConfiguration,
-                recordStreamConfig,
-                reportConfig,
-                socketAddressConfig,
-                delayConfig,
-                syslogConfig
-        );
+        final Benchmark benchmark = new Benchmark(benchmarkExecution, new ArrayList<>());
         Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.call()));
         Assertions.assertFalse(messageDeque.isEmpty());
         Assertions.assertEquals(messageCount, messageDeque.size());
@@ -231,31 +239,34 @@ public final class BenchmarkTLSTest {
     @Test
     public void testNoClients() {
         init(() -> new DefaultFrameDelegate((frame) -> messageDeque.add(frame.relpFrame().payload().toBytes())));
-        final int clients = 0;
+        final int initiatorCount = 0;
         final long messageCount = 5000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
         final int eventLoopCount = 19;
-        final InitiatorConfig initiatorConfig = new InitiatorConfig(
-                clients,
+
+        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::socketFactory);
+        final RecordStream recordStream = new RecordStreamConfig(messageCount)
+                .recordStream(syslogConfig.hostname(), syslogConfig.appName(), delayConfig.delay());
+        final InitiatorFactory initiatorFactory = new InitiatorFactory(
+                recordStream,
+                metricsConfiguration.metrics(),
+                socketAddressConfig.hostname(),
+                socketAddressConfig.port(),
+                timeoutConfiguration.openTimeout(),
+                timeoutConfiguration.payloadTimeout(),
                 retryTransmissionCount,
-                retryConnectionCount,
+                retryConnectionCount
+        );
+        final BenchmarkExecution benchmarkExecution = new BenchmarkExecution(
+                executorService,
+                socketFactory,
+                initiatorFactory,
+                initiatorCount,
                 eventLoopCount
         );
-        final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
-        final Benchmark benchmark = new Benchmark(
-                initiatorConfig,
-                metricsConfiguration,
-                prometheusConfiguration,
-                timeoutConfiguration,
-                transportConfiguration,
-                recordStreamConfig,
-                reportConfig,
-                socketAddressConfig,
-                delayConfig,
-                syslogConfig
-        );
-        Assertions.assertEquals(clients, Assertions.assertDoesNotThrow(() -> benchmark.call()));
+        final Benchmark benchmark = new Benchmark(benchmarkExecution, new ArrayList<>());
+        Assertions.assertEquals(0, Assertions.assertDoesNotThrow(() -> benchmark.call()));
         Assertions.assertTrue(messageDeque.isEmpty());
     }
 
@@ -272,33 +283,35 @@ public final class BenchmarkTLSTest {
                         2000000000L
                 )
         );
-        final int clients = 1;
+        final int initiatorCount = 1;
         final long messageCount = 10;
         final int retryTransmissionCount = 5;
         final int retryConnectionCount = 5;
         final long openTimeout = 1000000000L;
         final long syslogTimeout = 1000000000L;
         final int eventLoopCount = 1;
-        final InitiatorConfig initiatorConfig = new InitiatorConfig(
-                clients,
+
+        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::socketFactory);
+        final RecordStream recordStream = new RecordStreamConfig(messageCount)
+                .recordStream(syslogConfig.hostname(), syslogConfig.appName(), delayConfig.delay());
+        final InitiatorFactory initiatorFactory = new InitiatorFactory(
+                recordStream,
+                metricsConfiguration.metrics(),
+                socketAddressConfig.hostname(),
+                socketAddressConfig.port(),
+                openTimeout,
+                syslogTimeout,
                 retryTransmissionCount,
-                retryConnectionCount,
+                retryConnectionCount
+        );
+        final BenchmarkExecution benchmarkExecution = new BenchmarkExecution(
+                executorService,
+                socketFactory,
+                initiatorFactory,
+                initiatorCount,
                 eventLoopCount
         );
-        final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
-        final TimeoutConfig timeoutConfig = new TimeoutConfig(openTimeout, syslogTimeout);
-        final Benchmark benchmark = new Benchmark(
-                initiatorConfig,
-                metricsConfiguration,
-                prometheusConfiguration,
-                timeoutConfig,
-                transportConfiguration,
-                recordStreamConfig,
-                reportConfig,
-                socketAddressConfig,
-                delayConfig,
-                syslogConfig
-        );
+        final Benchmark benchmark = new Benchmark(benchmarkExecution, new ArrayList<>());
         Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.call()));
     }
 

@@ -46,6 +46,7 @@
 package com.teragrep.rlp_10;
 
 import com.teragrep.net_01.channel.socket.PlainFactory;
+import com.teragrep.net_01.channel.socket.SocketFactory;
 import com.teragrep.net_01.eventloop.EventLoop;
 import com.teragrep.net_01.eventloop.EventLoopFactory;
 import com.teragrep.net_01.server.ServerFactory;
@@ -100,23 +101,32 @@ class BenchmarkExecutionTest {
 
         init(() -> new DefaultFrameDelegate((frame) -> {
         }));
-        final Metrics metrics = new Metrics(new MetricsConfig());
+        final Metrics metrics = new MetricsConfig().metrics();
         final InitiatorConfig initiatorConfig = new InitiatorConfig();
         final SyslogConfig syslogConfig = new SyslogConfig();
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(expectedRecords);
         final DelayConfig delayConfig = new DelayConfig();
         final TimeoutConfig timeoutConfig = new TimeoutConfig();
         final TransportConfig transportConfig = new TransportConfig();
+        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(() -> transportConfig.socketFactory());
+        final int initiatorCount = Assertions.assertDoesNotThrow(() -> initiatorConfig.initiatorCount());
+        final int eventLoopCount = Assertions.assertDoesNotThrow(() -> initiatorConfig.eventLoopCount());
         final BenchmarkExecution benchmarkExecution = new BenchmarkExecution(
                 executorService,
-                metrics,
-                initiatorConfig,
-                socketAddressConfig,
-                syslogConfig,
-                recordStreamConfig,
-                delayConfig,
-                timeoutConfig,
-                transportConfig
+                socketFactory,
+                new InitiatorFactory(
+                        recordStreamConfig
+                                .recordStream(syslogConfig.hostname(), syslogConfig.appName(), delayConfig.delay()),
+                        metrics,
+                        socketAddressConfig.hostname(),
+                        socketAddressConfig.port(),
+                        timeoutConfig.openTimeout(),
+                        timeoutConfig.payloadTimeout(),
+                        initiatorConfig.retryTransmissionCount(),
+                        initiatorConfig.retryConnectionCount()
+                ),
+                initiatorCount,
+                eventLoopCount
         );
 
         // should start normally

@@ -49,7 +49,6 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SlidingWindowReservoir;
 import com.codahale.metrics.Timer;
-import com.teragrep.rlp_10.config.MetricsConfig;
 
 import java.util.Objects;
 
@@ -66,7 +65,7 @@ public final class Metrics {
     private final Timer receiveLatency;
     private final Timer connectLatency;
 
-    public Metrics(final MetricsConfig metricsConfiguration) {
+    public Metrics(final int window) {
         // must register each metric before usage, otherwise Prometheus server would fail to report metrics that have not yet received any events
         metricRegistry = new MetricRegistry();
         records = metricRegistry.counter("records");
@@ -75,13 +74,10 @@ public final class Metrics {
         disconnects = metricRegistry.counter("disconnects");
         retriedConnects = metricRegistry.counter("retriedConnects");
         transactionLatency = metricRegistry
-                .timer("transactionLatency", () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window())));
-        transmitLatency = metricRegistry
-                .timer("transmitLatency", () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window())));
-        receiveLatency = metricRegistry
-                .timer("receiveLatency", () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window())));
-        connectLatency = metricRegistry
-                .timer("connectLatency", () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window())));
+                .timer("transactionLatency", () -> new Timer(new SlidingWindowReservoir(window)));
+        transmitLatency = metricRegistry.timer("transmitLatency", () -> new Timer(new SlidingWindowReservoir(window)));
+        receiveLatency = metricRegistry.timer("receiveLatency", () -> new Timer(new SlidingWindowReservoir(window)));
+        connectLatency = metricRegistry.timer("connectLatency", () -> new Timer(new SlidingWindowReservoir(window)));
     }
 
     public MetricRegistry registry() {

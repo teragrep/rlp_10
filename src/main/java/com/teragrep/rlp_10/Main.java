@@ -48,14 +48,21 @@ package com.teragrep.rlp_10;
 import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.cnf_01.PathConfiguration;
 import com.teragrep.cnf_01.PropertiesConfiguration;
-import com.teragrep.rlp_10.config.ConfigFactory;
+import com.teragrep.net_01.channel.socket.SocketFactory;
+import com.teragrep.rlp_10.config.*;
+import com.teragrep.rlp_10.report.MetricsReport;
+import com.teragrep.rlp_10.report.PrometheusMetricsReport;
+import com.teragrep.rlp_10.report.Slf4JMetricsReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 
 public final class Main {
 
@@ -78,18 +85,54 @@ public final class Main {
 
         try {
             final ConfigFactory configFactory = new ConfigFactory(configurationValues);
-            final Benchmark benchmark = new Benchmark(
-                    configFactory.initiatorConfig(),
-                    configFactory.metricsConfig(),
-                    configFactory.prometheusConfig(),
-                    configFactory.timeoutConfig(),
-                    configFactory.transportConfig(),
-                    configFactory.recordStreamConfig(),
-                    configFactory.reportConfig(),
-                    configFactory.socketAddressConfig(),
-                    configFactory.delayConfig(),
-                    configFactory.syslogConfig()
+
+            // reusable config objects
+            final InitiatorConfig initiatorConfig = configFactory.initiatorConfig();
+            final TimeoutConfig timeoutConfig = configFactory.timeoutConfig();
+            final SocketAddressConfig socketAddressConfig = configFactory.socketAddressConfig();
+            final SyslogConfig syslogConfig = configFactory.syslogConfig();
+            final ReportConfig reportConfig = configFactory.reportConfig();
+
+            // objects requiring complex initialization
+            final Metrics metrics = configFactory.metricsConfig().metrics();
+            final RecordStream recordStream = configFactory
+                    .recordStreamConfig()
+                    .recordStream(syslogConfig.hostname(), syslogConfig.appName(), configFactory.delayConfig().delay());
+            final InitiatorFactory initiatorFactory = new InitiatorFactory(
+                    recordStream,
+                    metrics,
+                    socketAddressConfig.hostname(),
+                    socketAddressConfig.port(),
+                    timeoutConfig.openTimeout(),
+                    timeoutConfig.payloadTimeout(),
+                    initiatorConfig.retryTransmissionCount(),
+                    initiatorConfig.retryConnectionCount()
             );
+            final SocketFactory socketFactory = configFactory.transportConfig().socketFactory();
+            final BenchmarkExecution benchmarkExecution = new BenchmarkExecution(
+                    Executors.newVirtualThreadPerTaskExecutor(),
+                    socketFactory,
+                    initiatorFactory,
+                    initiatorConfig.initiatorCount(),
+                    initiatorConfig.eventLoopCount()
+            );
+
+            final List<MetricsReport> reports = new ArrayList<>();
+            final Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(
+                    metrics.registry(),
+                    reportConfig.interval(),
+                    reportConfig.rateTimeUnit(),
+                    reportConfig.durationTimeUnit()
+            );
+            final PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(
+                    metrics.registry(),
+                    configFactory.prometheusConfig().port()
+            );
+            reports.add(slf4JMetricsReport);
+            reports.add(prometheusMetricsReport);
+
+            final Benchmark benchmark = new Benchmark(benchmarkExecution, reports);
+            // start benchmark
             final long recordsSent = benchmark.call();
             System.out.println(recordsSent);
         }

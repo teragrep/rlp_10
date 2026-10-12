@@ -45,6 +45,8 @@
  */
 package com.teragrep.rlp_10.config;
 
+import com.teragrep.rlp_10.Metrics;
+
 import java.util.Objects;
 
 public final class MetricsConfig {
@@ -61,6 +63,10 @@ public final class MetricsConfig {
 
     public int window() {
         return window;
+    }
+
+    public Metrics metrics() {
+        return new Metrics(window);
     }
 
     @Override

@@ -61,7 +61,8 @@ public final class ConfigFactory {
 
     /**
      * Takes key-value pairs as a Map of Strings and creates various Config objects based on values received, applying
-     * defaults for any omitted values.
+     * defaults for any omitted values. Methods throw a ConfigurationException if any of the provided values are of
+     * invalid type.
      *
      * @param configValues Map<String,String> containing configuration key-value pairs
      */
@@ -73,6 +74,9 @@ public final class ConfigFactory {
         final String configuredDuration = configValues.getOrDefault("delay.duration", "PT0S");
         try {
             final Duration delayDuration = Duration.parse(configuredDuration);
+            if (delayDuration.isNegative()) {
+                throw new ConfigurationException("Delay duration cannot be negative!");
+            }
             return new DelayConfig(delayDuration);
         }
         catch (final DateTimeParseException dateTimeParseException) {
@@ -196,7 +200,7 @@ public final class ConfigFactory {
             final long payloadTimeout = configuredPayloadTimeout.toNanos();
             return new TimeoutConfig(openTimeout, payloadTimeout);
         }
-        catch (DateTimeParseException dateTimeParseException) {
+        catch (final DateTimeParseException dateTimeParseException) {
             throw new ConfigurationException(
                     "TimeoutConfig contains invalid configuration value!",
                     dateTimeParseException
