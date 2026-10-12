@@ -79,9 +79,9 @@ class InitiatorFactoryTest {
                 recordStream,
                 metrics,
                 socketAddressConfig.hostname(),
-                socketAddressConfig.port(),
-                timeoutConfig.openTimeout(),
-                timeoutConfig.payloadTimeout(),
+                Assertions.assertDoesNotThrow(() -> socketAddressConfig.port()),
+                Assertions.assertDoesNotThrow(() -> timeoutConfig.openTimeout()),
+                Assertions.assertDoesNotThrow(() -> timeoutConfig.payloadTimeout()),
                 initiatorConfig.retryTransmissionCount(),
                 initiatorConfig.retryConnectionCount()
         );

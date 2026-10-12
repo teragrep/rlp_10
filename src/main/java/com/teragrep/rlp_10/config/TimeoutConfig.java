@@ -45,6 +45,8 @@
  */
 package com.teragrep.rlp_10.config;
 
+import com.teragrep.cnf_01.ConfigurationException;
+
 import java.util.Objects;
 
 public final class TimeoutConfig {
@@ -53,7 +55,7 @@ public final class TimeoutConfig {
     private final long payloadTimeout;
 
     public TimeoutConfig() {
-        this(1000000000L, 1000000000L);
+        this(10000000000L, 5000000000L);
     }
 
     public TimeoutConfig(final long openTimeout, final long payloadTimeout) {
@@ -61,11 +63,17 @@ public final class TimeoutConfig {
         this.payloadTimeout = payloadTimeout;
     }
 
-    public long openTimeout() {
+    public long openTimeout() throws ConfigurationException {
+        if (openTimeout < 0) {
+            throw new ConfigurationException("Open timeout cannot be negative!");
+        }
         return openTimeout;
     }
 
-    public long payloadTimeout() {
+    public long payloadTimeout() throws ConfigurationException {
+        if (payloadTimeout < 0) {
+            throw new ConfigurationException("Payload timeout cannot be negative!");
+        }
         return payloadTimeout;
     }
 

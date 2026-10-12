@@ -45,6 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
+import com.teragrep.cnf_01.ConfigurationException;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -58,13 +59,16 @@ public final class ReportConfig {
         this(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
     }
 
-    public ReportConfig(final long intervalMs, final TimeUnit rateTimeUnit, final TimeUnit durationTimeUnit) {
-        this.interval = intervalMs;
+    public ReportConfig(final long interval, final TimeUnit rateTimeUnit, final TimeUnit durationTimeUnit) {
+        this.interval = interval;
         this.rateTimeUnit = rateTimeUnit;
         this.durationTimeUnit = durationTimeUnit;
     }
 
-    public long interval() {
+    public long interval() throws ConfigurationException {
+        if (interval <= 0) {
+            throw new ConfigurationException("Report interval must be higher than zero!");
+        }
         return interval;
     }
 

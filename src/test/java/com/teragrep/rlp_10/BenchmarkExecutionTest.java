@@ -116,12 +116,15 @@ class BenchmarkExecutionTest {
                 socketFactory,
                 new InitiatorFactory(
                         recordStreamConfig
-                                .recordStream(syslogConfig.hostname(), syslogConfig.appName(), delayConfig.delay()),
+                                .recordStream(
+                                        syslogConfig.hostname(), syslogConfig.appName(),
+                                        Assertions.assertDoesNotThrow(delayConfig::delay)
+                                ),
                         metrics,
                         socketAddressConfig.hostname(),
-                        socketAddressConfig.port(),
-                        timeoutConfig.openTimeout(),
-                        timeoutConfig.payloadTimeout(),
+                        Assertions.assertDoesNotThrow(() -> socketAddressConfig.port()),
+                        Assertions.assertDoesNotThrow(() -> timeoutConfig.openTimeout()),
+                        Assertions.assertDoesNotThrow(() -> timeoutConfig.payloadTimeout()),
                         initiatorConfig.retryTransmissionCount(),
                         initiatorConfig.retryConnectionCount()
                 ),

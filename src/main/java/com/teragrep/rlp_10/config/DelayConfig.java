@@ -45,6 +45,7 @@
  */
 package com.teragrep.rlp_10.config;
 
+import com.teragrep.cnf_01.ConfigurationException;
 import java.time.Duration;
 import java.util.Objects;
 
@@ -60,7 +61,10 @@ public final class DelayConfig {
         this.delay = delay;
     }
 
-    public long delay() {
+    public long delay() throws ConfigurationException {
+        if (delay.isNegative()) {
+            throw new ConfigurationException("Delay cannot be negative!");
+        }
         return delay.toNanos();
     }
 
