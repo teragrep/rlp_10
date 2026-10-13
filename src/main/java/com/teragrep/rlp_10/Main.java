@@ -95,10 +95,10 @@ public final class Main {
             final ReportConfig reportConfig = configFactory.reportConfig();
 
             // objects requiring complex initialization
-            final Metrics metrics = configFactory.metricsConfig().metrics();
+            final Metrics metrics = configFactory.metricsConfig().toMetrics();
             final RecordStream recordStream = configFactory
                     .recordStreamConfig()
-                    .recordStream(syslogConfig.hostname(), syslogConfig.appName(), configFactory.delayConfig().delay());
+                    .toRecordStream(syslogConfig.hostname(), syslogConfig.appName(), configFactory.delayConfig().delay());
             final InitiatorFactory initiatorFactory = new InitiatorFactory(
                     recordStream,
                     metrics,

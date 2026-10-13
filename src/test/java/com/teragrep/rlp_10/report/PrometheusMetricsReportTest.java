@@ -120,11 +120,11 @@ public final class PrometheusMetricsReportTest {
 
         final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::socketFactory);
         final RecordStream recordStream = new RecordStreamConfig(messageCount)
-                .recordStream(
+                .toRecordStream(
                         syslogConfig.hostname(), syslogConfig.appName(),
                         Assertions.assertDoesNotThrow(delayConfig::delay)
                 );
-        final Metrics metrics = metricsConfiguration.metrics();
+        final Metrics metrics = metricsConfiguration.toMetrics();
         final InitiatorFactory initiatorFactory = new InitiatorFactory(
                 recordStream,
                 metrics,

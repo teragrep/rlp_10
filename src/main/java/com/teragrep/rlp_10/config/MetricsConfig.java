@@ -65,7 +65,7 @@ public final class MetricsConfig {
         return window;
     }
 
-    public Metrics metrics() {
+    public Metrics toMetrics() {
         return new Metrics(window);
     }
 

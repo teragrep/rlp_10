@@ -101,7 +101,7 @@ class BenchmarkExecutionTest {
 
         init(() -> new DefaultFrameDelegate((frame) -> {
         }));
-        final Metrics metrics = new MetricsConfig().metrics();
+        final Metrics metrics = new MetricsConfig().toMetrics();
         final InitiatorConfig initiatorConfig = new InitiatorConfig();
         final SyslogConfig syslogConfig = new SyslogConfig();
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(expectedRecords);
@@ -116,7 +116,7 @@ class BenchmarkExecutionTest {
                 socketFactory,
                 new InitiatorFactory(
                         recordStreamConfig
-                                .recordStream(
+                                .toRecordStream(
                                         syslogConfig.hostname(), syslogConfig.appName(),
                                         Assertions.assertDoesNotThrow(delayConfig::delay)
                                 ),
