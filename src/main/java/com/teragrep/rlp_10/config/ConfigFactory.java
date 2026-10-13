@@ -191,6 +191,11 @@ public final class ConfigFactory {
         return new SyslogConfig(configuredHostname, configuredAppName);
     }
 
+    public OriginHostnameConfig originHostnameConfig() {
+        final String configuredFallbackHostname = configValues.getOrDefault("origin.fallbackHostname", "defaultOrigin");
+        return new OriginHostnameConfig(configuredFallbackHostname);
+    }
+
     public TimeoutConfig timeoutConfig() throws ConfigurationException {
         try {
             final Duration configuredOpenTimeout = Duration.parse(configValues.getOrDefault("timeout.open", "PT10S"));

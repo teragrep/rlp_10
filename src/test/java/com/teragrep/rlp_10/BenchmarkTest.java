@@ -79,6 +79,7 @@ public final class BenchmarkTest {
     private final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
     private final DelayConfig delayConfig = new DelayConfig();
     private final SyslogConfig syslogConfig = new SyslogConfig();
+    private final OriginHostnameConfig originHostnameConfig = new OriginHostnameConfig("someOrigin");
 
     private final ConcurrentLinkedDeque<byte[]> messageDeque = new ConcurrentLinkedDeque<>();
 
@@ -121,7 +122,7 @@ public final class BenchmarkTest {
         final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::socketFactory);
         final RecordStream recordStream = new RecordStreamConfig(messageCount)
                 .toRecordStream(
-                        syslogConfig.hostname(), syslogConfig.appName(),
+                        originHostnameConfig.hostname(), syslogConfig.hostname(), syslogConfig.appName(),
                         Assertions.assertDoesNotThrow(delayConfig::delay)
                 );
         final InitiatorFactory initiatorFactory = new InitiatorFactory(
@@ -162,7 +163,7 @@ public final class BenchmarkTest {
         final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::socketFactory);
         final RecordStream recordStream = new RecordStreamConfig(messageCount)
                 .toRecordStream(
-                        syslogConfig.hostname(), syslogConfig.appName(),
+                        originHostnameConfig.hostname(), syslogConfig.hostname(), syslogConfig.appName(),
                         Assertions.assertDoesNotThrow(delayConfig::delay)
                 );
         final InitiatorFactory initiatorFactory = new InitiatorFactory(
@@ -203,7 +204,7 @@ public final class BenchmarkTest {
         final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::socketFactory);
         final RecordStream recordStream = new RecordStreamConfig(messageCount)
                 .toRecordStream(
-                        syslogConfig.hostname(), syslogConfig.appName(),
+                        originHostnameConfig.hostname(), syslogConfig.hostname(), syslogConfig.appName(),
                         Assertions.assertDoesNotThrow(delayConfig::delay)
                 );
         final InitiatorFactory initiatorFactory = new InitiatorFactory(
@@ -252,7 +253,7 @@ public final class BenchmarkTest {
         final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::socketFactory);
         final RecordStream recordStream = new RecordStreamConfig(messageCount)
                 .toRecordStream(
-                        syslogConfig.hostname(), syslogConfig.appName(),
+                        originHostnameConfig.hostname(), syslogConfig.hostname(), syslogConfig.appName(),
                         Assertions.assertDoesNotThrow(delayConfig::delay)
                 );
         final InitiatorFactory initiatorFactory = new InitiatorFactory(

@@ -92,13 +92,17 @@ public final class Main {
             final TimeoutConfig timeoutConfig = configFactory.timeoutConfig();
             final SocketAddressConfig socketAddressConfig = configFactory.socketAddressConfig();
             final SyslogConfig syslogConfig = configFactory.syslogConfig();
+            final OriginHostnameConfig originHostnameConfig = configFactory.originHostnameConfig();
             final ReportConfig reportConfig = configFactory.reportConfig();
 
             // objects requiring complex initialization
             final Metrics metrics = configFactory.metricsConfig().toMetrics();
             final RecordStream recordStream = configFactory
                     .recordStreamConfig()
-                    .toRecordStream(syslogConfig.hostname(), syslogConfig.appName(), configFactory.delayConfig().delay());
+                    .toRecordStream(
+                            originHostnameConfig.hostname(), syslogConfig.hostname(), syslogConfig.appName(),
+                            configFactory.delayConfig().delay()
+                    );
             final InitiatorFactory initiatorFactory = new InitiatorFactory(
                     recordStream,
                     metrics,

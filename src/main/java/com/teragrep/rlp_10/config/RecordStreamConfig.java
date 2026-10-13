@@ -63,8 +63,13 @@ public final class RecordStreamConfig {
         return records;
     }
 
-    public RecordStream toRecordStream(final String hostname, final String appName, final long delay) {
-        final RecordStream recordStream = new RecordStreamImpl("defaultOrigin", hostname, appName, records);
+    public RecordStream toRecordStream(
+            final String origin,
+            final String hostname,
+            final String appName,
+            final long delay
+    ) {
+        final RecordStream recordStream = new RecordStreamImpl(origin, hostname, appName, records);
         // apply delay to recordStream if configured
         final RecordStream delayedStream;
         if (delay > 0) {

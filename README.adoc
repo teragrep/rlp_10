@@ -85,6 +85,10 @@ Example file with default configurations is available at `src/main/resources/con
 | localhost
 | Hostname used in RELP record
 
+| origin.hostname
+| defaultOrigin
+| Fallback origin hostname used in RELP record if cannot be detected automatically
+
 | socket.hostname
 | localhost
 | RELP Server target address

@@ -104,6 +104,7 @@ class BenchmarkExecutionTest {
         final Metrics metrics = new MetricsConfig().toMetrics();
         final InitiatorConfig initiatorConfig = new InitiatorConfig();
         final SyslogConfig syslogConfig = new SyslogConfig();
+        final OriginHostnameConfig originHostnameConfig = new OriginHostnameConfig("someOrigin");
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(expectedRecords);
         final DelayConfig delayConfig = new DelayConfig();
         final TimeoutConfig timeoutConfig = new TimeoutConfig();
@@ -117,8 +118,8 @@ class BenchmarkExecutionTest {
                 new InitiatorFactory(
                         recordStreamConfig
                                 .toRecordStream(
-                                        syslogConfig.hostname(), syslogConfig.appName(),
-                                        Assertions.assertDoesNotThrow(delayConfig::delay)
+                                        originHostnameConfig.hostname(), syslogConfig.hostname(),
+                                        syslogConfig.appName(), Assertions.assertDoesNotThrow(delayConfig::delay)
                                 ),
                         metrics,
                         socketAddressConfig.hostname(),
