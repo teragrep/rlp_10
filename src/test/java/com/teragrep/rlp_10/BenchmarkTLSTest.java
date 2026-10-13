@@ -192,8 +192,8 @@ public final class BenchmarkTLSTest {
                 initiatorCount,
                 eventLoopCount
         );
-        final Benchmark benchmark = new Benchmark(benchmarkExecution, new ArrayList<>());
-        Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.call()));
+        final Benchmark benchmark = new Benchmark(executorService, benchmarkExecution, new ArrayList<>());
+        Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.start().get()));
         Assertions.assertFalse(messageDeque.isEmpty());
         Assertions.assertEquals(messageCount, messageDeque.size());
     }
@@ -233,8 +233,8 @@ public final class BenchmarkTLSTest {
                 initiatorCount,
                 eventLoopCount
         );
-        final Benchmark benchmark = new Benchmark(benchmarkExecution, new ArrayList<>());
-        Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.call()));
+        final Benchmark benchmark = new Benchmark(executorService, benchmarkExecution, new ArrayList<>());
+        Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.start().get()));
         Assertions.assertFalse(messageDeque.isEmpty());
         Assertions.assertEquals(messageCount, messageDeque.size());
     }
@@ -274,8 +274,8 @@ public final class BenchmarkTLSTest {
                 initiatorCount,
                 eventLoopCount
         );
-        final Benchmark benchmark = new Benchmark(benchmarkExecution, new ArrayList<>());
-        Assertions.assertEquals(0, Assertions.assertDoesNotThrow(() -> benchmark.call()));
+        final Benchmark benchmark = new Benchmark(executorService, benchmarkExecution, new ArrayList<>());
+        Assertions.assertEquals(0, Assertions.assertDoesNotThrow(() -> benchmark.start().get()));
         Assertions.assertTrue(messageDeque.isEmpty());
     }
 
@@ -323,8 +323,8 @@ public final class BenchmarkTLSTest {
                 initiatorCount,
                 eventLoopCount
         );
-        final Benchmark benchmark = new Benchmark(benchmarkExecution, new ArrayList<>());
-        Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.call()));
+        final Benchmark benchmark = new Benchmark(executorService, benchmarkExecution, new ArrayList<>());
+        Assertions.assertEquals(messageCount, Assertions.assertDoesNotThrow(() -> benchmark.start().get()));
     }
 
     @Test

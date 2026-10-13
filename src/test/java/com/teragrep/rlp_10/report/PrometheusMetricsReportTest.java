@@ -147,10 +147,9 @@ public final class PrometheusMetricsReportTest {
         final PrometheusMetricsReport report = new PrometheusMetricsReport(metrics.registry(), prometheusPort);
         reports.add(report);
 
-        final Benchmark benchmark = new Benchmark(benchmarkExecution, reports);
+        final Benchmark benchmark = new Benchmark(executorService, benchmarkExecution, reports);
 
-        final ExecutorService forkJoinPool = ForkJoinPool.commonPool();
-        final Future<Long> clientRecords = forkJoinPool.submit(benchmark);
+        final Future<Long> clientRecords = Assertions.assertDoesNotThrow(() -> benchmark.start());
         final HttpClient client = HttpClient.newHttpClient();
         final HttpRequest request = HttpRequest
                 .newBuilder()
@@ -170,7 +169,6 @@ public final class PrometheusMetricsReportTest {
         Assertions.assertEquals(messageCount, recordsSent.get());
 
         client.close();
-        forkJoinPool.shutdown();
         // assert that HTTP response contains information about each metric in prometheus format
         Assertions
                 .assertTrue(

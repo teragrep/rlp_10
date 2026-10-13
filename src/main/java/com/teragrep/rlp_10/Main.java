@@ -62,6 +62,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public final class Main {
@@ -109,8 +110,9 @@ public final class Main {
                     initiatorConfig.retryConnectionCount()
             );
             final SocketFactory socketFactory = configFactory.transportConfig().socketFactory();
+            final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
             final BenchmarkExecution benchmarkExecution = new BenchmarkExecution(
-                    Executors.newVirtualThreadPerTaskExecutor(),
+                    executorService,
                     socketFactory,
                     initiatorFactory,
                     initiatorConfig.initiatorCount(),
@@ -131,9 +133,14 @@ public final class Main {
             reports.add(slf4JMetricsReport);
             reports.add(prometheusMetricsReport);
 
-            final Benchmark benchmark = new Benchmark(benchmarkExecution, reports);
-            // start benchmark
-            final long recordsSent = benchmark.call();
+            final Benchmark benchmark = new Benchmark(executorService, benchmarkExecution, reports);
+
+            // shutdownhook in case JVM is terminated
+            Thread shutdownThread = new Thread(benchmark::stop);
+            Runtime.getRuntime().addShutdownHook(shutdownThread);
+
+            // start benchmark and block until copmletion
+            final long recordsSent = benchmark.start().get();
             System.out.println(recordsSent);
         }
         catch (final ConfigurationException configurationException) {

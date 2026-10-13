@@ -54,15 +54,16 @@ import com.teragrep.rlp_10.config.*;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 /**
- * BenchmarkExecution starts a configured number of Eventloops within a given ExecutorService and keeps track of every
- * Task within each of the EventLoops
+ * BenchmarkExecution starts a configured number of Eventloops and Initiators within a given ExecutorService and keeps
+ * track of every Task within each of the EventLoops
  */
-public final class BenchmarkExecution {
+public final class BenchmarkExecution implements Callable<Long> {
 
     private final Map<EventLoop, List<Initiator>> eventLoops;
     private final EventLoopFactory eventLoopFactory;
@@ -90,7 +91,7 @@ public final class BenchmarkExecution {
         this.eventLoopCount = eventLoopCount;
     }
 
-    public void start() throws IOException {
+    public Long call() throws IOException, ExecutionException, InterruptedException {
         final int baseInitiators = initiatorCount / eventLoopCount;
         final int remainder = initiatorCount % eventLoopCount;
 
@@ -116,6 +117,7 @@ public final class BenchmarkExecution {
             }
             this.eventLoops.put(eventLoop, initiators);
         }
+        return awaitTermination();
     }
 
     public Long awaitTermination() throws ExecutionException, InterruptedException {

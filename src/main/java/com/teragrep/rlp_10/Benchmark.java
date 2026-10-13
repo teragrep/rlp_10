@@ -46,7 +46,6 @@
 package com.teragrep.rlp_10;
 
 import com.teragrep.cnf_01.ConfigurationException;
-import com.teragrep.rlp_10.config.*;
 import com.teragrep.rlp_10.report.MetricsReport;
 
 import java.io.IOException;
@@ -54,46 +53,41 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- * Benchmark runs a set of MetricsReports and starts an instance of BenchmarkExecution
+ * Benchmark runs a set of MetricsReports and starts an instance of BenchmarkExecution within a given ExecutorService
  */
-public final class Benchmark implements Callable<Long> {
+public final class Benchmark {
 
     private final ExecutorService executorService;
     private final List<MetricsReport> reports;
-    private final List<Future<Long>> executorTasks;
     private final BenchmarkExecution benchmarkExecution;
 
-    public Benchmark(final BenchmarkExecution benchmarkExecution, final List<MetricsReport> reports) {
-        this.executorService = Executors.newVirtualThreadPerTaskExecutor();
-        this.executorTasks = new ArrayList<>();
+    public Benchmark(
+            final ExecutorService executorService,
+            final BenchmarkExecution benchmarkExecution,
+            final List<MetricsReport> reports
+    ) {
+        this.executorService = executorService;
         this.reports = List.copyOf(reports);
         this.benchmarkExecution = benchmarkExecution;
     }
 
-    public Long call() throws ConfigurationException, InterruptedException, ExecutionException, IOException {
+    public Future<Long> start() throws ConfigurationException, InterruptedException, ExecutionException, IOException {
         // start reports
         for (final MetricsReport report : reports) {
             report.start();
         }
-
-        // start eventloops
-        benchmarkExecution.start();
-
-        // shutdown hook in case JVM is terminated
-        final Thread shutdownHook = new Thread(this::stopBenchmark);
-        Runtime.getRuntime().addShutdownHook(shutdownHook);
-
-        // wait until execution is finished, then stop benchmark
-        final long totalRecords = benchmarkExecution.awaitTermination();
-        stopBenchmark();
-        return totalRecords;
+        // start benchmark execution
+        Future<Long> execution = executorService.submit(benchmarkExecution);
+        return execution;
     }
 
-    private void stopBenchmark() {
+    public void stop() {
         benchmarkExecution.stop();
+        // stop reports
         for (final MetricsReport report : reports) {
             report.stop();
         }
+        executorService.shutdown();
     }
 
     @Override
@@ -108,7 +102,7 @@ public final class Benchmark implements Callable<Long> {
         else {
             final Benchmark benchmark = (Benchmark) o;
             equals = Objects.equals(executorService, benchmark.executorService) && Objects
-                    .equals(reports, benchmark.reports) && Objects.equals(executorTasks, benchmark.executorTasks)
+                    .equals(reports, benchmark.reports)
                     && Objects.equals(benchmarkExecution, benchmark.benchmarkExecution);
         }
         return equals;
@@ -116,6 +110,6 @@ public final class Benchmark implements Callable<Long> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(executorService, reports, executorTasks, benchmarkExecution);
+        return Objects.hash(executorService, reports, benchmarkExecution);
     }
 }

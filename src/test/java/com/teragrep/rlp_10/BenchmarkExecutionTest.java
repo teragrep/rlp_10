@@ -133,7 +133,7 @@ class BenchmarkExecutionTest {
         );
 
         // should start normally
-        Assertions.assertDoesNotThrow(() -> benchmarkExecution.start());
+        Assertions.assertDoesNotThrow(() -> benchmarkExecution.call());
 
         // should return number of sent records
         Assertions
