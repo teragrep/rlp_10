@@ -45,60 +45,40 @@
  */
 package com.teragrep.rlp_10.config;
 
+import com.codahale.metrics.MetricRegistry;
 import com.teragrep.cnf_01.ConfigurationException;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public final class ReportConfig {
+public final class PrometheusReportConfigTest {
 
-    private final long interval;
-    private final TimeUnit rateTimeUnit;
-    private final TimeUnit durationTimeUnit;
-
-    public ReportConfig() {
-        this(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
+    /**
+     * Should be able to create a report based on configruation variables
+     */
+    @Test
+    void testToReport() {
+        final PrometheusReportConfig prometheusConfig = new PrometheusReportConfig(new MetricRegistry(), 8080);
+        Assertions.assertDoesNotThrow(() -> prometheusConfig.toReport());
     }
 
-    public ReportConfig(final long interval, final TimeUnit rateTimeUnit, final TimeUnit durationTimeUnit) {
-        this.interval = interval;
-        this.rateTimeUnit = rateTimeUnit;
-        this.durationTimeUnit = durationTimeUnit;
+    @Test
+    void testValidPort() {
+        final int expectedPort = 8080;
+        final PrometheusReportConfig prometheusConfig = new PrometheusReportConfig(new MetricRegistry(), expectedPort);
+        final int port = Assertions.assertDoesNotThrow(() -> prometheusConfig.port());
+        Assertions.assertEquals(expectedPort, port);
     }
 
-    public long interval() throws ConfigurationException {
-        if (interval <= 0) {
-            throw new ConfigurationException("Report interval must be higher than zero!");
-        }
-        return interval;
+    @Test
+    void testInvalidPort() {
+        final int invalidPort = 65536;
+        final PrometheusReportConfig prometheusConfig = new PrometheusReportConfig(new MetricRegistry(), invalidPort);
+        Assertions.assertThrows(ConfigurationException.class, () -> prometheusConfig.port());
     }
 
-    public TimeUnit rateTimeUnit() {
-        return rateTimeUnit;
-    }
-
-    public TimeUnit durationTimeUnit() {
-        return durationTimeUnit;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        final boolean equals;
-        if (this == o) {
-            equals = true;
-        }
-        else if (o == null || getClass() != o.getClass()) {
-            equals = false;
-        }
-        else {
-            final ReportConfig that = (ReportConfig) o;
-            equals = interval == that.interval && rateTimeUnit == that.rateTimeUnit
-                    && durationTimeUnit == that.durationTimeUnit;
-        }
-        return equals;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(interval, rateTimeUnit, durationTimeUnit);
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(PrometheusReportConfig.class).verify();
     }
 }

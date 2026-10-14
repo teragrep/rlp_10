@@ -45,13 +45,53 @@
  */
 package com.teragrep.rlp_10.config;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.jupiter.api.Test;
+import com.codahale.metrics.MetricRegistry;
+import com.teragrep.cnf_01.ConfigurationException;
+import com.teragrep.rlp_10.report.PrometheusMetricsReport;
 
-public final class ReportConfigTest {
+import java.util.Objects;
 
-    @Test
-    public void testContract() {
-        EqualsVerifier.forClass(ReportConfig.class).verify();
+public final class PrometheusReportConfig {
+
+    private final int port;
+    private final MetricRegistry registry;
+
+    public PrometheusReportConfig(final MetricRegistry registry, final int port) {
+        this.registry = registry;
+        this.port = port;
+    }
+
+    public PrometheusMetricsReport toReport() throws ConfigurationException {
+        return new PrometheusMetricsReport(registry, port());
+    }
+
+    public int port() throws ConfigurationException {
+        if (port < 1 || port > 65535) {
+            throw new ConfigurationException("Prometheus port " + port + " is not within expected range (1 - 65535)!");
+        }
+        else {
+            return port;
+        }
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final PrometheusReportConfig that = (PrometheusReportConfig) o;
+            equals = port == that.port && Objects.equals(registry, that.registry);
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(port, registry);
     }
 }

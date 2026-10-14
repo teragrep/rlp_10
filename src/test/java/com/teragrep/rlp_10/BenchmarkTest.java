@@ -72,10 +72,9 @@ public final class BenchmarkTest {
 
     // default configs to reduce clutter
     private final MetricsConfig metricsConfiguration = new MetricsConfig();
-    private final PrometheusConfig prometheusConfiguration = new PrometheusConfig();
     private final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
     private final TransportConfig transportConfiguration = new TransportConfig();
-    private final ReportConfig reportConfig = new ReportConfig();
+    private final Slf4jReportConfig reportConfig = new Slf4jReportConfig();
     private final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
     private final DelayConfig delayConfig = new DelayConfig();
     private final SyslogConfig syslogConfig = new SyslogConfig();

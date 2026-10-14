@@ -45,30 +45,74 @@
  */
 package com.teragrep.rlp_10.config;
 
+import com.codahale.metrics.MetricRegistry;
 import com.teragrep.cnf_01.ConfigurationException;
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import com.teragrep.rlp_10.report.Slf4JMetricsReport;
 
-public final class PrometheusConfigTest {
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
-    @Test
-    void testValidPort() {
-        final int expectedPort = 8080;
-        final PrometheusConfig prometheusConfig = new PrometheusConfig(expectedPort);
-        final int port = Assertions.assertDoesNotThrow(() -> prometheusConfig.port());
-        Assertions.assertEquals(expectedPort, port);
+public final class Slf4jReportConfig {
+
+    private final MetricRegistry registry;
+    private final long interval;
+    private final TimeUnit rateTimeUnit;
+    private final TimeUnit durationTimeUnit;
+
+    public Slf4jReportConfig() {
+        this(new MetricRegistry(), 1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
     }
 
-    @Test
-    void testInvalidPort() {
-        final int invalidPort = 65536;
-        final PrometheusConfig prometheusConfig = new PrometheusConfig(invalidPort);
-        Assertions.assertThrows(ConfigurationException.class, () -> prometheusConfig.port());
+    public Slf4jReportConfig(
+            final MetricRegistry registry,
+            final long interval,
+            final TimeUnit rateTimeUnit,
+            final TimeUnit durationTimeUnit
+    ) {
+        this.registry = registry;
+        this.interval = interval;
+        this.rateTimeUnit = rateTimeUnit;
+        this.durationTimeUnit = durationTimeUnit;
     }
 
-    @Test
-    public void testContract() {
-        EqualsVerifier.forClass(PrometheusConfig.class).verify();
+    public long interval() throws ConfigurationException {
+        if (interval <= 0) {
+            throw new ConfigurationException("Report interval must be higher than zero!");
+        }
+        return interval;
+    }
+
+    public TimeUnit rateTimeUnit() {
+        return rateTimeUnit;
+    }
+
+    public TimeUnit durationTimeUnit() {
+        return durationTimeUnit;
+    }
+
+    public Slf4JMetricsReport toReport() throws ConfigurationException {
+        return new Slf4JMetricsReport(registry, interval(), rateTimeUnit(), durationTimeUnit());
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final Slf4jReportConfig config = (Slf4jReportConfig) o;
+            equals = interval == config.interval && Objects.equals(registry, config.registry)
+                    && rateTimeUnit == config.rateTimeUnit && durationTimeUnit == config.durationTimeUnit;
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(registry, interval, rateTimeUnit, durationTimeUnit);
     }
 }

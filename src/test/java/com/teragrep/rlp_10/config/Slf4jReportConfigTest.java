@@ -45,49 +45,31 @@
  */
 package com.teragrep.rlp_10.config;
 
-import com.teragrep.cnf_01.ConfigurationException;
+import com.codahale.metrics.MetricRegistry;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
-public final class PrometheusConfig {
+public final class Slf4jReportConfigTest {
 
-    private final int port;
-
-    public PrometheusConfig() {
-        this(8080);
+    /**
+     * Should be able to create a report based on configruation variables
+     */
+    @Test
+    public void testToReport() {
+        final Slf4jReportConfig config = new Slf4jReportConfig(
+                new MetricRegistry(),
+                5000,
+                TimeUnit.MILLISECONDS,
+                TimeUnit.MILLISECONDS
+        );
+        Assertions.assertDoesNotThrow(() -> config.toReport());
     }
 
-    public PrometheusConfig(final int port) {
-        this.port = port;
-    }
-
-    public int port() throws ConfigurationException {
-        if (port < 1 || port > 65535) {
-            throw new ConfigurationException("Prometheus port " + port + " is not within expected range (1 - 65535)!");
-        }
-        else {
-            return port;
-        }
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        final boolean equals;
-        if (this == o) {
-            equals = true;
-        }
-        else if (o == null || getClass() != o.getClass()) {
-            equals = false;
-        }
-        else {
-            final PrometheusConfig that = (PrometheusConfig) o;
-            equals = port == that.port;
-        }
-        return equals;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(port);
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(Slf4jReportConfig.class).verify();
     }
 }

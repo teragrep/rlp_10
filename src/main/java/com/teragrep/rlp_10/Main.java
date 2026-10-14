@@ -51,8 +51,6 @@ import com.teragrep.cnf_01.PropertiesConfiguration;
 import com.teragrep.net_01.channel.socket.SocketFactory;
 import com.teragrep.rlp_10.config.*;
 import com.teragrep.rlp_10.report.MetricsReport;
-import com.teragrep.rlp_10.report.PrometheusMetricsReport;
-import com.teragrep.rlp_10.report.Slf4JMetricsReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,7 +91,6 @@ public final class Main {
             final SocketAddressConfig socketAddressConfig = configFactory.socketAddressConfig();
             final SyslogConfig syslogConfig = configFactory.syslogConfig();
             final OriginHostnameConfig originHostnameConfig = configFactory.originHostnameConfig();
-            final ReportConfig reportConfig = configFactory.reportConfig();
 
             // objects requiring complex initialization
             final Metrics metrics = configFactory.metricsConfig().toMetrics();
@@ -124,23 +121,16 @@ public final class Main {
             );
 
             final List<MetricsReport> reports = new ArrayList<>();
-            final Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(
-                    metrics.registry(),
-                    reportConfig.interval(),
-                    reportConfig.rateTimeUnit(),
-                    reportConfig.durationTimeUnit()
-            );
-            final PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(
-                    metrics.registry(),
-                    configFactory.prometheusConfig().port()
-            );
-            reports.add(slf4JMetricsReport);
-            reports.add(prometheusMetricsReport);
+            final Slf4jReportConfig slf4jReportConfig = configFactory.slf4jReportConfig(metrics.registry());
+            final PrometheusReportConfig prometheusReportConfig = configFactory
+                    .prometheusReportConfig(metrics.registry());
+            reports.add(slf4jReportConfig.toReport());
+            reports.add(prometheusReportConfig.toReport());
 
             final Benchmark benchmark = new Benchmark(executorService, benchmarkExecution, reports);
 
             // shutdownhook in case JVM is terminated
-            Thread shutdownThread = new Thread(benchmark::stop);
+            final Thread shutdownThread = new Thread(benchmark::stop);
             Runtime.getRuntime().addShutdownHook(shutdownThread);
 
             // start benchmark and block until copmletion
