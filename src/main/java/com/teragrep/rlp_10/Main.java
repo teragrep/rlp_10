@@ -121,11 +121,10 @@ public final class Main {
             );
 
             final List<MetricsReport> reports = new ArrayList<>();
-            final Slf4jReportConfig slf4jReportConfig = configFactory.slf4jReportConfig(metrics.registry());
-            final PrometheusReportConfig prometheusReportConfig = configFactory
-                    .prometheusReportConfig(metrics.registry());
-            reports.add(slf4jReportConfig.toReport());
-            reports.add(prometheusReportConfig.toReport());
+            final Slf4jReportConfig slf4jReportConfig = configFactory.slf4jReportConfig();
+            final PrometheusReportConfig prometheusReportConfig = configFactory.prometheusReportConfig();
+            reports.add(slf4jReportConfig.toReport(metrics.registry()));
+            reports.add(prometheusReportConfig.toReport(metrics.registry()));
 
             final Benchmark benchmark = new Benchmark(executorService, benchmarkExecution, reports);
 

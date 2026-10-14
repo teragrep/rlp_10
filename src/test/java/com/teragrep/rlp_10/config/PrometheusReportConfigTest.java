@@ -58,14 +58,14 @@ public final class PrometheusReportConfigTest {
      */
     @Test
     void testToReport() {
-        final PrometheusReportConfig prometheusConfig = new PrometheusReportConfig(new MetricRegistry(), 8080);
-        Assertions.assertDoesNotThrow(() -> prometheusConfig.toReport());
+        final PrometheusReportConfig prometheusConfig = new PrometheusReportConfig(8080);
+        Assertions.assertDoesNotThrow(() -> prometheusConfig.toReport(new MetricRegistry()));
     }
 
     @Test
     void testValidPort() {
         final int expectedPort = 8080;
-        final PrometheusReportConfig prometheusConfig = new PrometheusReportConfig(new MetricRegistry(), expectedPort);
+        final PrometheusReportConfig prometheusConfig = new PrometheusReportConfig(expectedPort);
         final int port = Assertions.assertDoesNotThrow(() -> prometheusConfig.port());
         Assertions.assertEquals(expectedPort, port);
     }
@@ -73,7 +73,7 @@ public final class PrometheusReportConfigTest {
     @Test
     void testInvalidPort() {
         final int invalidPort = 65536;
-        final PrometheusReportConfig prometheusConfig = new PrometheusReportConfig(new MetricRegistry(), invalidPort);
+        final PrometheusReportConfig prometheusConfig = new PrometheusReportConfig(invalidPort);
         Assertions.assertThrows(ConfigurationException.class, () -> prometheusConfig.port());
     }
 

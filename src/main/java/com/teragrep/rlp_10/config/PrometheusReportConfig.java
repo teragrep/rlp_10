@@ -54,14 +54,12 @@ import java.util.Objects;
 public final class PrometheusReportConfig {
 
     private final int port;
-    private final MetricRegistry registry;
 
-    public PrometheusReportConfig(final MetricRegistry registry, final int port) {
-        this.registry = registry;
+    public PrometheusReportConfig(final int port) {
         this.port = port;
     }
 
-    public PrometheusMetricsReport toReport() throws ConfigurationException {
+    public PrometheusMetricsReport toReport(MetricRegistry registry) throws ConfigurationException {
         return new PrometheusMetricsReport(registry, port());
     }
 
@@ -85,13 +83,13 @@ public final class PrometheusReportConfig {
         }
         else {
             final PrometheusReportConfig that = (PrometheusReportConfig) o;
-            equals = port == that.port && Objects.equals(registry, that.registry);
+            equals = port == that.port;
         }
         return equals;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(port, registry);
+        return Objects.hash(port);
     }
 }

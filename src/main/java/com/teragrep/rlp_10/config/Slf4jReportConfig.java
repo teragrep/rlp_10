@@ -54,22 +54,15 @@ import java.util.concurrent.TimeUnit;
 
 public final class Slf4jReportConfig {
 
-    private final MetricRegistry registry;
     private final long interval;
     private final TimeUnit rateTimeUnit;
     private final TimeUnit durationTimeUnit;
 
     public Slf4jReportConfig() {
-        this(new MetricRegistry(), 1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
+        this(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
     }
 
-    public Slf4jReportConfig(
-            final MetricRegistry registry,
-            final long interval,
-            final TimeUnit rateTimeUnit,
-            final TimeUnit durationTimeUnit
-    ) {
-        this.registry = registry;
+    public Slf4jReportConfig(final long interval, final TimeUnit rateTimeUnit, final TimeUnit durationTimeUnit) {
         this.interval = interval;
         this.rateTimeUnit = rateTimeUnit;
         this.durationTimeUnit = durationTimeUnit;
@@ -90,7 +83,7 @@ public final class Slf4jReportConfig {
         return durationTimeUnit;
     }
 
-    public Slf4JMetricsReport toReport() throws ConfigurationException {
+    public Slf4JMetricsReport toReport(MetricRegistry registry) throws ConfigurationException {
         return new Slf4JMetricsReport(registry, interval(), rateTimeUnit(), durationTimeUnit());
     }
 
@@ -105,14 +98,14 @@ public final class Slf4jReportConfig {
         }
         else {
             final Slf4jReportConfig config = (Slf4jReportConfig) o;
-            equals = interval == config.interval && Objects.equals(registry, config.registry)
-                    && rateTimeUnit == config.rateTimeUnit && durationTimeUnit == config.durationTimeUnit;
+            equals = interval == config.interval && rateTimeUnit == config.rateTimeUnit
+                    && durationTimeUnit == config.durationTimeUnit;
         }
         return equals;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(registry, interval, rateTimeUnit, durationTimeUnit);
+        return Objects.hash(interval, rateTimeUnit, durationTimeUnit);
     }
 }

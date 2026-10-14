@@ -10,16 +10,6 @@
         <Class name="com.teragrep.rlp_10.report.PrometheusMetricsReport"/>
         <Bug pattern="EI_EXPOSE_REP2" />
     </Match>
-    <!-- Ignore expose internal representation by returning Metrics.metricRegistry bug, as MetricsRegistry is mutable by design -->
-    <Match>
-        <Class name="com.teragrep.rlp_10.config.PrometheusReportConfig"/>
-        <Bug pattern="EI_EXPOSE_REP2" />
-    </Match>
-    <!-- Ignore expose internal representation by returning Metrics.metricRegistry bug, as MetricsRegistry is mutable by design -->
-    <Match>
-        <Class name="com.teragrep.rlp_10.config.Slf4jReportConfig"/>
-        <Bug pattern="EI_EXPOSE_REP2" />
-    </Match>
     <!-- Ignore absolute filenames in test classes -->
     <Match>
         <Class name="com.teragrep.rlp_10.config.ConfigFactoryTest"/>

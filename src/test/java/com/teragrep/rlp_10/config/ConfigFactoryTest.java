@@ -45,7 +45,6 @@
  */
 package com.teragrep.rlp_10.config;
 
-import com.codahale.metrics.MetricRegistry;
 import com.teragrep.cnf_01.ConfigurationException;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
@@ -70,9 +69,8 @@ public final class ConfigFactoryTest {
         final DelayConfig delayConfig = Assertions.assertDoesNotThrow(() -> configFactory.delayConfig());
         final MetricsConfig metricsConfig = Assertions.assertDoesNotThrow(() -> configFactory.metricsConfig());
         final PrometheusReportConfig prometheusConfig = Assertions
-                .assertDoesNotThrow(() -> configFactory.prometheusReportConfig(new MetricRegistry()));
-        final Slf4jReportConfig reportConfig = Assertions
-                .assertDoesNotThrow(() -> configFactory.slf4jReportConfig(new MetricRegistry()));
+                .assertDoesNotThrow(() -> configFactory.prometheusReportConfig());
+        final Slf4jReportConfig reportConfig = Assertions.assertDoesNotThrow(() -> configFactory.slf4jReportConfig());
         final SocketAddressConfig socketAddressConfig = Assertions
                 .assertDoesNotThrow(() -> configFactory.socketAddressConfig());
         final SyslogConfig syslogConfig = Assertions.assertDoesNotThrow(() -> configFactory.syslogConfig());
@@ -127,9 +125,8 @@ public final class ConfigFactoryTest {
         final DelayConfig delayConfig = Assertions.assertDoesNotThrow(() -> configFactory.delayConfig());
         final MetricsConfig metricsConfig = Assertions.assertDoesNotThrow(() -> configFactory.metricsConfig());
         final PrometheusReportConfig prometheusConfig = Assertions
-                .assertDoesNotThrow(() -> configFactory.prometheusReportConfig(new MetricRegistry()));
-        final Slf4jReportConfig reportConfig = Assertions
-                .assertDoesNotThrow(() -> configFactory.slf4jReportConfig(new MetricRegistry()));
+                .assertDoesNotThrow(() -> configFactory.prometheusReportConfig());
+        final Slf4jReportConfig reportConfig = Assertions.assertDoesNotThrow(() -> configFactory.slf4jReportConfig());
         final SocketAddressConfig socketAddressConfig = Assertions
                 .assertDoesNotThrow(() -> configFactory.socketAddressConfig());
         final SyslogConfig syslogConfig = Assertions.assertDoesNotThrow(() -> configFactory.syslogConfig());
@@ -183,12 +180,8 @@ public final class ConfigFactoryTest {
         Assertions.assertThrows(ConfigurationException.class, () -> configFactory.recordStreamConfig());
         Assertions.assertThrows(ConfigurationException.class, () -> configFactory.delayConfig());
         Assertions.assertThrows(ConfigurationException.class, () -> configFactory.metricsConfig());
-        Assertions
-                .assertThrows(
-                        ConfigurationException.class, () -> configFactory.prometheusReportConfig(new MetricRegistry())
-                );
-        Assertions
-                .assertThrows(ConfigurationException.class, () -> configFactory.slf4jReportConfig(new MetricRegistry()));
+        Assertions.assertThrows(ConfigurationException.class, () -> configFactory.prometheusReportConfig());
+        Assertions.assertThrows(ConfigurationException.class, () -> configFactory.slf4jReportConfig());
         Assertions.assertThrows(ConfigurationException.class, () -> configFactory.socketAddressConfig());
         Assertions.assertThrows(ConfigurationException.class, () -> configFactory.timeoutConfig());
         Assertions.assertThrows(ConfigurationException.class, () -> configFactory.transportConfig());

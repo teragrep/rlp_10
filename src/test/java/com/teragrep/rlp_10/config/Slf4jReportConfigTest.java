@@ -59,13 +59,8 @@ public final class Slf4jReportConfigTest {
      */
     @Test
     public void testToReport() {
-        final Slf4jReportConfig config = new Slf4jReportConfig(
-                new MetricRegistry(),
-                5000,
-                TimeUnit.MILLISECONDS,
-                TimeUnit.MILLISECONDS
-        );
-        Assertions.assertDoesNotThrow(() -> config.toReport());
+        final Slf4jReportConfig config = new Slf4jReportConfig(5000, TimeUnit.MILLISECONDS, TimeUnit.MILLISECONDS);
+        Assertions.assertDoesNotThrow(() -> config.toReport(new MetricRegistry()));
     }
 
     @Test

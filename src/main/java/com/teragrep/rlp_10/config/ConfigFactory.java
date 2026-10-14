@@ -45,7 +45,6 @@
  */
 package com.teragrep.rlp_10.config;
 
-import com.codahale.metrics.MetricRegistry;
 import com.teragrep.cnf_01.ConfigurationException;
 
 import java.nio.file.Path;
@@ -123,11 +122,11 @@ public final class ConfigFactory {
         }
     }
 
-    public PrometheusReportConfig prometheusReportConfig(final MetricRegistry registry) throws ConfigurationException {
+    public PrometheusReportConfig prometheusReportConfig() throws ConfigurationException {
         final String configuredPort = configValues.getOrDefault("prometheus.port", "8080");
         try {
             final int port = Integer.parseInt(configuredPort);
-            return new PrometheusReportConfig(registry, port);
+            return new PrometheusReportConfig(port);
         }
         catch (final NumberFormatException numberFormatException) {
             throw new ConfigurationException(
@@ -152,7 +151,7 @@ public final class ConfigFactory {
         }
     }
 
-    public Slf4jReportConfig slf4jReportConfig(final MetricRegistry registry) throws ConfigurationException {
+    public Slf4jReportConfig slf4jReportConfig() throws ConfigurationException {
         final String configuredInterval = configValues.getOrDefault("report.interval", "1000");
         final String configuredRateTimeUnit = configValues.getOrDefault("report.ratetimeunit", "SECONDS");
         final String configuredDurationTimeUnit = configValues.getOrDefault("report.durationtimeunit", "MILLISECONDS");
@@ -160,7 +159,7 @@ public final class ConfigFactory {
             final long interval = Long.parseLong(configuredInterval);
             final TimeUnit rateTimeUnit = TimeUnit.valueOf(configuredRateTimeUnit);
             final TimeUnit durationTimeUnit = TimeUnit.valueOf(configuredDurationTimeUnit);
-            return new Slf4jReportConfig(registry, interval, rateTimeUnit, durationTimeUnit);
+            return new Slf4jReportConfig(interval, rateTimeUnit, durationTimeUnit);
         }
         catch (final IllegalArgumentException illegalArgumentException) {
             throw new ConfigurationException(
