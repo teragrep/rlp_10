@@ -109,7 +109,7 @@ class BenchmarkExecutionTest {
         final DelayConfig delayConfig = new DelayConfig();
         final TimeoutConfig timeoutConfig = new TimeoutConfig();
         final TransportConfig transportConfig = new TransportConfig();
-        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(() -> transportConfig.socketFactory());
+        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(() -> transportConfig.toSocketFactory());
         final int initiatorCount = Assertions.assertDoesNotThrow(() -> initiatorConfig.initiatorCount());
         final int eventLoopCount = Assertions.assertDoesNotThrow(() -> initiatorConfig.eventLoopCount());
         final BenchmarkExecution benchmarkExecution = new BenchmarkExecution(

@@ -113,7 +113,7 @@ public final class Main {
                     initiatorConfig.retryTransmissionCount(),
                     initiatorConfig.retryConnectionCount()
             );
-            final SocketFactory socketFactory = configFactory.transportConfig().socketFactory();
+            final SocketFactory socketFactory = configFactory.transportConfig().toSocketFactory();
             final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
             final BenchmarkExecution benchmarkExecution = new BenchmarkExecution(
                     executorService,

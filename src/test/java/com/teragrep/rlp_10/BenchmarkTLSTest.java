@@ -170,7 +170,7 @@ public final class BenchmarkTLSTest {
         final int retryConnectionCount = 3;
         final int eventLoopCount = 19;
 
-        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::socketFactory);
+        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::toSocketFactory);
         final RecordStream recordStream = new RecordStreamConfig(messageCount)
                 .toRecordStream(
                         originHostnameConfig.hostname(), syslogConfig.hostname(), syslogConfig.appName(),
@@ -211,7 +211,7 @@ public final class BenchmarkTLSTest {
         final int retryConnectionCount = 3;
         final int eventLoopCount = 19;
 
-        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::socketFactory);
+        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::toSocketFactory);
         final RecordStream recordStream = new RecordStreamConfig(messageCount)
                 .toRecordStream(
                         originHostnameConfig.hostname(), syslogConfig.hostname(), syslogConfig.appName(),
@@ -252,7 +252,7 @@ public final class BenchmarkTLSTest {
         final int retryConnectionCount = 3;
         final int eventLoopCount = 19;
 
-        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::socketFactory);
+        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::toSocketFactory);
         final RecordStream recordStream = new RecordStreamConfig(messageCount)
                 .toRecordStream(
                         originHostnameConfig.hostname(), syslogConfig.hostname(), syslogConfig.appName(),
@@ -301,7 +301,7 @@ public final class BenchmarkTLSTest {
         final long syslogTimeout = 1000000000L;
         final int eventLoopCount = 1;
 
-        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::socketFactory);
+        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::toSocketFactory);
         final RecordStream recordStream = new RecordStreamConfig(messageCount)
                 .toRecordStream(
                         originHostnameConfig.hostname(), syslogConfig.hostname(), syslogConfig.appName(),

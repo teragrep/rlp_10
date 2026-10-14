@@ -119,7 +119,7 @@ public final class PrometheusMetricsReportTest {
         final int retryConnectionCount = 3;
         final int eventLoopCount = 2;
 
-        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::socketFactory);
+        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::toSocketFactory);
         final RecordStream recordStream = new RecordStreamConfig(messageCount)
                 .toRecordStream(
                         originHostnameConfig.hostname(), syslogConfig.hostname(), syslogConfig.appName(),

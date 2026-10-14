@@ -117,7 +117,7 @@ public final class TransportConfig {
         return protocol;
     }
 
-    public SocketFactory socketFactory() throws ConfigurationException {
+    public SocketFactory toSocketFactory() throws ConfigurationException {
         final SocketFactory rv;
         if (!tls()) {
             rv = new PlainFactory();
