@@ -45,12 +45,11 @@
  */
 package com.teragrep.rlp_10;
 
-import com.codahale.metrics.Timer;
 import com.teragrep.rlp_03.client.RelpClient;
 import com.teragrep.rlp_03.client.RelpClientFactory;
-import com.teragrep.rlp_03.client.RelpClientStub;
 import com.teragrep.rlp_03.frame.RelpFrame;
 import com.teragrep.rlp_03.frame.RelpFrameFactory;
+import com.teragrep.rlp_10.relpClient.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,110 +101,36 @@ public final class Initiator implements Callable<Long> {
 
     @Override
     public Long call() {
-        // producer threads
-        try (final RelpClient relpClient = connect(retryConnectCount)) {
-            if (!relpClient.isStub()) {
-                // send syslog messageCount number of times
-                while (run) {
-                    final boolean sent = send(relpClient, retryTransmissionCount);
-                    if (!sent) {
-                        LOGGER.error("Failed to transmit data to server! Stopping...");
-                        break;
-                    }
+        try {
+            final RelpClient relpClient = new RetryingRelpClient(
+                    new MeteredRelpClient(
+                            new TimeoutRelpClient(relpClientFactory.open(new InetSocketAddress(hostname, port)).get(openTimeout, TimeUnit.NANOSECONDS), metrics, openTimeout, payloadTimeout), metrics
+                    ),
+                    metrics,
+                    retryConnectCount,
+                    retryTransmissionCount
+            );
+            final RelpFrame open = relpFrameFactory.create("open", "a hallo yo client");
+            relpClient.transmit(open).get();
+            while (run) {
+                final String payload = new String(recordStream.get(), StandardCharsets.UTF_8); // todo recordStream should return a stubable SyslogMessage, currently stubness is represented by empty bytearray
+                if (payload.isEmpty()) {
+                    stop();
+                    break;
                 }
-                // send close
-                close(relpClient);
+                final RelpFrame syslog = relpFrameFactory.create("syslog", payload);
+                relpClient.transmit(syslog).get();
+                recordsSent.incrementAndGet();
             }
-            else {
-                LOGGER.warn("RelpClient connection timeout! Stopping...");
-            }
+            final RelpFrame close = relpFrameFactory.create("close", "");
+            relpClient.transmit(close);
         }
-        catch (final ExecutionException | InterruptedException exception) {
-            LOGGER.error("Initiator encountered an unrecoverable error: ", exception);
+        catch (final ExecutionException | InterruptedException | TimeoutException e) {
+            // individual Initiators are allowed to fail without stopping the whole program, but should be logged as Errors.
+            LOGGER.error("Initiator encountered an unrecoverable error, stopping...", e);
+            return recordsSent.get();
         }
         return recordsSent.get();
-    }
-
-    private RelpClient connect(final int retryCount) throws InterruptedException, ExecutionException {
-        final Timer.Context connectTimer = metrics.connectLatency().time();
-        RelpClient rv = new RelpClientStub();
-        for (int i = 0; i < retryCount; i++) {
-            try {
-                rv = connect();
-                metrics.connects().inc();
-                break;
-            }
-            catch (final TimeoutException timeoutException) {
-                metrics.retriedConnects().inc();
-                LOGGER.warn("Timeout reached while trying to establish RelpClient!");
-            }
-        }
-        connectTimer.close();
-        return rv;
-    }
-
-    private RelpClient connect() throws InterruptedException, ExecutionException, TimeoutException {
-        final RelpClient relpClient = relpClientFactory
-                .open(new InetSocketAddress(hostname, port))
-                .get(openTimeout, TimeUnit.NANOSECONDS);
-
-        final RelpFrame openFrame = relpFrameFactory.create("open", "a hallo yo client");
-        final CompletableFuture<RelpFrame> open = relpClient.transmit(openFrame);
-        open.get(openTimeout, TimeUnit.NANOSECONDS);
-        return relpClient;
-    }
-
-    private boolean send(final RelpClient relpClient, final int retryCount)
-            throws InterruptedException, ExecutionException {
-        int retries = 0;
-        final String payload = new String(recordStream.get(), StandardCharsets.UTF_8); // todo recordStream should return a stubable SyslogMessage, currently stubness is represented by empty bytearray
-        boolean sent = send(relpClient, payload);
-        while (!sent && retries < retryCount) {
-            retries++;
-            metrics.resends().inc();
-            sent = send(relpClient, payload);
-        }
-        return sent;
-    }
-
-    private boolean send(final RelpClient relpClient, final String payload)
-            throws InterruptedException, ExecutionException {
-        try {
-            // start transaction and transmit timers
-            final Timer.Context transactionTimer = metrics.transactionLatency().time();
-            final Timer.Context transmitTimer = metrics.transmitLatency().time();
-            final Timer.Context receiveTimer;
-            // stop transmit timer as soon as relpClient.transmit() finishes and start receiveTimer.
-            if (!payload.isEmpty()) {
-                final CompletableFuture<RelpFrame> syslog = relpClient
-                        .transmit(relpFrameFactory.create("syslog", payload));
-
-                // Transmission is complete as soon as relpClient.transmit() finishes.
-                transmitTimer.close();
-                receiveTimer = metrics.receiveLatency().time();
-                syslog.get(payloadTimeout, TimeUnit.NANOSECONDS);
-                recordsSent.incrementAndGet();
-                // Whole transaction is complete as soon as Future received by transmit() is completed (or times out).
-                receiveTimer.close();
-                transactionTimer.close();
-                metrics.records().inc();
-                return true;
-            }
-            else {
-                stop();
-                return true;
-            }
-        }
-        catch (final TimeoutException timeoutException) {
-            LOGGER.warn("Send syslog attempt timeout after {} seconds!", payloadTimeout);
-            return false;
-        }
-    }
-
-    private void close(final RelpClient relpClient) throws InterruptedException, ExecutionException {
-        final CompletableFuture<RelpFrame> close = relpClient.transmit(relpFrameFactory.create("close", ""));
-        close.get();
-        metrics.disconnects().inc();
     }
 
     public void stop() {

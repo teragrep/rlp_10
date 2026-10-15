@@ -45,17 +45,15 @@
  */
 package com.teragrep.rlp_10.config;
 
+import com.teragrep.rlp_10.RecordStream;
+import com.teragrep.rlp_10.RecordStreamDelay;
+import com.teragrep.rlp_10.RecordStreamImpl;
+
 import java.util.Objects;
 
 public final class RecordStreamConfig {
 
-    private static final long maxRecords = Long.MAX_VALUE;
-
     private final long records;
-
-    public RecordStreamConfig() {
-        this(maxRecords);
-    }
 
     public RecordStreamConfig(final long records) {
         this.records = records;
@@ -63,6 +61,24 @@ public final class RecordStreamConfig {
 
     public long records() {
         return records;
+    }
+
+    public RecordStream toRecordStream(
+            final String origin,
+            final String hostname,
+            final String appName,
+            final long delay
+    ) {
+        final RecordStream recordStream = new RecordStreamImpl(origin, hostname, appName, records);
+        // apply delay to recordStream if configured
+        final RecordStream delayedStream;
+        if (delay > 0) {
+            delayedStream = new RecordStreamDelay(delay, recordStream);
+        }
+        else {
+            delayedStream = recordStream;
+        }
+        return delayedStream;
     }
 
     @Override

@@ -85,6 +85,10 @@ Example file with default configurations is available at `src/main/resources/con
 | localhost
 | Hostname used in RELP record
 
+| origin.hostname
+| defaultOrigin
+| Fallback origin hostname used in RELP record if cannot be detected automatically
+
 | socket.hostname
 | localhost
 | RELP Server target address
@@ -94,12 +98,12 @@ Example file with default configurations is available at `src/main/resources/con
 | Relp Server target port
 
 | timeout.open
-| 1000000000
-| RELP Server reconnect interval, in nanoseconds
+| PT10S
+| RELP Server reconnect interval, in ISO-8601 duration format
 
 | timeout.payload
-| 1000000000
-| RELP Server resend interval, in nanoseconds
+| PT5S
+| RELP Server resend interval, in ISO-8601 duration format
 
 | transport.tls
 | false

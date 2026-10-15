@@ -45,13 +45,67 @@
  */
 package com.teragrep.rlp_10.config;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.jupiter.api.Test;
+import com.codahale.metrics.MetricRegistry;
+import com.teragrep.cnf_01.ConfigurationException;
+import com.teragrep.rlp_10.report.Slf4JMetricsReport;
 
-public final class ReportConfigTest {
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
-    @Test
-    public void testContract() {
-        EqualsVerifier.forClass(ReportConfig.class).verify();
+public final class Slf4jReportConfig {
+
+    private final long interval;
+    private final TimeUnit rateTimeUnit;
+    private final TimeUnit durationTimeUnit;
+
+    public Slf4jReportConfig() {
+        this(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
+    }
+
+    public Slf4jReportConfig(final long interval, final TimeUnit rateTimeUnit, final TimeUnit durationTimeUnit) {
+        this.interval = interval;
+        this.rateTimeUnit = rateTimeUnit;
+        this.durationTimeUnit = durationTimeUnit;
+    }
+
+    public long interval() throws ConfigurationException {
+        if (interval <= 0) {
+            throw new ConfigurationException("Report interval must be higher than zero!");
+        }
+        return interval;
+    }
+
+    public TimeUnit rateTimeUnit() {
+        return rateTimeUnit;
+    }
+
+    public TimeUnit durationTimeUnit() {
+        return durationTimeUnit;
+    }
+
+    public Slf4JMetricsReport toReport(MetricRegistry registry) throws ConfigurationException {
+        return new Slf4JMetricsReport(registry, interval(), rateTimeUnit(), durationTimeUnit());
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean equals;
+        if (this == o) {
+            equals = true;
+        }
+        else if (o == null || getClass() != o.getClass()) {
+            equals = false;
+        }
+        else {
+            final Slf4jReportConfig config = (Slf4jReportConfig) o;
+            equals = interval == config.interval && rateTimeUnit == config.rateTimeUnit
+                    && durationTimeUnit == config.durationTimeUnit;
+        }
+        return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(interval, rateTimeUnit, durationTimeUnit);
     }
 }

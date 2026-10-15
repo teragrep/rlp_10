@@ -47,7 +47,6 @@ package com.teragrep.rlp_10.report;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
-import com.teragrep.rlp_10.config.ReportConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,22 +56,27 @@ import java.util.concurrent.TimeUnit;
 public final class Slf4JMetricsReport implements MetricsReport {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Slf4JMetricsReport.class);
-    private final ReportConfig config;
+    private final long interval;
     private final Slf4jReporter slf4jReport;
 
-    public Slf4JMetricsReport(final MetricRegistry registry, final ReportConfig config) {
-        this.config = config;
+    public Slf4JMetricsReport(
+            final MetricRegistry registry,
+            final long interval,
+            final TimeUnit rateTimeUnit,
+            final TimeUnit durationTimeUnit
+    ) {
+        this.interval = interval;
         this.slf4jReport = Slf4jReporter
                 .forRegistry(registry)
                 .outputTo(LOGGER)
-                .convertRatesTo(config.rateTimeUnit())
-                .convertDurationsTo(config.durationTimeUnit())
+                .convertRatesTo(rateTimeUnit)
+                .convertDurationsTo(durationTimeUnit)
                 .build();
     }
 
     @Override
     public void start() {
-        slf4jReport.start(config.interval(), TimeUnit.MILLISECONDS);
+        slf4jReport.start(interval, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -91,13 +95,13 @@ public final class Slf4JMetricsReport implements MetricsReport {
         }
         else {
             final Slf4JMetricsReport that = (Slf4JMetricsReport) o;
-            equals = Objects.equals(config, that.config) && Objects.equals(slf4jReport, that.slf4jReport);
+            equals = interval == that.interval && Objects.equals(slf4jReport, that.slf4jReport);
         }
         return equals;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(config, slf4jReport);
+        return Objects.hash(interval, slf4jReport);
     }
 }

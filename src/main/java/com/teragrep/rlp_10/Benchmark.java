@@ -46,241 +46,48 @@
 package com.teragrep.rlp_10;
 
 import com.teragrep.cnf_01.ConfigurationException;
-import com.teragrep.net_01.channel.context.ConnectContextFactory;
-import com.teragrep.net_01.channel.socket.PlainFactory;
-import com.teragrep.net_01.channel.socket.SocketFactory;
-import com.teragrep.net_01.channel.socket.TLSFactory;
-import com.teragrep.net_01.eventloop.EventLoop;
-import com.teragrep.net_01.eventloop.EventLoopFactory;
-import com.teragrep.rlp_03.client.RelpClientFactory;
-import com.teragrep.rlp_10.config.*;
 import com.teragrep.rlp_10.report.MetricsReport;
-import com.teragrep.rlp_10.report.PrometheusMetricsReport;
-import com.teragrep.rlp_10.report.Slf4JMetricsReport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.TrustManagerFactory;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.security.*;
-import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.Function;
 
 /**
- * Benchmark tests a relp endpoint
+ * Benchmark runs a set of MetricsReports and starts an instance of BenchmarkExecution within a given ExecutorService
  */
-public final class Benchmark implements Callable<Long> {
+public final class Benchmark {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Benchmark.class);
     private final ExecutorService executorService;
-    private final InitiatorConfig initiatorConfig;
-    private final MetricsConfig metricsConfig;
-    private final PrometheusConfig prometheusConfig;
-    private final TimeoutConfig timeoutConfig;
-    private final TransportConfig transportConfig;
-    private final RecordStreamConfig recordStreamConfig;
-    private final ReportConfig reportConfig;
-    private final SocketAddressConfig socketAddressConfig;
-    private final DelayConfig delayConfig;
-    private final SyslogConfig syslogConfig;
-    private final Map<EventLoop, List<Initiator>> eventLoops;
     private final List<MetricsReport> reports;
-    private final List<Future<Long>> executorTasks;
+    private final BenchmarkExecution benchmarkExecution;
 
     public Benchmark(
-            final InitiatorConfig initiatorConfig,
-            final MetricsConfig metricsConfig,
-            final PrometheusConfig prometheusConfig,
-            final TimeoutConfig timeoutConfig,
-            final TransportConfig transportConfig,
-            final RecordStreamConfig recordStreamConfig,
-            final ReportConfig reportConfig,
-            final SocketAddressConfig socketAddressConfig,
-            final DelayConfig delayConfig,
-            final SyslogConfig syslogConfig
+            final ExecutorService executorService,
+            final BenchmarkExecution benchmarkExecution,
+            final List<MetricsReport> reports
     ) {
-        this.executorService = Executors.newVirtualThreadPerTaskExecutor();
-        this.initiatorConfig = initiatorConfig;
-        this.metricsConfig = metricsConfig;
-        this.prometheusConfig = prometheusConfig;
-        this.timeoutConfig = timeoutConfig;
-        this.transportConfig = transportConfig;
-        this.recordStreamConfig = recordStreamConfig;
-        this.reportConfig = reportConfig;
-        this.socketAddressConfig = socketAddressConfig;
-        this.delayConfig = delayConfig;
-        this.syslogConfig = syslogConfig;
-        this.eventLoops = new HashMap<>();
-        this.reports = new ArrayList<>();
-        this.executorTasks = new ArrayList<>();
+        this.executorService = executorService;
+        this.reports = List.copyOf(reports);
+        this.benchmarkExecution = benchmarkExecution;
     }
 
-    public Long call() {
-        final Metrics metrics = new Metrics(metricsConfig);
-
-        // reports
-        try {
-            final int prometheusPort = prometheusConfig.port();
-            final PrometheusMetricsReport prometheusMetricsReport = new PrometheusMetricsReport(
-                    metrics.registry(),
-                    prometheusPort
-            );
-            reports.add(prometheusMetricsReport);
-            final Slf4JMetricsReport slf4JMetricsReport = new Slf4JMetricsReport(metrics.registry(), reportConfig);
-            reports.add(slf4JMetricsReport);
-
-            for (final MetricsReport report : reports) {
-                report.start();
-            }
-
-            // recordStream is shared across all Initiators. Initiators ask for records until the recordstream is exhausted
-            final RecordStream recordStream = new RecordStreamImpl(
-                    new Hostname("defaultOrigin").toString(),
-                    syslogConfig.hostname(),
-                    syslogConfig.appName(),
-                    recordStreamConfig.records()
-            );
-
-            // apply delay to recordStream if configured
-            final RecordStream delayedStream;
-            if (delayConfig.delay() > 0) {
-                delayedStream = new RecordStreamDelay(delayConfig.delay(), recordStream);
-            }
-            else {
-                delayedStream = recordStream;
-            }
-
-            final EventLoopFactory eventLoopFactory = new EventLoopFactory();
-            final SocketFactory socketFactory = createSocketFactory();
-            final int baseInitiators = initiatorConfig.initiatorCount() / initiatorConfig.eventLoopCount();
-            final int remainder = initiatorConfig.initiatorCount() % initiatorConfig.eventLoopCount();
-            final List<Initiator> initiators = new ArrayList<>();
-            // create and start a thread for configured number of EventLoops and distribute configured number of Initiators among them equally
-            for (int eventLoopCount = 0; eventLoopCount < initiatorConfig.eventLoopCount(); eventLoopCount++) {
-                final EventLoop eventLoop = eventLoopFactory.create();
-                executorService.submit(eventLoop);
-
-                final ConnectContextFactory connectContextFactory = new ConnectContextFactory(
-                        executorService,
-                        socketFactory
-                );
-
-                // use remainder to determine if this EventLoop should get an additional Initiator or not in order to fit all Initiators within configured number of EventLoops
-                final int initiatorsForEventLoop = baseInitiators + (eventLoopCount < remainder ? 1 : 0);
-                final RelpClientFactory relpClientFactory = new RelpClientFactory(connectContextFactory, eventLoop);
-                for (int initiatorCount = 0; initiatorCount < initiatorsForEventLoop; initiatorCount++) {
-                    final Initiator initiator = new Initiator(
-                            relpClientFactory,
-                            delayedStream,
-                            socketAddressConfig.hostname(),
-                            socketAddressConfig.port(),
-                            metrics,
-                            timeoutConfig.openTimeout(),
-                            timeoutConfig.payloadTimeout(),
-                            initiatorConfig.retryTransmissionCount(),
-                            initiatorConfig.retryConnectionCount()
-                    );
-                    executorTasks.add(executorService.submit(initiator));
-                    initiators.add(initiator);
-                }
-                eventLoops.put(eventLoop, initiators);
-            }
-
-            // shutdown hook in case JVM is terminated
-            final Thread shutdownHook = new Thread(this::stopBenchmark);
-            Runtime.getRuntime().addShutdownHook(shutdownHook);
-
-            // block until each task is complete
-            long totalRecords = 0;
-            for (final Future<Long> task : executorTasks) {
-                final long taskRecords = task.get();
-                totalRecords += taskRecords;
-            }
-            stopBenchmark();
-            return totalRecords;
+    public Future<Long> start() throws ConfigurationException, InterruptedException, ExecutionException, IOException {
+        // start reports
+        for (final MetricsReport report : reports) {
+            report.start();
         }
-        catch (final InterruptedException | ExecutionException | IOException | ConfigurationException e) {
-            LOGGER.error("An unrecoverable Exception occurred while running Benchmark!", e);
-            // unrecoverable exceptions
-            throw new RuntimeException(e);
-        }
+        // start benchmark execution
+        Future<Long> execution = executorService.submit(benchmarkExecution);
+        return execution;
     }
 
-    private void stopBenchmark() {
-        for (final Map.Entry<EventLoop, List<Initiator>> entry : eventLoops.entrySet()) {
-            final List<Initiator> initiators = entry.getValue();
-            final EventLoop eventLoop = entry.getKey();
-            // tell each initiator to stop as soon as they can
-            for (final Initiator initiator : initiators) {
-                initiator.stop();
-            }
-            eventLoop.stop(); // do not close, stop it, it's automatic due to a "feature" https://github.com/teragrep/net_01/issues/30
-        }
-
+    public void stop() {
+        benchmarkExecution.stop();
+        // stop reports
         for (final MetricsReport report : reports) {
             report.stop();
         }
-
         executorService.shutdown();
-    }
-
-    /**
-     * A method that produces {@link SocketFactory}
-     *
-     * @return
-     */
-    private SocketFactory createSocketFactory() {
-        final SocketFactory rv;
-        if (!transportConfig.tls()) {
-            rv = new PlainFactory();
-        }
-        else {
-            try {
-                final SSLContext sslContext = SSLContext.getInstance(transportConfig.protocol());
-                final KeyStore ks = KeyStore.getInstance("JKS");
-                final KeyStore ts = KeyStore.getInstance("JKS");
-
-                final File ksFile = transportConfig.keyStoreFile();
-                final File tsFile = transportConfig.trustStoreFile();
-
-                final FileInputStream ksFileIS = new FileInputStream(ksFile);
-                final FileInputStream tsFileIS = new FileInputStream(tsFile);
-                ts.load(tsFileIS, transportConfig.trustStorePassword().toCharArray());
-                final TrustManagerFactory tmf = TrustManagerFactory
-                        .getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                tmf.init(ts);
-
-                ks.load(ksFileIS, transportConfig.keyStorePassword().toCharArray());
-                final KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                kmf.init(ks, transportConfig.keyStorePassword().toCharArray());
-                sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-
-                tsFileIS.close();
-                ksFileIS.close();
-
-                final Function<SSLContext, SSLEngine> sslEngineFunction = context -> {
-                    final SSLEngine engine = context.createSSLEngine();
-                    engine.setUseClientMode(true);
-                    return engine;
-                };
-                rv = new TLSFactory(sslContext, sslEngineFunction);
-            }
-            catch (
-                final KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException
-                        | UnrecoverableKeyException | KeyManagementException e
-            ) {
-                // unrecoverable error
-                throw new RuntimeException("Error while initializing TLS connection, check your configuration!", e);
-            }
-        }
-        return rv;
     }
 
     @Override
@@ -295,19 +102,14 @@ public final class Benchmark implements Callable<Long> {
         else {
             final Benchmark benchmark = (Benchmark) o;
             equals = Objects.equals(executorService, benchmark.executorService) && Objects
-                    .equals(initiatorConfig, benchmark.initiatorConfig)
-                    && Objects.equals(metricsConfig, benchmark.metricsConfig) && Objects.equals(prometheusConfig, benchmark.prometheusConfig) && Objects.equals(timeoutConfig, benchmark.timeoutConfig) && Objects.equals(transportConfig, benchmark.transportConfig) && Objects.equals(recordStreamConfig, benchmark.recordStreamConfig) && Objects.equals(reportConfig, benchmark.reportConfig) && Objects.equals(socketAddressConfig, benchmark.socketAddressConfig) && Objects.equals(delayConfig, benchmark.delayConfig) && Objects.equals(syslogConfig, benchmark.syslogConfig) && Objects.equals(eventLoops, benchmark.eventLoops) && Objects.equals(reports, benchmark.reports) && Objects.equals(executorTasks, benchmark.executorTasks);
+                    .equals(reports, benchmark.reports)
+                    && Objects.equals(benchmarkExecution, benchmark.benchmarkExecution);
         }
         return equals;
     }
 
     @Override
     public int hashCode() {
-        return Objects
-                .hash(
-                        executorService, initiatorConfig, metricsConfig, prometheusConfig, timeoutConfig,
-                        transportConfig, recordStreamConfig, reportConfig, socketAddressConfig, delayConfig,
-                        syslogConfig, eventLoops, reports, executorTasks
-                );
+        return Objects.hash(executorService, reports, benchmarkExecution);
     }
 }

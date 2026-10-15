@@ -48,12 +48,20 @@ package com.teragrep.rlp_10;
 import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.cnf_01.PathConfiguration;
 import com.teragrep.cnf_01.PropertiesConfiguration;
-import com.teragrep.rlp_10.config.ConfigFactory;
+import com.teragrep.net_01.channel.socket.SocketFactory;
+import com.teragrep.rlp_10.config.*;
+import com.teragrep.rlp_10.report.MetricsReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public final class Main {
 
@@ -76,23 +84,65 @@ public final class Main {
 
         try {
             final ConfigFactory configFactory = new ConfigFactory(configurationValues);
-            final Benchmark benchmark = new Benchmark(
-                    configFactory.initiatorConfig(),
-                    configFactory.metricsConfig(),
-                    configFactory.prometheusConfig(),
-                    configFactory.timeoutConfig(),
-                    configFactory.transportConfig(),
-                    configFactory.recordStreamConfig(),
-                    configFactory.reportConfig(),
-                    configFactory.socketAddressConfig(),
-                    configFactory.delayConfig(),
-                    configFactory.syslogConfig()
+
+            // reusable config objects
+            final InitiatorConfig initiatorConfig = configFactory.initiatorConfig();
+            final TimeoutConfig timeoutConfig = configFactory.timeoutConfig();
+            final SocketAddressConfig socketAddressConfig = configFactory.socketAddressConfig();
+            final SyslogConfig syslogConfig = configFactory.syslogConfig();
+            final OriginHostnameConfig originHostnameConfig = configFactory.originHostnameConfig();
+
+            // objects requiring complex initialization
+            final Metrics metrics = configFactory.metricsConfig().toMetrics();
+            final RecordStream recordStream = configFactory
+                    .recordStreamConfig()
+                    .toRecordStream(
+                            originHostnameConfig.hostname(), syslogConfig.hostname(), syslogConfig.appName(),
+                            configFactory.delayConfig().delay()
+                    );
+            final InitiatorFactory initiatorFactory = new InitiatorFactory(
+                    recordStream,
+                    metrics,
+                    socketAddressConfig.hostname(),
+                    socketAddressConfig.port(),
+                    timeoutConfig.openTimeout(),
+                    timeoutConfig.payloadTimeout(),
+                    initiatorConfig.retryTransmissionCount(),
+                    initiatorConfig.retryConnectionCount()
             );
-            long recordsSent = benchmark.call();
+            final SocketFactory socketFactory = configFactory.transportConfig().toSocketFactory();
+            final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
+            final BenchmarkExecution benchmarkExecution = new BenchmarkExecution(
+                    executorService,
+                    socketFactory,
+                    initiatorFactory,
+                    initiatorConfig.initiatorCount(),
+                    initiatorConfig.eventLoopCount()
+            );
+
+            final List<MetricsReport> reports = new ArrayList<>();
+            final Slf4jReportConfig slf4jReportConfig = configFactory.slf4jReportConfig();
+            final PrometheusReportConfig prometheusReportConfig = configFactory.prometheusReportConfig();
+            reports.add(slf4jReportConfig.toReport(metrics.registry()));
+            reports.add(prometheusReportConfig.toReport(metrics.registry()));
+
+            final Benchmark benchmark = new Benchmark(executorService, benchmarkExecution, reports);
+
+            // shutdownhook in case JVM is terminated
+            final Thread shutdownThread = new Thread(benchmark::stop);
+            Runtime.getRuntime().addShutdownHook(shutdownThread);
+
+            // start benchmark and block until copmletion
+            final long recordsSent = benchmark.start().get();
             System.out.println(recordsSent);
         }
         catch (final ConfigurationException configurationException) {
             LOGGER.error("Invalid configuration!", configurationException);
+            System.exit(1);
+        }
+        catch (final InterruptedException | IOException | ExecutionException unrecoverableException) {
+            LOGGER.error("An unrecoverable exception occurred!", unrecoverableException);
+            System.exit(1);
         }
     }
 }

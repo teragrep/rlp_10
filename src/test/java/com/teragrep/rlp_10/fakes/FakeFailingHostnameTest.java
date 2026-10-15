@@ -43,32 +43,18 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_10.config;
+package com.teragrep.rlp_10.fakes;
 
-import com.teragrep.cnf_01.ConfigurationException;
-import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public final class PrometheusConfigTest {
+import java.net.UnknownHostException;
+
+public class FakeFailingHostnameTest {
 
     @Test
-    void testValidPort() {
-        final int expectedPort = 8080;
-        final PrometheusConfig prometheusConfig = new PrometheusConfig(expectedPort);
-        final int port = Assertions.assertDoesNotThrow(() -> prometheusConfig.port());
-        Assertions.assertEquals(expectedPort, port);
-    }
-
-    @Test
-    void testInvalidPort() {
-        final int invalidPort = 65536;
-        final PrometheusConfig prometheusConfig = new PrometheusConfig(invalidPort);
-        Assertions.assertThrows(ConfigurationException.class, () -> prometheusConfig.port());
-    }
-
-    @Test
-    public void testContract() {
-        EqualsVerifier.forClass(PrometheusConfig.class).verify();
+    public void testFakeFailingHostname() {
+        final FakeFailingHostname hostname = new FakeFailingHostname();
+        Assertions.assertThrows(UnknownHostException.class, () -> hostname.hostname());
     }
 }

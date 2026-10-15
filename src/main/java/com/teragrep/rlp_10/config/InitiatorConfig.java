@@ -79,6 +79,21 @@ public final class InitiatorConfig {
         return initiatorCount;
     }
 
+    public int eventLoopCount() throws ConfigurationException {
+        if (eventLoopCount < 1) {
+            throw new ConfigurationException("Must have at least one EventLoop!");
+        }
+        return eventLoopCount;
+    }
+
+    public int retryTransmissionCount() {
+        return retryTransmissionCount;
+    }
+
+    public int retryConnectionCount() {
+        return retryConnectionCount;
+    }
+
     @Override
     public boolean equals(final Object o) {
         final boolean equals;
@@ -100,20 +115,4 @@ public final class InitiatorConfig {
     public int hashCode() {
         return Objects.hash(initiatorCount, retryTransmissionCount, retryConnectionCount, eventLoopCount);
     }
-
-    public int eventLoopCount() throws ConfigurationException {
-        if (eventLoopCount < 1) {
-            throw new ConfigurationException("Must have at least one EventLoop!");
-        }
-        return eventLoopCount;
-    }
-
-    public int retryTransmissionCount() {
-        return retryTransmissionCount;
-    }
-
-    public int retryConnectionCount() {
-        return retryConnectionCount;
-    }
-
 }

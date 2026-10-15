@@ -45,6 +45,8 @@
  */
 package com.teragrep.rlp_10.config;
 
+import com.teragrep.cnf_01.ConfigurationException;
+
 import java.util.Objects;
 
 public final class SocketAddressConfig {
@@ -65,7 +67,10 @@ public final class SocketAddressConfig {
         return hostname;
     }
 
-    public int port() {
+    public int port() throws ConfigurationException {
+        if (port <= 0) {
+            throw new ConfigurationException("Port cannot be neagtive!");
+        }
         return port;
     }
 

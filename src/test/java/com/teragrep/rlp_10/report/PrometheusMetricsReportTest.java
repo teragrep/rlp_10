@@ -46,12 +46,14 @@
 package com.teragrep.rlp_10.report;
 
 import com.teragrep.net_01.channel.socket.PlainFactory;
+import com.teragrep.net_01.channel.socket.SocketFactory;
 import com.teragrep.net_01.eventloop.EventLoop;
 import com.teragrep.net_01.eventloop.EventLoopFactory;
 import com.teragrep.net_01.server.ServerFactory;
 import com.teragrep.rlp_03.frame.FrameDelegationClockFactory;
 import com.teragrep.rlp_03.frame.delegate.DefaultFrameDelegate;
-import com.teragrep.rlp_10.Benchmark;
+import com.teragrep.rlp_03.frame.delegate.FrameDelegate;
+import com.teragrep.rlp_10.*;
 import com.teragrep.rlp_10.config.*;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.eclipse.jetty.server.Server;
@@ -61,84 +63,95 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public final class PrometheusMetricsReportTest {
 
     private EventLoop eventLoop;
-    private Thread eventLoopThread;
     private ExecutorService executorService;
 
     private final MetricsConfig metricsConfiguration = new MetricsConfig();
-    private final PrometheusConfig prometheusConfiguration = new PrometheusConfig();
     private final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
     private final TransportConfig transportConfiguration = new TransportConfig();
-    private final ReportConfig reportConfig = new ReportConfig();
     private final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
     private final DelayConfig delayConfig = new DelayConfig();
     private final SyslogConfig syslogConfig = new SyslogConfig();
+    private final OriginHostnameConfig originHostnameConfig = new OriginHostnameConfig("someOrigin");
 
     private final ConcurrentLinkedDeque<byte[]> messageDeque = new ConcurrentLinkedDeque<>();
 
-    @BeforeAll
-    public void init() {
-        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
+    private void init(final Supplier<FrameDelegate> frameDelegateSupplier) {
 
         final EventLoopFactory eventLoopFactory = new EventLoopFactory();
         Assertions.assertDoesNotThrow(() -> eventLoop = eventLoopFactory.create());
+        executorService = Executors.newVirtualThreadPerTaskExecutor();
+        executorService.submit(eventLoop);
 
-        eventLoopThread = new Thread(eventLoop);
-        eventLoopThread.start();
-
-        executorService = Executors.newSingleThreadExecutor();
         final ServerFactory serverFactory = new ServerFactory(
                 eventLoop,
                 executorService,
                 new PlainFactory(),
-                new FrameDelegationClockFactory(() -> new DefaultFrameDelegate((frame) -> messageDeque.add(frame.relpFrame().payload().toBytes())))
+                new FrameDelegationClockFactory(() -> frameDelegateSupplier.get())
         );
         Assertions.assertDoesNotThrow(() -> serverFactory.create(socketAddressConfig.port()));
     }
 
-    @AfterAll
-    public void cleanup() {
+    @AfterEach
+    public void clearMessageList() {
         eventLoop.stop();
         executorService.shutdown();
-        Assertions.assertDoesNotThrow(() -> eventLoopThread.join());
+        // clear received list
+        messageDeque.clear();
     }
 
     @Test
     public void testPrometheusServer() {
-        final int clients = 50;
-        final int messageCount = 10000;
+        final int prometheusPort = 8080;
+        init(() -> new DefaultFrameDelegate((frame) -> messageDeque.add(frame.relpFrame().payload().toBytes())));
+        final int initiatorCount = 50;
+        final long messageCount = 10000;
         final int retryTransmissionCount = 3;
         final int retryConnectionCount = 3;
         final int eventLoopCount = 2;
-        final InitiatorConfig initiatorConfig = new InitiatorConfig(
-                clients,
+
+        final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::toSocketFactory);
+        final RecordStream recordStream = new RecordStreamConfig(messageCount)
+                .toRecordStream(
+                        originHostnameConfig.hostname(), syslogConfig.hostname(), syslogConfig.appName(),
+                        Assertions.assertDoesNotThrow(delayConfig::delay)
+                );
+        final Metrics metrics = metricsConfiguration.toMetrics();
+        final InitiatorFactory initiatorFactory = new InitiatorFactory(
+                recordStream,
+                metrics,
+                socketAddressConfig.hostname(),
+                Assertions.assertDoesNotThrow(() -> socketAddressConfig.port()),
+                Assertions.assertDoesNotThrow(() -> timeoutConfiguration.openTimeout()),
+                Assertions.assertDoesNotThrow(() -> timeoutConfiguration.payloadTimeout()),
                 retryTransmissionCount,
-                retryConnectionCount,
+                retryConnectionCount
+        );
+        final BenchmarkExecution benchmarkExecution = new BenchmarkExecution(
+                executorService,
+                socketFactory,
+                initiatorFactory,
+                initiatorCount,
                 eventLoopCount
         );
-        final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(messageCount);
-        final Benchmark benchmark = new Benchmark(
-                initiatorConfig,
-                metricsConfiguration,
-                prometheusConfiguration,
-                timeoutConfiguration,
-                transportConfiguration,
-                recordStreamConfig,
-                reportConfig,
-                socketAddressConfig,
-                delayConfig,
-                syslogConfig
-        );
-        final ExecutorService forkJoinPool = ForkJoinPool.commonPool();
-        final Future<Long> clientRecords = forkJoinPool.submit(benchmark);
+
+        final List<MetricsReport> reports = new ArrayList<>();
+        final PrometheusMetricsReport report = new PrometheusMetricsReport(metrics.registry(), prometheusPort);
+        reports.add(report);
+
+        final Benchmark benchmark = new Benchmark(executorService, benchmarkExecution, reports);
+
+        final Future<Long> clientRecords = Assertions.assertDoesNotThrow(() -> benchmark.start());
         final HttpClient client = HttpClient.newHttpClient();
-        final int prometheusPort = Assertions.assertDoesNotThrow(() -> prometheusConfiguration.port());
         final HttpRequest request = HttpRequest
                 .newBuilder()
                 .uri(URI.create("http://localhost:" + prometheusPort + "/metrics"))
@@ -156,7 +169,6 @@ public final class PrometheusMetricsReportTest {
         });
         Assertions.assertEquals(messageCount, recordsSent.get());
 
-        forkJoinPool.close();
         client.close();
         // assert that HTTP response contains information about each metric in prometheus format
         Assertions

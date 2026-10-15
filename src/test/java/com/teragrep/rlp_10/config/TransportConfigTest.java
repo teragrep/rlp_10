@@ -54,4 +54,8 @@ public final class TransportConfigTest {
     public void testContract() {
         EqualsVerifier.forClass(TransportConfig.class).verify();
     }
+
+    @Test
+    void socketFactory() {
+    }
 }

@@ -45,48 +45,9 @@
  */
 package com.teragrep.rlp_10;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Objects;
 
-public final class Hostname {
+public interface Hostname {
 
-    private final String defaultHostname;
-    private static final Logger LOGGER = LoggerFactory.getLogger(Hostname.class);
-
-    public Hostname(final String defaultHostname) {
-        this.defaultHostname = defaultHostname;
-    }
-
-    public String hostname() {
-        String rv;
-        try {
-            rv = InetAddress.getLocalHost().getHostName();
-        }
-        catch (UnknownHostException e) {
-            rv = defaultHostname;
-            LOGGER.warn("Could not determine hostname, defaulting to <{}>", defaultHostname, e);
-        }
-        return rv;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        Hostname hostname = (Hostname) o;
-        return Objects.equals(defaultHostname, hostname.defaultHostname);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(defaultHostname);
-    }
+    public abstract String hostname() throws UnknownHostException;
 }

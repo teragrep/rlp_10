@@ -43,51 +43,23 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_10.config;
+package com.teragrep.rlp_10.fakes;
 
-import com.teragrep.cnf_01.ConfigurationException;
+import com.teragrep.rlp_10.Hostname;
 
-import java.util.Objects;
+import java.net.UnknownHostException;
 
-public final class PrometheusConfig {
+/**
+ * Fake Hostname that simulates a failure to fetch hostname
+ */
 
-    private final int port;
+public class FakeFailingHostname implements Hostname {
 
-    public PrometheusConfig() {
-        this(8080);
+    public FakeFailingHostname() {
+
     }
 
-    public PrometheusConfig(final int port) {
-        this.port = port;
-    }
-
-    public int port() throws ConfigurationException {
-        if (port < 1 || port > 65535) {
-            throw new ConfigurationException("Prometheus port " + port + " is not within expected range (1 - 65535)!");
-        }
-        else {
-            return port;
-        }
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        final boolean equals;
-        if (this == o) {
-            equals = true;
-        }
-        else if (o == null || getClass() != o.getClass()) {
-            equals = false;
-        }
-        else {
-            final PrometheusConfig that = (PrometheusConfig) o;
-            equals = port == that.port;
-        }
-        return equals;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(port);
+    public String hostname() throws UnknownHostException {
+        throw new UnknownHostException("Failed to retrieve hostname!");
     }
 }

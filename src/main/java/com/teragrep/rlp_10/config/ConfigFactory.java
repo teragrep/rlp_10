@@ -59,6 +59,13 @@ public final class ConfigFactory {
 
     private final Map<String, String> configValues;
 
+    /**
+     * Takes key-value pairs as a Map of Strings and creates various Config objects based on values received, applying
+     * defaults for any omitted values. Methods throw a ConfigurationException if any of the provided values are of
+     * invalid type.
+     *
+     * @param configValues Map<String,String> containing configuration key-value pairs
+     */
     public ConfigFactory(final Map<String, String> configValues) {
         this.configValues = Collections.unmodifiableMap(configValues);
     }
@@ -67,6 +74,9 @@ public final class ConfigFactory {
         final String configuredDuration = configValues.getOrDefault("delay.duration", "PT0S");
         try {
             final Duration delayDuration = Duration.parse(configuredDuration);
+            if (delayDuration.isNegative()) {
+                throw new ConfigurationException("Delay duration cannot be negative!");
+            }
             return new DelayConfig(delayDuration);
         }
         catch (final DateTimeParseException dateTimeParseException) {
@@ -112,11 +122,11 @@ public final class ConfigFactory {
         }
     }
 
-    public PrometheusConfig prometheusConfig() throws ConfigurationException {
+    public PrometheusReportConfig prometheusReportConfig() throws ConfigurationException {
         final String configuredPort = configValues.getOrDefault("prometheus.port", "8080");
         try {
             final int port = Integer.parseInt(configuredPort);
-            return new PrometheusConfig(port);
+            return new PrometheusReportConfig(port);
         }
         catch (final NumberFormatException numberFormatException) {
             throw new ConfigurationException(
@@ -141,7 +151,7 @@ public final class ConfigFactory {
         }
     }
 
-    public ReportConfig reportConfig() throws ConfigurationException {
+    public Slf4jReportConfig slf4jReportConfig() throws ConfigurationException {
         final String configuredInterval = configValues.getOrDefault("report.interval", "1000");
         final String configuredRateTimeUnit = configValues.getOrDefault("report.ratetimeunit", "SECONDS");
         final String configuredDurationTimeUnit = configValues.getOrDefault("report.durationtimeunit", "MILLISECONDS");
@@ -149,7 +159,7 @@ public final class ConfigFactory {
             final long interval = Long.parseLong(configuredInterval);
             final TimeUnit rateTimeUnit = TimeUnit.valueOf(configuredRateTimeUnit);
             final TimeUnit durationTimeUnit = TimeUnit.valueOf(configuredDurationTimeUnit);
-            return new ReportConfig(interval, rateTimeUnit, durationTimeUnit);
+            return new Slf4jReportConfig(interval, rateTimeUnit, durationTimeUnit);
         }
         catch (final IllegalArgumentException illegalArgumentException) {
             throw new ConfigurationException(
@@ -181,18 +191,24 @@ public final class ConfigFactory {
         return new SyslogConfig(configuredHostname, configuredAppName);
     }
 
+    public OriginHostnameConfig originHostnameConfig() {
+        final String configuredFallbackHostname = configValues.getOrDefault("origin.fallbackHostname", "defaultOrigin");
+        return new OriginHostnameConfig(configuredFallbackHostname);
+    }
+
     public TimeoutConfig timeoutConfig() throws ConfigurationException {
-        final String configuredOpenTimeout = configValues.getOrDefault("timeout.open", "10");
-        final String configuredPayloadTimeout = configValues.getOrDefault("timeout.payload", "5");
         try {
-            final long openTimeout = Long.parseLong(configuredOpenTimeout);
-            final long payloadTimeout = Long.parseLong(configuredPayloadTimeout);
+            final Duration configuredOpenTimeout = Duration.parse(configValues.getOrDefault("timeout.open", "PT10S"));
+            final Duration configuredPayloadTimeout = Duration
+                    .parse(configValues.getOrDefault("timeout.payload", "PT5S"));
+            final long openTimeout = configuredOpenTimeout.toNanos();
+            final long payloadTimeout = configuredPayloadTimeout.toNanos();
             return new TimeoutConfig(openTimeout, payloadTimeout);
         }
-        catch (final NumberFormatException numberFormatException) {
+        catch (final DateTimeParseException dateTimeParseException) {
             throw new ConfigurationException(
                     "TimeoutConfig contains invalid configuration value!",
-                    numberFormatException
+                    dateTimeParseException
             );
         }
     }

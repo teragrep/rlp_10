@@ -43,58 +43,51 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_10.config;
+package com.teragrep.rlp_10;
 
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
+import com.teragrep.rlp_03.frame.delegate.FrameContext;
+import com.teragrep.rlp_03.frame.delegate.FrameDelegate;
 
-public final class ReportConfig {
+import java.util.concurrent.locks.LockSupport;
 
-    private final long interval;
-    private final TimeUnit rateTimeUnit;
-    private final TimeUnit durationTimeUnit;
+/**
+ * Initially delays open and syslog transmissions by a configured delay, with delay rapidly decreasing for each received
+ * message
+ */
+public class AcceleratingDelegate implements FrameDelegate {
 
-    public ReportConfig() {
-        this(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
-    }
+    private final FrameDelegate origin;
+    private final long initialOpenDelay;
+    private final long initialSyslogDelay;
+    private int openCount = 1;
+    private int syslogCount = 1;
 
-    public ReportConfig(final long intervalMs, final TimeUnit rateTimeUnit, final TimeUnit durationTimeUnit) {
-        this.interval = intervalMs;
-        this.rateTimeUnit = rateTimeUnit;
-        this.durationTimeUnit = durationTimeUnit;
-    }
-
-    public long interval() {
-        return interval;
-    }
-
-    public TimeUnit rateTimeUnit() {
-        return rateTimeUnit;
-    }
-
-    public TimeUnit durationTimeUnit() {
-        return durationTimeUnit;
+    public AcceleratingDelegate(final FrameDelegate origin, final long openDelayNanos, final long syslogDelayNanos) {
+        this.origin = origin;
+        this.initialOpenDelay = openDelayNanos;
+        this.initialSyslogDelay = syslogDelayNanos;
     }
 
     @Override
-    public boolean equals(final Object o) {
-        final boolean equals;
-        if (this == o) {
-            equals = true;
+    public boolean accept(final FrameContext frameContext) {
+        if (frameContext.relpFrame().command().toString().equals("open")) {
+            LockSupport.parkNanos(initialOpenDelay / openCount);
+            openCount++;
         }
-        else if (o == null || getClass() != o.getClass()) {
-            equals = false;
+        else if (frameContext.relpFrame().command().toString().equals("syslog")) {
+            LockSupport.parkNanos(initialSyslogDelay / syslogCount);
+            syslogCount++;
         }
-        else {
-            final ReportConfig that = (ReportConfig) o;
-            equals = interval == that.interval && rateTimeUnit == that.rateTimeUnit
-                    && durationTimeUnit == that.durationTimeUnit;
-        }
-        return equals;
+        return origin.accept(frameContext);
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(interval, rateTimeUnit, durationTimeUnit);
+    public void close() throws Exception {
+        origin.close();
+    }
+
+    @Override
+    public boolean isStub() {
+        return false;
     }
 }
