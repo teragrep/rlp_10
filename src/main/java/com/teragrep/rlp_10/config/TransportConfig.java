@@ -58,7 +58,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.Objects;
@@ -72,10 +71,6 @@ public final class TransportConfig {
     private final String keystorePassword;
     private final String truststorePassword;
     private final String protocol;
-
-    public TransportConfig() {
-        this(false, Paths.get("tls/keystore.jks"), Paths.get("tls/truststore.jks"), "password", "password", "TLSv1.3");
-    }
 
     public TransportConfig(
             final boolean tls,

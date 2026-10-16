@@ -58,10 +58,6 @@ public final class Slf4jReportConfig {
     private final TimeUnit rateTimeUnit;
     private final TimeUnit durationTimeUnit;
 
-    public Slf4jReportConfig() {
-        this(1000, TimeUnit.SECONDS, TimeUnit.MILLISECONDS);
-    }
-
     public Slf4jReportConfig(final long interval, final TimeUnit rateTimeUnit, final TimeUnit durationTimeUnit) {
         this.interval = interval;
         this.rateTimeUnit = rateTimeUnit;

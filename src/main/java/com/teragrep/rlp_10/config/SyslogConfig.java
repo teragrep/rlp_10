@@ -52,10 +52,6 @@ public final class SyslogConfig {
     private final String hostname;
     private final String appName;
 
-    public SyslogConfig() {
-        this("localhost", "appName");
-    }
-
     public SyslogConfig(final String hostname, final String appName) {
         this.hostname = hostname;
         this.appName = appName;

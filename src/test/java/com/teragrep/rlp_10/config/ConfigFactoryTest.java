@@ -51,6 +51,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -139,7 +140,7 @@ public final class ConfigFactoryTest {
         Assertions.assertEquals(3, initiatorConfig.retryConnectionCount());
         Assertions.assertEquals(3, initiatorConfig.retryTransmissionCount());
         Assertions.assertEquals(100000, recordStreamConfig.records());
-        Assertions.assertEquals(1000000000, Assertions.assertDoesNotThrow(delayConfig::delay));
+        Assertions.assertEquals(Duration.ofSeconds(1).toNanos(), Assertions.assertDoesNotThrow(delayConfig::delay));
         Assertions.assertEquals(2000, metricsConfig.window());
         Assertions.assertEquals(8000, Assertions.assertDoesNotThrow(() -> prometheusConfig.port()));
         Assertions.assertEquals(60000, Assertions.assertDoesNotThrow(() -> reportConfig.interval()));
@@ -149,8 +150,10 @@ public final class ConfigFactoryTest {
         Assertions.assertEquals(1601, Assertions.assertDoesNotThrow(() -> socketAddressConfig.port()));
         Assertions.assertEquals("testApp", syslogConfig.appName());
         Assertions.assertEquals("localhost", syslogConfig.hostname());
-        Assertions.assertEquals(1000000000, Assertions.assertDoesNotThrow(() -> timeoutConfig.openTimeout()));
-        Assertions.assertEquals(5000000000L, Assertions.assertDoesNotThrow(() -> timeoutConfig.payloadTimeout()));
+        Assertions
+                .assertEquals(Duration.ofSeconds(1).toNanos(), Assertions.assertDoesNotThrow(() -> timeoutConfig.openTimeout()));
+        Assertions
+                .assertEquals(Duration.ofSeconds(5).toNanos(), Assertions.assertDoesNotThrow(() -> timeoutConfig.payloadTimeout()));
         Assertions.assertEquals(true, transportConfig.tls());
         Assertions.assertEquals("changeit", transportConfig.keyStorePassword());
         Assertions.assertEquals("changeit", transportConfig.trustStorePassword());

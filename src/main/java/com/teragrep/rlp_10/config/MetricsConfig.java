@@ -53,10 +53,6 @@ public final class MetricsConfig {
 
     private final int window;
 
-    public MetricsConfig() {
-        this(10000);
-    }
-
     public MetricsConfig(final int window) {
         this.window = window;
     }

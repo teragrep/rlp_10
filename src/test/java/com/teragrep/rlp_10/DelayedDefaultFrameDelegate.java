@@ -65,10 +65,6 @@ public class DelayedDefaultFrameDelegate implements FrameDelegate {
 
     private final FrameDelegate frameDelegate;
 
-    public DelayedDefaultFrameDelegate(final Consumer<FrameContext> cbFunction) {
-        this(cbFunction, 4000000000L, 4000000000L);
-    }
-
     public DelayedDefaultFrameDelegate(
             final Consumer<FrameContext> cbFunction,
             final long connectionDelayNanos,

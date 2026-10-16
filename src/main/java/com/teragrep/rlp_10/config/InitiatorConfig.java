@@ -56,10 +56,6 @@ public final class InitiatorConfig {
     private final int retryConnectionCount;
     private final int eventLoopCount;
 
-    public InitiatorConfig() {
-        this(1, 3, 3, 1);
-    }
-
     public InitiatorConfig(
             final int initiatorCount,
             final int retryTransmissionCount,

@@ -54,10 +54,6 @@ public final class TimeoutConfig {
     private final long openTimeout;
     private final long payloadTimeout;
 
-    public TimeoutConfig() {
-        this(10000000000L, 5000000000L);
-    }
-
     public TimeoutConfig(final long openTimeout, final long payloadTimeout) {
         this.openTimeout = openTimeout;
         this.payloadTimeout = payloadTimeout;
