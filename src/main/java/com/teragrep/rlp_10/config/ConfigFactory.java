@@ -46,6 +46,7 @@
 package com.teragrep.rlp_10.config;
 
 import com.teragrep.cnf_01.ConfigurationException;
+import com.teragrep.hst_01.config.HostnameConfig;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -191,9 +192,9 @@ public final class ConfigFactory {
         return new SyslogConfig(configuredHostname, configuredAppName);
     }
 
-    public OriginHostnameConfig originHostnameConfig() {
+    public HostnameConfig originHostnameConfig() {
         final String configuredFallbackHostname = configValues.getOrDefault("origin.fallbackHostname", "defaultOrigin");
-        return new OriginHostnameConfig(configuredFallbackHostname);
+        return new HostnameConfig(configuredFallbackHostname);
     }
 
     public TimeoutConfig timeoutConfig() throws ConfigurationException {
