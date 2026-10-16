@@ -71,7 +71,7 @@ class BenchmarkExecutionTest {
 
     private EventLoop eventLoop;
     private ExecutorService executorService;
-    final SocketAddressConfig socketAddressConfig = new SocketAddressConfig("localhost", 1601);
+    private final SocketAddressConfig socketAddressConfig = new SocketAddressConfig("localhost", 1601);
 
     // start a server
     public void init(final Supplier<FrameDelegate> frameDelegateSupplier) {
