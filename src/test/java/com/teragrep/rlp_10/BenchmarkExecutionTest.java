@@ -45,6 +45,7 @@
  */
 package com.teragrep.rlp_10;
 
+import com.teragrep.hst_01.config.HostnameConfig;
 import com.teragrep.net_01.channel.socket.PlainFactory;
 import com.teragrep.net_01.channel.socket.SocketFactory;
 import com.teragrep.net_01.eventloop.EventLoop;
@@ -104,7 +105,7 @@ class BenchmarkExecutionTest {
         final Metrics metrics = new MetricsConfig().toMetrics();
         final InitiatorConfig initiatorConfig = new InitiatorConfig();
         final SyslogConfig syslogConfig = new SyslogConfig();
-        final OriginHostnameConfig originHostnameConfig = new OriginHostnameConfig("someOrigin");
+        final HostnameConfig originHostnameConfig = new HostnameConfig("someOrigin");
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(expectedRecords);
         final DelayConfig delayConfig = new DelayConfig();
         final TimeoutConfig timeoutConfig = new TimeoutConfig();
@@ -118,7 +119,7 @@ class BenchmarkExecutionTest {
                 new InitiatorFactory(
                         recordStreamConfig
                                 .toRecordStream(
-                                        originHostnameConfig.hostname(), syslogConfig.hostname(),
+                                        originHostnameConfig.hostname().asString(), syslogConfig.hostname(),
                                         syslogConfig.appName(), Assertions.assertDoesNotThrow(delayConfig::delay)
                                 ),
                         metrics,

@@ -48,6 +48,7 @@ package com.teragrep.rlp_10;
 import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.cnf_01.PathConfiguration;
 import com.teragrep.cnf_01.PropertiesConfiguration;
+import com.teragrep.hst_01.config.HostnameConfig;
 import com.teragrep.net_01.channel.socket.SocketFactory;
 import com.teragrep.rlp_10.config.*;
 import com.teragrep.rlp_10.report.MetricsReport;
@@ -90,14 +91,14 @@ public final class Main {
             final TimeoutConfig timeoutConfig = configFactory.timeoutConfig();
             final SocketAddressConfig socketAddressConfig = configFactory.socketAddressConfig();
             final SyslogConfig syslogConfig = configFactory.syslogConfig();
-            final OriginHostnameConfig originHostnameConfig = configFactory.originHostnameConfig();
+            final HostnameConfig originHostnameConfig = configFactory.originHostnameConfig();
 
             // objects requiring complex initialization
             final Metrics metrics = configFactory.metricsConfig().toMetrics();
             final RecordStream recordStream = configFactory
                     .recordStreamConfig()
                     .toRecordStream(
-                            originHostnameConfig.hostname(), syslogConfig.hostname(), syslogConfig.appName(),
+                            originHostnameConfig.hostname().asString(), syslogConfig.hostname(), syslogConfig.appName(),
                             configFactory.delayConfig().delay()
                     );
             final InitiatorFactory initiatorFactory = new InitiatorFactory(
