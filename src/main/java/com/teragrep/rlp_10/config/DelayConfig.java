@@ -53,10 +53,6 @@ public final class DelayConfig {
 
     private final Duration delay;
 
-    public DelayConfig() {
-        this(Duration.ZERO);
-    }
-
     public DelayConfig(final Duration delay) {
         this.delay = delay;
     }

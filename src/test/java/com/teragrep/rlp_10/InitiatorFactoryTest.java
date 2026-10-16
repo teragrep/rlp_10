@@ -58,6 +58,7 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -71,10 +72,13 @@ class InitiatorFactoryTest {
 
         final int expectedInitiators = 500;
         final RecordStream recordStream = new RecordStreamImpl("testOrigin", "testHost", "testApp", 2500);
-        final Metrics metrics = new MetricsConfig().toMetrics();
-        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
-        final TimeoutConfig timeoutConfig = new TimeoutConfig();
-        final InitiatorConfig initiatorConfig = new InitiatorConfig();
+        final Metrics metrics = new MetricsConfig(10000).toMetrics();
+        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig("localhost", 1601);
+        final TimeoutConfig timeoutConfig = new TimeoutConfig(
+                Duration.ofSeconds(10).toNanos(),
+                Duration.ofSeconds(5).toNanos()
+        );
+        final InitiatorConfig initiatorConfig = new InitiatorConfig(1, 3, 3, 1);
         final InitiatorFactory initiatorFactory = new InitiatorFactory(
                 recordStream,
                 metrics,

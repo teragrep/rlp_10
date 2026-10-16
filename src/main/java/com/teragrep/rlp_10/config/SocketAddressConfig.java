@@ -54,10 +54,6 @@ public final class SocketAddressConfig {
     private final String hostname;
     private final int port;
 
-    public SocketAddressConfig() {
-        this("localhost", 1601);
-    }
-
     public SocketAddressConfig(final String hostname, final int port) {
         this.hostname = hostname;
         this.port = port;

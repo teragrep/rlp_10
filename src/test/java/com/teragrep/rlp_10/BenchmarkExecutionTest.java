@@ -60,6 +60,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
@@ -69,7 +71,7 @@ class BenchmarkExecutionTest {
 
     private EventLoop eventLoop;
     private ExecutorService executorService;
-    final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
+    final SocketAddressConfig socketAddressConfig = new SocketAddressConfig("localhost", 1601);
 
     // start a server
     public void init(final Supplier<FrameDelegate> frameDelegateSupplier) {
@@ -101,14 +103,24 @@ class BenchmarkExecutionTest {
 
         init(() -> new DefaultFrameDelegate((frame) -> {
         }));
-        final Metrics metrics = new MetricsConfig().toMetrics();
-        final InitiatorConfig initiatorConfig = new InitiatorConfig();
-        final SyslogConfig syslogConfig = new SyslogConfig();
+        final Metrics metrics = new MetricsConfig(10000).toMetrics();
+        final InitiatorConfig initiatorConfig = new InitiatorConfig(1, 3, 3, 1);
+        final SyslogConfig syslogConfig = new SyslogConfig("localhost", "appName");
         final OriginHostnameConfig originHostnameConfig = new OriginHostnameConfig("someOrigin");
         final RecordStreamConfig recordStreamConfig = new RecordStreamConfig(expectedRecords);
-        final DelayConfig delayConfig = new DelayConfig();
-        final TimeoutConfig timeoutConfig = new TimeoutConfig();
-        final TransportConfig transportConfig = new TransportConfig();
+        final DelayConfig delayConfig = new DelayConfig(Duration.ZERO);
+        final TimeoutConfig timeoutConfig = new TimeoutConfig(
+                Duration.ofSeconds(10).toNanos(),
+                Duration.ofSeconds(5).toNanos()
+        );
+        final TransportConfig transportConfig = new TransportConfig(
+                false,
+                Paths.get("tls/keystore.jks"),
+                Paths.get("tls/truststore.jks"),
+                "password",
+                "password",
+                "TLSv1.3"
+        );
         final SocketFactory socketFactory = Assertions.assertDoesNotThrow(() -> transportConfig.toSocketFactory());
         final int initiatorCount = Assertions.assertDoesNotThrow(() -> initiatorConfig.initiatorCount());
         final int eventLoopCount = Assertions.assertDoesNotThrow(() -> initiatorConfig.eventLoopCount());

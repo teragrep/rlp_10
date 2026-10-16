@@ -57,7 +57,7 @@ import java.util.concurrent.*;
 
 public final class MetricsTest {
 
-    final MetricsConfig config = new MetricsConfig();
+    final MetricsConfig config = new MetricsConfig(10000);
     final Metrics metrics = new Metrics(config.window());
     final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
 

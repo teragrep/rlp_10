@@ -63,6 +63,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -75,12 +77,22 @@ public final class PrometheusMetricsReportTest {
     private EventLoop eventLoop;
     private ExecutorService executorService;
 
-    private final MetricsConfig metricsConfiguration = new MetricsConfig();
-    private final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
-    private final TransportConfig transportConfiguration = new TransportConfig();
-    private final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
-    private final DelayConfig delayConfig = new DelayConfig();
-    private final SyslogConfig syslogConfig = new SyslogConfig();
+    private final MetricsConfig metricsConfiguration = new MetricsConfig(10000);
+    private final TimeoutConfig timeoutConfiguration = new TimeoutConfig(
+            Duration.ofSeconds(10).toNanos(),
+            Duration.ofSeconds(5).toNanos()
+    );
+    private final TransportConfig transportConfiguration = new TransportConfig(
+            false,
+            Paths.get("tls/keystore.jks"),
+            Paths.get("tls/truststore.jks"),
+            "password",
+            "password",
+            "TLSv1.3"
+    );
+    private final SocketAddressConfig socketAddressConfig = new SocketAddressConfig("localhost", 1601);
+    private final DelayConfig delayConfig = new DelayConfig(Duration.ZERO);
+    private final SyslogConfig syslogConfig = new SyslogConfig("localhost", "appName");
     private final OriginHostnameConfig originHostnameConfig = new OriginHostnameConfig("someOrigin");
 
     private final ConcurrentLinkedDeque<byte[]> messageDeque = new ConcurrentLinkedDeque<>();

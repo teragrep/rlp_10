@@ -65,6 +65,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.nio.file.Path;
 import java.security.KeyStore;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.concurrent.*;
 import java.util.function.Function;
@@ -80,8 +81,11 @@ public final class BenchmarkTLSTest {
     private ExecutorService executorService;
 
     // default configs to reduce clutter
-    private final MetricsConfig metricsConfiguration = new MetricsConfig();
-    private final TimeoutConfig timeoutConfiguration = new TimeoutConfig();
+    private final MetricsConfig metricsConfiguration = new MetricsConfig(10000);
+    private final TimeoutConfig timeoutConfiguration = new TimeoutConfig(
+            Duration.ofSeconds(10).toNanos(),
+            Duration.ofSeconds(5).toNanos()
+    );
     private final TransportConfig transportConfiguration = new TransportConfig(
             true,
             Path.of("src/test/resources/tls/keystore-client.jks"),
@@ -90,16 +94,15 @@ public final class BenchmarkTLSTest {
             "changeit",
             "TLSv1.3"
     );
-    private final Slf4jReportConfig reportConfig = new Slf4jReportConfig();
-    private final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
-    private final DelayConfig delayConfig = new DelayConfig();
-    private final SyslogConfig syslogConfig = new SyslogConfig();
+    private final SocketAddressConfig socketAddressConfig = new SocketAddressConfig("localhost", 1601);
+    private final DelayConfig delayConfig = new DelayConfig(Duration.ZERO);
+    private final SyslogConfig syslogConfig = new SyslogConfig("localhost", "appName");
     private final OriginHostnameConfig originHostnameConfig = new OriginHostnameConfig("someOrigin");
 
     private final ConcurrentLinkedDeque<byte[]> messageDeque = new ConcurrentLinkedDeque<>();
 
     public void init(final Supplier<FrameDelegate> frameDelegateSupplier) {
-        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig();
+        final SocketAddressConfig socketAddressConfig = new SocketAddressConfig("localhost", 1601);
 
         final EventLoopFactory eventLoopFactory = new EventLoopFactory();
         Assertions.assertDoesNotThrow(() -> eventLoop = eventLoopFactory.create());
@@ -288,16 +291,16 @@ public final class BenchmarkTLSTest {
         init(
                 () -> new DelayedDefaultFrameDelegate(
                         frameContext -> messageDeque.add(frameContext.relpFrame().payload().toBytes()),
-                        2000000000L,
-                        2000000000L
+                        Duration.ofSeconds(2).toNanos(),
+                        Duration.ofSeconds(2).toNanos()
                 )
         );
         final int initiatorCount = 1;
         final long messageCount = 10;
         final int retryTransmissionCount = 5;
         final int retryConnectionCount = 5;
-        final long openTimeout = 1000000000L;
-        final long syslogTimeout = 1000000000L;
+        final long openTimeout = Duration.ofSeconds(1).toNanos();
+        final long syslogTimeout = Duration.ofSeconds(1).toNanos();
         final int eventLoopCount = 1;
 
         final SocketFactory socketFactory = Assertions.assertDoesNotThrow(transportConfiguration::toSocketFactory);
